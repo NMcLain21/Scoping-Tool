@@ -528,3 +528,38 @@ h3 {
   font-size: 10px; color: var(--text-muted);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+
+/* ── Drag handle ──────────────────────────────────────────────── */
+.drag-handle {
+  display: flex;
+  align-items: center;
+  padding: 0 5px 0 2px;
+  color: #ccc;
+  cursor: grab;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+.drag-handle:hover { color: #999; }
+.drag-handle:active { cursor: grabbing; }
+
+/* ── Dragging state ───────────────────────────────────────────── */
+.my-color-item.dragging {
+  opacity: 0.4;
+  background: #f0f4fa;
+  border-radius: 6px;
+}
+
+/* ── Drag-over indicator ──────────────────────────────────────── */
+.my-color-item.drag-over {
+  border-top: 2px solid #2A3E6D;
+  margin-top: -2px;
+}
+
+/* ── Trash button ─────────────────────────────────────────────── */
+.my-del-btn {
+  color: #bbb;
+  transition: color 0.15s;
+}
+.my-del-btn:hover {
+  color: #D50032;
+}

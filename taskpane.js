@@ -105,97 +105,70 @@ function normalizeHex(raw) {
 function esc(s) {
   return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
-
-// Tint: mix hex toward white by factor (0–1)
 function tintHex(hex, factor) {
   const { r, g, b } = hexToRgb(hex);
-  return rgbToHex(
-    Math.round(r + (255 - r) * factor),
-    Math.round(g + (255 - g) * factor),
-    Math.round(b + (255 - b) * factor)
-  );
+  return rgbToHex(Math.round(r+(255-r)*factor),Math.round(g+(255-g)*factor),Math.round(b+(255-b)*factor));
 }
-
-// Shade: darken hex by factor (0–1)
 function shadeHex(hex, factor) {
   const { r, g, b } = hexToRgb(hex);
-  return rgbToHex(
-    Math.round(r * (1 - factor)),
-    Math.round(g * (1 - factor)),
-    Math.round(b * (1 - factor))
-  );
+  return rgbToHex(Math.round(r*(1-factor)),Math.round(g*(1-factor)),Math.round(b*(1-factor)));
 }
 
 // ─────────────────────────────────────────────────────────────────
 // HSV utilities
 // ─────────────────────────────────────────────────────────────────
-function hsvToRgb(h, s, v) {
-  const c = v*s, x = c*(1-Math.abs((h/60)%2-1)), m = v-c;
-  let r=0, g=0, b=0;
-  if      (h<60)  { r=c; g=x; b=0; }
-  else if (h<120) { r=x; g=c; b=0; }
-  else if (h<180) { r=0; g=c; b=x; }
-  else if (h<240) { r=0; g=x; b=c; }
-  else if (h<300) { r=x; g=0; b=c; }
-  else            { r=c; g=0; b=x; }
-  return { r: Math.round((r+m)*255), g: Math.round((g+m)*255), b: Math.round((b+m)*255) };
+function hsvToRgb(h,s,v) {
+  const c=v*s, x=c*(1-Math.abs((h/60)%2-1)), m=v-c;
+  let r=0,g=0,b=0;
+  if(h<60){r=c;g=x;b=0;}else if(h<120){r=x;g=c;b=0;}
+  else if(h<180){r=0;g=c;b=x;}else if(h<240){r=0;g=x;b=c;}
+  else if(h<300){r=x;g=0;b=c;}else{r=c;g=0;b=x;}
+  return{r:Math.round((r+m)*255),g:Math.round((g+m)*255),b:Math.round((b+m)*255)};
 }
-function rgbToHsv(r, g, b) {
-  r/=255; g/=255; b/=255;
-  const max=Math.max(r,g,b), min=Math.min(r,g,b), d=max-min;
-  let h=0;
-  const s=max===0?0:d/max, v=max;
-  if (d!==0) {
-    if      (max===r) h=((g-b)/d+(g<b?6:0))*60;
-    else if (max===g) h=((b-r)/d+2)*60;
-    else              h=((r-g)/d+4)*60;
-  }
-  return { h: h<0?h+360:h, s, v };
+function rgbToHsv(r,g,b) {
+  r/=255;g/=255;b/=255;
+  const max=Math.max(r,g,b),min=Math.min(r,g,b),d=max-min;
+  let h=0;const s=max===0?0:d/max,v=max;
+  if(d!==0){if(max===r)h=((g-b)/d+(g<b?6:0))*60;else if(max===g)h=((b-r)/d+2)*60;else h=((r-g)/d+4)*60;}
+  return{h:h<0?h+360:h,s,v};
 }
-function hexToHsv(hex) { const {r,g,b}=hexToRgb(hex); return rgbToHsv(r,g,b); }
-function hsvToHex(h,s,v) { const {r,g,b}=hsvToRgb(h,s,v); return rgbToHex(r,g,b); }
+function hexToHsv(hex){const{r,g,b}=hexToRgb(hex);return rgbToHsv(r,g,b);}
+function hsvToHex(h,s,v){const{r,g,b}=hsvToRgb(h,s,v);return rgbToHex(r,g,b);}
 
 // ─────────────────────────────────────────────────────────────────
 // Storage
 // ─────────────────────────────────────────────────────────────────
 function getPalette(key) {
   try {
-    const s   = localStorage.getItem(`sct_${key}`);
-    const arr = s ? JSON.parse(s) : JSON.parse(JSON.stringify(DEFAULT_PALETTES[key]));
-    if (key==='fill') arr.forEach(c => { if (!c.textHex) c.textHex = autoTextHex(c.hex); });
+    const s=localStorage.getItem(`sct_${key}`);
+    const arr=s?JSON.parse(s):JSON.parse(JSON.stringify(DEFAULT_PALETTES[key]));
+    if(key==='fill') arr.forEach(c=>{if(!c.textHex)c.textHex=autoTextHex(c.hex);});
     return arr;
   } catch { return JSON.parse(JSON.stringify(DEFAULT_PALETTES[key])); }
 }
-function savePalette(key, arr) { localStorage.setItem(`sct_${key}`, JSON.stringify(arr)); }
-
-function updateColor(key, idx, hex, name, textHex) {
-  const arr = getPalette(key);
-  if (!arr[idx]) return;
-  arr[idx] = { hex, name: name||hex };
-  if (key==='fill') arr[idx].textHex = textHex || autoTextHex(hex);
-  savePalette(key, arr);
+function savePalette(key,arr){localStorage.setItem(`sct_${key}`,JSON.stringify(arr));}
+function updateColor(key,idx,hex,name,textHex) {
+  const arr=getPalette(key);
+  if(!arr[idx])return;
+  arr[idx]={hex,name:name||hex};
+  if(key==='fill')arr[idx].textHex=textHex||autoTextHex(hex);
+  savePalette(key,arr);
 }
-function addColor(key, hex, name, textHex) {
-  const norm = normalizeHex(hex);
-  if (!norm) return;
-  const arr   = getPalette(key);
-  const entry = { hex: norm, name: name||norm };
-  if (key==='fill') entry.textHex = textHex || autoTextHex(norm);
-  arr.push(entry);
-  savePalette(key, arr);
+function addColor(key,hex,name,textHex) {
+  const norm=normalizeHex(hex);if(!norm)return;
+  const arr=getPalette(key);
+  const entry={hex:norm,name:name||norm};
+  if(key==='fill')entry.textHex=textHex||autoTextHex(norm);
+  arr.push(entry);savePalette(key,arr);
 }
-function deleteColor(key, idx) {
-  const arr = getPalette(key); arr.splice(idx,1); savePalette(key,arr);
-}
-function getRecent(key) {
-  try { return JSON.parse(localStorage.getItem(`sct_recent_${key}`))||[]; } catch { return []; }
-}
-function pushRecent(key, hex) {
-  if (!hex||hex==='none') return;
-  const norm = normalizeHex(hex)||hex.toUpperCase();
-  let arr    = getRecent(key).filter(h=>h!==norm);
+function deleteColor(key,idx){const arr=getPalette(key);arr.splice(idx,1);savePalette(key,arr);}
+function getRecent(key){try{return JSON.parse(localStorage.getItem(`sct_recent_${key}`))||[];}catch{return[];}}
+function pushRecent(key,hex) {
+  if(!hex||hex==='none')return;
+  const norm=normalizeHex(hex)||hex.toUpperCase();
+  let arr=getRecent(key).filter(h=>h!==norm);
   arr.unshift(norm);
-  localStorage.setItem(`sct_recent_${key}`, JSON.stringify(arr.slice(0,10)));
+  localStorage.setItem(`sct_recent_${key}`,JSON.stringify(arr.slice(0,10)));
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -212,21 +185,62 @@ let _cachedShapeCount = 0;
 let _applyVer         = 0;
 
 // ─────────────────────────────────────────────────────────────────
-// Build the PowerPoint-style 7×6 theme grid
+// Theme colors — loaded from the document on startup
+// Falls back to BRAND_COLORS if API unavailable
+// ─────────────────────────────────────────────────────────────────
+let _themeColors = null;
+
+async function loadThemeColors() {
+  try {
+    await PowerPoint.run(async ctx => {
+      ctx.presentation.slideMasters.load('items');
+      await ctx.sync();
+      const master = ctx.presentation.slideMasters.getItemAt(0);
+      const theme  = master.getTheme();
+      theme.load('themeColorScheme');
+      await ctx.sync();
+      const cs = theme.themeColorScheme;
+      // Match PowerPoint ribbon column order: Dark1, Light1, Dark2, Light2, Accent1-6
+      const raw = [
+        { raw: cs.dark1,   name: 'Text / Dark 1'  },
+        { raw: cs.light1,  name: 'Background 1'   },
+        { raw: cs.dark2,   name: 'Text / Dark 2'  },
+        { raw: cs.light2,  name: 'Background 2'   },
+        { raw: cs.accent1, name: 'Accent 1'        },
+        { raw: cs.accent2, name: 'Accent 2'        },
+        { raw: cs.accent3, name: 'Accent 3'        },
+        { raw: cs.accent4, name: 'Accent 4'        },
+        { raw: cs.accent5, name: 'Accent 5'        },
+        { raw: cs.accent6, name: 'Accent 6'        },
+      ];
+      const parsed = raw.map(c=>({hex:normalizeHex(c.raw),name:c.name})).filter(c=>c.hex);
+      if (parsed.length >= 4) {
+        _themeColors = parsed;
+        if (_editKey) renderEditPanel();
+      }
+    });
+  } catch(e) {
+    console.log('Theme colors unavailable, using brand colors:', e.message);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Build the PowerPoint-style theme grid (uses live doc colors)
 // ─────────────────────────────────────────────────────────────────
 function buildThemeGrid(dataAttr) {
+  const baseColors = _themeColors || BRAND_COLORS;
   const rows = [
-    BRAND_COLORS.map(c => c.hex),                          // Row 0: base
-    BRAND_COLORS.map(c => tintHex(c.hex, 0.8)),           // Row 1: 80% lighter
-    BRAND_COLORS.map(c => tintHex(c.hex, 0.6)),           // Row 2: 60% lighter
-    BRAND_COLORS.map(c => tintHex(c.hex, 0.4)),           // Row 3: 40% lighter
-    BRAND_COLORS.map(c => shadeHex(c.hex, 0.25)),         // Row 4: 25% darker
-    BRAND_COLORS.map(c => shadeHex(c.hex, 0.5)),          // Row 5: 50% darker
+    baseColors.map(c=>c.hex),
+    baseColors.map(c=>tintHex(c.hex,0.8)),
+    baseColors.map(c=>tintHex(c.hex,0.6)),
+    baseColors.map(c=>tintHex(c.hex,0.4)),
+    baseColors.map(c=>shadeHex(c.hex,0.25)),
+    baseColors.map(c=>shadeHex(c.hex,0.5)),
   ];
   return `<div class="ppt-theme-grid">${
-    rows.map((row, ri) =>
+    rows.map((row,ri)=>
       `<div class="ppt-theme-row${ri===0?' ppt-base-row':''}">${
-        row.map(hex =>
+        row.map(hex=>
           `<button class="ppt-theme-swatch${isLight(hex)?' light':''}"
                    style="background:${hex}" ${dataAttr}="${hex}"
                    title="${hex}" type="button"></button>`
@@ -237,21 +251,21 @@ function buildThemeGrid(dataAttr) {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Build a single PowerPoint-style picker panel (collapsible sections)
+// Build a single PowerPoint-style picker panel (collapsible)
 // ─────────────────────────────────────────────────────────────────
-function buildPptPicker(pickerType, sufx, startHex, dataAttr, recentKey) {
-  const norm   = normalizeHex(startHex) || '#2A3E6D';
-  const hexVal = norm.replace('#','');
-  const recent = getRecent(recentKey);
-  const moreId = `mc-${pickerType}-${sufx}`;
+function buildPptPicker(pickerType,sufx,startHex,dataAttr,recentKey) {
+  const norm=normalizeHex(startHex)||'#2A3E6D';
+  const hexVal=norm.replace('#','');
+  const recent=getRecent(recentKey);
+  const moreId=`mc-${pickerType}-${sufx}`;
 
-  const stdRow = STANDARD_COLORS.map(c =>
+  const stdRow=STANDARD_COLORS.map(c=>
     `<button class="ppt-theme-swatch${isLight(c.hex)?' light':''}"
              style="background:${c.hex}" ${dataAttr}="${c.hex}"
              title="${esc(c.name)}" type="button"></button>`
   ).join('');
 
-  const recentHtml = recent.length ? `
+  const recentHtml=recent.length?`
     <div class="acc-section">
       <button class="acc-hdr" data-acc="recent-${pickerType}-${sufx}" type="button">
         <span>Recent Colors</span>
@@ -261,18 +275,17 @@ function buildPptPicker(pickerType, sufx, startHex, dataAttr, recentKey) {
       </button>
       <div class="acc-body hidden" id="acc-recent-${pickerType}-${sufx}">
         <div class="ppt-std-row" style="padding:4px 0 2px;">${
-          recent.slice(0,10).map(hex =>
+          recent.slice(0,10).map(hex=>
             `<button class="ppt-theme-swatch${isLight(hex)?' light':''}"
                      style="background:${hex}" ${dataAttr}="${hex}"
                      title="${hex}" type="button"></button>`
           ).join('')
         }</div>
       </div>
-    </div>` : '';
+    </div>`:'';
 
   return `
     <div class="ppt-picker" data-picker="${pickerType}">
-
       <div class="acc-section">
         <button class="acc-hdr acc-open" data-acc="theme-${pickerType}-${sufx}" type="button">
           <span>Theme Colors</span>
@@ -284,7 +297,6 @@ function buildPptPicker(pickerType, sufx, startHex, dataAttr, recentKey) {
           <div style="padding:4px 0 2px;">${buildThemeGrid(dataAttr)}</div>
         </div>
       </div>
-
       <div class="acc-section">
         <button class="acc-hdr" data-acc="std-${pickerType}-${sufx}" type="button">
           <span>Standard Colors</span>
@@ -296,12 +308,9 @@ function buildPptPicker(pickerType, sufx, startHex, dataAttr, recentKey) {
           <div class="ppt-std-row" style="padding:4px 0 2px;">${stdRow}</div>
         </div>
       </div>
-
       ${recentHtml}
-
       <div class="acc-section">
-        <button class="acc-hdr" data-acc="${moreId}" type="button"
-                id="more-btn-${pickerType}-${sufx}">
+        <button class="acc-hdr" data-acc="${moreId}" type="button" id="more-btn-${pickerType}-${sufx}">
           <span>Custom Color</span>
           <svg class="acc-chevron" width="10" height="10" viewBox="0 0 10 10" fill="none">
             <path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
@@ -331,31 +340,25 @@ function buildPptPicker(pickerType, sufx, startHex, dataAttr, recentKey) {
           </div>
         </div>
       </div>
-
     </div>`;
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Build color form — flat PowerPoint-style pickers
+// Build color form
 // ─────────────────────────────────────────────────────────────────
-function buildColorForm(type, idx, startHex, startName, startTextHex) {
-  const norm    = normalizeHex(startHex) || '#2A3E6D';
-  const txNorm  = normalizeHex(startTextHex) || autoTextHex(norm);
-  const sufx    = type==='edit' ? `edit-${idx}` : 'add';
-  const isFill  = _editKey === 'fill';
-
-  const fillPicker = buildPptPicker('fill', sufx, norm, 'data-setfill', _editKey);
-  const fontPicker = isFill
-    ? buildPptPicker('textcolor', sufx, txNorm, 'data-settextcolor', 'text')
-    : '';
+function buildColorForm(type,idx,startHex,startName,startTextHex) {
+  const norm=normalizeHex(startHex)||'#2A3E6D';
+  const txNorm=normalizeHex(startTextHex)||autoTextHex(norm);
+  const sufx=type==='edit'?`edit-${idx}`:'add';
+  const isFill=_editKey==='fill';
+  const fillPicker=buildPptPicker('fill',sufx,norm,'data-setfill',_editKey);
+  const fontPicker=isFill?buildPptPicker('textcolor',sufx,txNorm,'data-settextcolor','text'):'';
 
   return `
     <div class="color-form" id="cform-${sufx}" data-type="${type}" data-idx="${idx??''}">
-
       <input type="text" class="ep-name-input" id="cfn-${sufx}"
              placeholder="Color name (optional)" maxlength="36"
              value="${esc(startName)}" />
-
       <!-- Shape Fill header -->
       <div class="ppt-sect-hdr">
         <svg class="ppt-fill-svg" id="fill-svg-${sufx}" width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -369,8 +372,7 @@ function buildColorForm(type, idx, startHex, startName, startTextHex) {
              id="fill-swatch-${sufx}" style="background:${norm};"></div>
       </div>
       ${fillPicker}
-
-      ${isFill ? `
+      ${isFill?`
       <!-- Font Color header -->
       <div class="ppt-sect-hdr" style="margin-top:10px;">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -383,12 +385,10 @@ function buildColorForm(type, idx, startHex, startName, startTextHex) {
         <div class="ppt-curr-swatch${isLight(txNorm)?' light':''}"
              id="font-swatch-${sufx}" style="background:${txNorm};"></div>
       </div>
-      ${fontPicker}
-      ` : ''}
-
+      ${fontPicker}`:''}
       <div class="cform-btns">
         <button class="cform-save" type="button" data-type="${type}" data-idx="${idx??''}">
-          ${type==='edit' ? 'Save Changes' : '+ Add to My Colors'}
+          ${type==='edit'?'Save Changes':'+ Add to My Colors'}
         </button>
         <button class="cform-cancel" type="button">Cancel</button>
       </div>
@@ -396,281 +396,238 @@ function buildColorForm(type, idx, startHex, startName, startTextHex) {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Wire a single picker's interactions
-// Returns a cleanup function to remove global mouse listeners
+// Wire a single picker
 // ─────────────────────────────────────────────────────────────────
-function wirePicker(form, pickerType, sufx, onColorChange) {
-  const moreId    = `mc-${pickerType}-${sufx}`;
-  const morePanel = document.getElementById(moreId);
-  const moreBtn   = document.getElementById(`more-btn-${pickerType}-${sufx}`);
-  const hexInp    = document.getElementById(`hex-${pickerType}-${sufx}`);
-  const preview   = document.getElementById(`prev-${pickerType}-${sufx}`);
-  const sq        = document.getElementById(`hsv-sq-${pickerType}-${sufx}`);
-  const dot       = document.getElementById(`hsv-dot-${pickerType}-${sufx}`);
-  const hueSlider = document.getElementById(`hue-${pickerType}-${sufx}`);
-  const dataAttr  = pickerType==='fill' ? 'data-setfill' : 'data-settextcolor';
+function wirePicker(form,pickerType,sufx,onColorChange) {
+  const moreId=`mc-${pickerType}-${sufx}`;
+  const hexInp=document.getElementById(`hex-${pickerType}-${sufx}`);
+  const preview=document.getElementById(`prev-${pickerType}-${sufx}`);
+  const sq=document.getElementById(`hsv-sq-${pickerType}-${sufx}`);
+  const dot=document.getElementById(`hsv-dot-${pickerType}-${sufx}`);
+  const hueSlider=document.getElementById(`hue-${pickerType}-${sufx}`);
+  const dataAttr=pickerType==='fill'?'data-setfill':'data-settextcolor';
 
-  // HSV state
-  const startNorm = normalizeHex('#' + (hexInp?.value||'')) || '#2A3E6D';
-  const startHsv  = hexToHsv(startNorm);
-  let H = startHsv.h, S = startHsv.s, V = startHsv.v;
+  const startNorm=normalizeHex('#'+(hexInp?.value||''))||'#2A3E6D';
+  const startHsv=hexToHsv(startNorm);
+  let H=startHsv.h,S=startHsv.s,V=startHsv.v;
 
   function syncFromHsv() {
-    const hex = hsvToHex(H, S, V);
-    if (hexInp)  hexInp.value             = hex.replace('#','').toUpperCase();
-    if (preview) preview.style.background = hex;
-    if (preview) preview.classList.toggle('light', isLight(hex));
-    if (sq) {
-      sq.style.background = `hsl(${Math.round(H)},100%,50%)`;
-      if (dot) { dot.style.left = `${S*100}%`; dot.style.top = `${(1-V)*100}%`; }
-    }
-    if (hueSlider) hueSlider.value = Math.round(H);
+    const hex=hsvToHex(H,S,V);
+    if(hexInp)hexInp.value=hex.replace('#','').toUpperCase();
+    if(preview){preview.style.background=hex;preview.classList.toggle('light',isLight(hex));}
+    if(sq){sq.style.background=`hsl(${Math.round(H)},100%,50%)`;if(dot){dot.style.left=`${S*100}%`;dot.style.top=`${(1-V)*100}%`;}}
+    if(hueSlider)hueSlider.value=Math.round(H);
     onColorChange(hex);
   }
-
   function setFromHex(rawHex) {
-    const c = rawHex.startsWith('#') ? rawHex : '#'+rawHex;
-    const n = normalizeHex(c);
-    if (!n) return;
-    const hsv = hexToHsv(n);
-    H = hsv.h; S = hsv.s; V = hsv.v;
-    if (hexInp)  hexInp.value             = n.replace('#','').toUpperCase();
-    if (preview) preview.style.background = n;
-    if (preview) preview.classList.toggle('light', isLight(n));
-    if (sq) {
-      sq.style.background = `hsl(${Math.round(H)},100%,50%)`;
-      if (dot) { dot.style.left = `${S*100}%`; dot.style.top = `${(1-V)*100}%`; }
-    }
-    if (hueSlider) hueSlider.value = Math.round(H);
+    const c=rawHex.startsWith('#')?rawHex:'#'+rawHex;
+    const n=normalizeHex(c);if(!n)return;
+    const hsv=hexToHsv(n);H=hsv.h;S=hsv.s;V=hsv.v;
+    if(hexInp)hexInp.value=n.replace('#','').toUpperCase();
+    if(preview){preview.style.background=n;preview.classList.toggle('light',isLight(n));}
+    if(sq){sq.style.background=`hsl(${Math.round(H)},100%,50%)`;if(dot){dot.style.left=`${S*100}%`;dot.style.top=`${(1-V)*100}%`;}}
+    if(hueSlider)hueSlider.value=Math.round(H);
     onColorChange(n);
   }
 
-  // Quick-pick swatches (theme grid + standard + recent)
-  const pickerEl = form.querySelector(`.ppt-picker[data-picker="${pickerType}"]`);
-  pickerEl?.querySelectorAll(`[${dataAttr}]`).forEach(btn => {
-    btn.addEventListener('click', e => {
+  const pickerEl=form.querySelector(`.ppt-picker[data-picker="${pickerType}"]`);
+  pickerEl?.querySelectorAll(`[${dataAttr}]`).forEach(btn=>{
+    btn.addEventListener('click',e=>{
       e.stopPropagation();
       setFromHex(btn.getAttribute(dataAttr));
-      pickerEl.querySelectorAll(`[${dataAttr}]`).forEach(b => b.classList.remove('qp-selected'));
+      pickerEl.querySelectorAll(`[${dataAttr}]`).forEach(b=>b.classList.remove('qp-selected'));
       btn.classList.add('qp-selected');
     });
   });
 
-  // Accordion headers inside this picker
-  const pickerContainer = form.querySelector(`.ppt-picker[data-picker="${pickerType}"]`);
-  pickerContainer?.querySelectorAll('.acc-hdr').forEach(hdr => {
-    hdr.addEventListener('click', () => {
-      const bodyId = hdr.dataset.acc;
-      const body   = document.getElementById(bodyId);
-      if (!body) return;
-      const opening = body.classList.contains('hidden');
-      body.classList.toggle('hidden', !opening);
-      hdr.classList.toggle('acc-open', opening);
-      hdr.querySelector('.acc-chevron')?.classList.toggle('acc-chevron-open', opening);
-      // Initialize HSV square on first open of Custom Color panel
-      if (opening && bodyId === moreId) syncFromHsv();
+  const pickerContainer=form.querySelector(`.ppt-picker[data-picker="${pickerType}"]`);
+  pickerContainer?.querySelectorAll('.acc-hdr').forEach(hdr=>{
+    hdr.addEventListener('click',()=>{
+      const bodyId=hdr.dataset.acc;
+      const body=document.getElementById(bodyId);if(!body)return;
+      const opening=body.classList.contains('hidden');
+      body.classList.toggle('hidden',!opening);
+      hdr.classList.toggle('acc-open',opening);
+      hdr.querySelector('.acc-chevron')?.classList.toggle('acc-chevron-open',opening);
+      if(opening&&bodyId===moreId)syncFromHsv();
     });
   });
 
-  // Hue slider
-  hueSlider?.addEventListener('input', () => { H = parseFloat(hueSlider.value); syncFromHsv(); });
+  hueSlider?.addEventListener('input',()=>{H=parseFloat(hueSlider.value);syncFromHsv();});
 
-  // Square drag
-  let dragging = false;
+  let dragging=false;
   function handleDrag(e) {
-    if (!sq?.isConnected) { dragging = false; return; }
-    const rect = sq.getBoundingClientRect();
-    const cx   = e.touches ? e.touches[0].clientX : e.clientX;
-    const cy   = e.touches ? e.touches[0].clientY : e.clientY;
-    S = Math.max(0, Math.min(1, (cx - rect.left) / rect.width));
-    V = Math.max(0, Math.min(1, 1 - (cy - rect.top) / rect.height));
+    if(!sq?.isConnected){dragging=false;return;}
+    const rect=sq.getBoundingClientRect();
+    const cx=e.touches?e.touches[0].clientX:e.clientX;
+    const cy=e.touches?e.touches[0].clientY:e.clientY;
+    S=Math.max(0,Math.min(1,(cx-rect.left)/rect.width));
+    V=Math.max(0,Math.min(1,1-(cy-rect.top)/rect.height));
     syncFromHsv();
   }
-  if (sq) {
-    sq.addEventListener('mousedown',  e => { e.preventDefault(); dragging=true; handleDrag(e); });
-    sq.addEventListener('touchstart', e => { e.preventDefault(); handleDrag(e); }, { passive: false });
-    sq.addEventListener('touchmove',  e => { e.preventDefault(); handleDrag(e); }, { passive: false });
+  if(sq){
+    sq.addEventListener('mousedown',e=>{e.preventDefault();dragging=true;handleDrag(e);});
+    sq.addEventListener('touchstart',e=>{e.preventDefault();handleDrag(e);},{passive:false});
+    sq.addEventListener('touchmove',e=>{e.preventDefault();handleDrag(e);},{passive:false});
   }
-  const onMove = e => { if (dragging) handleDrag(e); };
-  const onUp   = ()  => { dragging = false; };
-  document.addEventListener('mousemove', onMove);
-  document.addEventListener('mouseup',   onUp);
-
-  // Hex input
-  hexInp?.addEventListener('input', () => { if (hexInp.value.length===6) setFromHex(hexInp.value); });
-
-  // Initialize square on load (More panel is hidden; still init state)
-  if (sq) syncFromHsv();
-
-  return () => {
-    document.removeEventListener('mousemove', onMove);
-    document.removeEventListener('mouseup',   onUp);
-  };
+  const onMove=e=>{if(dragging)handleDrag(e);};
+  const onUp=()=>{dragging=false;};
+  document.addEventListener('mousemove',onMove);
+  document.addEventListener('mouseup',onUp);
+  hexInp?.addEventListener('input',()=>{if(hexInp.value.length===6)setFromHex(hexInp.value);});
+  if(sq)syncFromHsv();
+  return ()=>{document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onUp);};
 }
 
 // ─────────────────────────────────────────────────────────────────
 // Wire the whole color form
 // ─────────────────────────────────────────────────────────────────
-function wireColorForm(form, key) {
-  const type   = form.dataset.type;
-  const idx    = form.dataset.idx !== '' ? parseInt(form.dataset.idx, 10) : null;
-  const sufx   = type==='edit' ? `edit-${idx}` : 'add';
-  const isFill = key === 'fill';
+function wireColorForm(form,key) {
+  const type=form.dataset.type;
+  const idx=form.dataset.idx!==''?parseInt(form.dataset.idx,10):null;
+  const sufx=type==='edit'?`edit-${idx}`:'add';
+  const isFill=key==='fill';
+  let currentFill=normalizeHex('#'+(document.getElementById(`hex-fill-${sufx}`)?.value||''))||'#2A3E6D';
+  let currentText=normalizeHex('#'+(document.getElementById(`hex-textcolor-${sufx}`)?.value||''))||autoTextHex(currentFill);
 
-  // Track current fill selection
-  let currentFill = normalizeHex('#'+(document.getElementById(`hex-fill-${sufx}`)?.value||'')) || '#2A3E6D';
-  // Track current font color (DOI only)
-  let currentText = normalizeHex('#'+(document.getElementById(`hex-textcolor-${sufx}`)?.value||'')) || autoTextHex(currentFill);
-
-  // Fill color change — update fill header swatch + paint-bucket icon
   function onFillChange(hex) {
-    currentFill = hex;
-    const sw = document.getElementById(`fill-swatch-${sufx}`);
-    if (sw) { sw.style.background = hex; sw.classList.toggle('light', isLight(hex)); }
-    const sv = document.getElementById(`fill-svg-${sufx}`);
-    if (sv) {
-      const p = sv.querySelector('path');
-      if (p) { p.setAttribute('fill', hex); p.setAttribute('stroke', isLight(hex)?'#aaa':hex); }
-    }
+    currentFill=hex;
+    const sw=document.getElementById(`fill-swatch-${sufx}`);
+    if(sw){sw.style.background=hex;sw.classList.toggle('light',isLight(hex));}
+    const sv=document.getElementById(`fill-svg-${sufx}`);
+    if(sv){const p=sv.querySelector('path');if(p){p.setAttribute('fill',hex);p.setAttribute('stroke',isLight(hex)?'#aaa':hex);}}
   }
-
-  // Font color change — update font header swatch + A icon
   function onFontChange(hex) {
-    currentText = hex;
-    const sw = document.getElementById(`font-swatch-${sufx}`);
-    if (sw) { sw.style.background = hex; sw.classList.toggle('light', isLight(hex)); }
-    const txt = document.getElementById(`font-svg-${sufx}`);
-    if (txt) txt.setAttribute('fill', hex);
-    const bar = document.getElementById(`font-bar-${sufx}`);
-    if (bar) bar.setAttribute('fill', hex);
+    currentText=hex;
+    const sw=document.getElementById(`font-swatch-${sufx}`);
+    if(sw){sw.style.background=hex;sw.classList.toggle('light',isLight(hex));}
+    const txt=document.getElementById(`font-svg-${sufx}`);if(txt)txt.setAttribute('fill',hex);
+    const bar=document.getElementById(`font-bar-${sufx}`);if(bar)bar.setAttribute('fill',hex);
   }
 
-  // Wire fill picker
-  const cleanFill = wirePicker(form, 'fill', sufx, onFillChange);
-  // Wire font picker (DOI only)
-  const cleanFont = isFill ? wirePicker(form, 'textcolor', sufx, onFontChange) : null;
+  const cleanFill=wirePicker(form,'fill',sufx,onFillChange);
+  const cleanFont=isFill?wirePicker(form,'textcolor',sufx,onFontChange):null;
+  const nameInp=document.getElementById(`cfn-${sufx}`);
 
-  const nameInp = document.getElementById(`cfn-${sufx}`);
-
-  // Save
-  form.querySelector('.cform-save')?.addEventListener('click', () => {
-    const norm = normalizeHex(currentFill);
-    if (!norm) return;
-    const name    = nameInp?.value.trim() || '';
-    const txtNorm = isFill ? (normalizeHex(currentText) || autoTextHex(norm)) : null;
-    if (type==='edit' && idx !== null) updateColor(key, idx, norm, name||norm, txtNorm);
-    else addColor(key, norm, name, txtNorm);
-    _openForm = null;
-    cleanFill?.();
-    cleanFont?.();
-    renderEditPanel();
+  form.querySelector('.cform-save')?.addEventListener('click',()=>{
+    const norm=normalizeHex(currentFill);if(!norm)return;
+    const name=nameInp?.value.trim()||'';
+    const txtNorm=isFill?(normalizeHex(currentText)||autoTextHex(norm)):null;
+    if(type==='edit'&&idx!==null)updateColor(key,idx,norm,name||norm,txtNorm);
+    else addColor(key,norm,name,txtNorm);
+    _openForm=null;cleanFill?.();cleanFont?.();renderEditPanel();
   });
-
-  // Cancel
-  form.querySelector('.cform-cancel')?.addEventListener('click', () => {
-    _openForm = null;
-    cleanFill?.();
-    cleanFont?.();
-    renderEditPanel();
+  form.querySelector('.cform-cancel')?.addEventListener('click',()=>{
+    _openForm=null;cleanFill?.();cleanFont?.();renderEditPanel();
   });
-
-  nameInp?.addEventListener('keydown', e => {
-    if (e.key==='Enter') form.querySelector('.cform-save')?.click();
-  });
-
-  setTimeout(() => { if (nameInp?.isConnected) nameInp.select(); }, 50);
+  nameInp?.addEventListener('keydown',e=>{if(e.key==='Enter')form.querySelector('.cform-save')?.click();});
+  setTimeout(()=>{if(nameInp?.isConnected)nameInp.select();},50);
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Main panel — labeled tiles + pencil button
+// Main panel — labeled tiles
 // ─────────────────────────────────────────────────────────────────
 function renderMainSwatches(key) {
-  const row = document.getElementById(`swatches-${key}`);
-  if (!row) return;
-  const colors = getPalette(key);
-
-  row.innerHTML =
-    colors.map(c => {
-      if (key === 'border') {
-        return `<button class="main-swatch border-legend-tile"
-                         data-color="${c.hex}" title="${esc(c.name)}" aria-label="${esc(c.name)}">
-                  <span class="legend-line-sample" style="background:${c.hex}"></span>
-                  <span class="legend-line-name">${esc(c.name)}</span>
-                </button>`;
-      }
-      if (key === 'fill') {
-        const txHex = c.textHex || autoTextHex(c.hex);
-        return `<button class="main-swatch doi-tile"
-                         style="background:${c.hex};"
-                         data-color="${c.hex}" data-textcolor="${txHex}"
-                         title="${esc(c.name)}" aria-label="${esc(c.name)}">
-                  <span class="swatch-label" style="color:${txHex};">${esc(c.name)}</span>
-                </button>`;
-      }
-      const txtColor = isLight(c.hex) ? '#000000' : '#FFFFFF';
-      return `<button class="main-swatch${isLight(c.hex)?' light':''}"
-                       style="background:${c.hex}"
+  const row=document.getElementById(`swatches-${key}`);if(!row)return;
+  const colors=getPalette(key);
+  row.innerHTML=colors.map(c=>{
+    if(key==='border'){
+      return `<button class="main-swatch border-legend-tile"
                        data-color="${c.hex}" title="${esc(c.name)}" aria-label="${esc(c.name)}">
-                <span class="swatch-label" style="color:${txtColor};">${esc(c.name)}</span>
+                <span class="legend-line-sample" style="background:${c.hex}"></span>
+                <span class="legend-line-name">${esc(c.name)}</span>
               </button>`;
-    }).join('') +
-    `<button class="edit-palette-btn" data-key="${key}" title="Edit ${key} palette">
-       <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-         <path d="M8.5 1.5a1.414 1.414 0 012 2L4 10H2V8L8.5 1.5z"
-               stroke="currentColor" stroke-width="1.3"
-               stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-       </svg>
-     </button>`;
+    }
+    if(key==='fill'){
+      const txHex=c.textHex||autoTextHex(c.hex);
+      return `<button class="main-swatch doi-tile"
+                       style="background:${c.hex};"
+                       data-color="${c.hex}" data-textcolor="${txHex}"
+                       title="${esc(c.name)}" aria-label="${esc(c.name)}">
+                <span class="swatch-label" style="color:${txHex};">${esc(c.name)}</span>
+              </button>`;
+    }
+    const txtColor=isLight(c.hex)?'#000000':'#FFFFFF';
+    return `<button class="main-swatch${isLight(c.hex)?' light':''}"
+                     style="background:${c.hex}"
+                     data-color="${c.hex}" title="${esc(c.name)}" aria-label="${esc(c.name)}">
+              <span class="swatch-label" style="color:${txtColor};">${esc(c.name)}</span>
+            </button>`;
+  }).join('')+
+  `<button class="edit-palette-btn" data-key="${key}" title="Edit ${key} palette">
+     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+       <path d="M8.5 1.5a1.414 1.414 0 012 2L4 10H2V8L8.5 1.5z"
+             stroke="currentColor" stroke-width="1.3"
+             stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+     </svg>
+   </button>`;
 
-  row.querySelectorAll('.main-swatch').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const color    = btn.dataset.color;
-      const txtColor = btn.dataset.textcolor;
-      if (key==='fill' && txtColor) applyDOITile(color, txtColor);
-      else ({ border: applyBorderColor, text: applyTextColor })[key]?.(color);
-      pushRecent(key, color);
+  row.querySelectorAll('.main-swatch').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const color=btn.dataset.color;
+      const txtColor=btn.dataset.textcolor;
+      if(key==='fill'&&txtColor)applyDOITile(color,txtColor);
+      else({border:applyBorderColor,text:applyTextColor})[key]?.(color);
+      pushRecent(key,color);
     });
   });
-
-  row.querySelector('.edit-palette-btn').addEventListener('click', () => {
-    const fnMap = { fill: applyDOITile, border: applyBorderColor, text: applyTextColor };
-    openEditPanel(key, fnMap[key]);
+  row.querySelector('.edit-palette-btn').addEventListener('click',()=>{
+    const fnMap={fill:applyDOITile,border:applyBorderColor,text:applyTextColor};
+    openEditPanel(key,fnMap[key]);
   });
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Trash can SVG helper
+// ─────────────────────────────────────────────────────────────────
+function trashIcon() {
+  return `<svg width="11" height="12" viewBox="0 0 11 12" fill="none">
+    <path d="M1 3h9M4 3V2a.5.5 0 01.5-.5h2A.5.5 0 017 2v1M9 3l-.5 7a.5.5 0 01-.5.5H3a.5.5 0 01-.5-.5L2 3"
+          stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
 }
 
 // ─────────────────────────────────────────────────────────────────
 // Edit panel — open / close
 // ─────────────────────────────────────────────────────────────────
-function openEditPanel(key, fn) {
-  _editKey = key; _applyFn = fn; _openForm = null;
+function openEditPanel(key,fn) {
+  _editKey=key;_applyFn=fn;_openForm=null;
   renderEditPanel();
   document.getElementById('main-content').classList.add('hidden');
   document.getElementById('edit-panel').classList.remove('hidden');
 }
-
 function closeEditPanel() {
   document.getElementById('edit-panel').classList.add('hidden');
   document.getElementById('main-content').classList.remove('hidden');
   renderMainSwatches(_editKey);
-  _editKey = null; _applyFn = null; _openForm = null;
+  _editKey=null;_applyFn=null;_openForm=null;
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Edit panel — full render
+// Edit panel — render
 // ─────────────────────────────────────────────────────────────────
 function renderEditPanel() {
-  const key      = _editKey;
-  const titleMap = { fill: 'Degree of Integration', border: 'Post Int Process Owner', text: 'Text Color' };
-  document.getElementById('edit-panel-title').textContent = titleMap[key] || 'Edit Colors';
+  const key=_editKey;
+  const titleMap={fill:'Degree of Integration',border:'Post Int Process Owner',text:'Text Color'};
+  document.getElementById('edit-panel-title').textContent=titleMap[key]||'Edit Colors';
+  const palette=getPalette(key);
 
-  const palette = getPalette(key);
-
-  const myColorsHtml = palette.map((c, i) => {
-    const isEditing = _openForm && _openForm.type==='edit' && _openForm.idx===i;
-    const txHex     = c.textHex || autoTextHex(c.hex);
+  const myColorsHtml=palette.map((c,i)=>{
+    const isEditing=_openForm&&_openForm.type==='edit'&&_openForm.idx===i;
+    const txHex=c.textHex||autoTextHex(c.hex);
     return `
-      <div class="my-color-item" data-idx="${i}">
+      <div class="my-color-item" draggable="true" data-idx="${i}">
         <div class="my-color-top">
+          <div class="drag-handle" title="Drag to reorder">
+            <svg width="10" height="14" viewBox="0 0 10 14" fill="none">
+              <circle cx="3" cy="3"  r="1.2" fill="currentColor"/>
+              <circle cx="7" cy="3"  r="1.2" fill="currentColor"/>
+              <circle cx="3" cy="7"  r="1.2" fill="currentColor"/>
+              <circle cx="7" cy="7"  r="1.2" fill="currentColor"/>
+              <circle cx="3" cy="11" r="1.2" fill="currentColor"/>
+              <circle cx="7" cy="11" r="1.2" fill="currentColor"/>
+            </svg>
+          </div>
           <div class="my-swatch-wrap">
             <div class="my-swatch${isLight(c.hex)?' light':''}"
                  style="background:${c.hex}"
@@ -690,26 +647,18 @@ function renderEditPanel() {
               </svg>
             </button>
             <button class="my-del-btn" data-idx="${i}" title="Delete">
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                <line x1="1.5" y1="1.5" x2="8.5" y2="8.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-                <line x1="8.5" y1="1.5" x2="1.5" y2="8.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-              </svg>
+              ${trashIcon()}
             </button>
           </div>
         </div>
-        ${isEditing ? buildColorForm('edit', i, c.hex, c.name, txHex) : ''}
+        ${isEditing?buildColorForm('edit',i,c.hex,c.name,txHex):''}
       </div>`;
   }).join('');
 
-  const isAdding = _openForm && _openForm.type==='add';
-
-  document.getElementById('edit-panel-body').innerHTML = `
-    <div class="ep-label">
-      My Colors
-      <span class="ep-hint">click swatch to apply</span>
-    </div>
+  const isAdding=_openForm&&_openForm.type==='add';
+  document.getElementById('edit-panel-body').innerHTML=`
+    <div class="ep-label">My Colors <span class="ep-hint">drag to reorder · click swatch to apply</span></div>
     <div id="my-colors-list">${myColorsHtml}</div>
-
     <button class="add-new-btn${isAdding?' active':''}" id="ep-add-toggle">
       <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
         <line x1="5.5" y1="1" x2="5.5" y2="10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
@@ -717,8 +666,7 @@ function renderEditPanel() {
       </svg>
       Add New Color
     </button>
-    ${isAdding ? buildColorForm('add', null, '#2A3E6D', '', '#FFFFFF') : ''}
-
+    ${isAdding?buildColorForm('add',null,'#2A3E6D','','#FFFFFF'):''}
     <button class="no-color-btn" id="ep-no-color">
       <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
         <rect x="1" y="1" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.2"/>
@@ -726,189 +674,218 @@ function renderEditPanel() {
       </svg>
       ${NO_LABEL[key]||'No Color'}
     </button>
-
     <button class="reset-defaults-btn" id="ep-reset">↺ Reset to defaults</button>
   `;
-
   bindEditEvents(key);
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Bind events inside the edit panel
+// Bind edit panel events (including drag-and-drop)
 // ─────────────────────────────────────────────────────────────────
 function bindEditEvents(key) {
-  const body = document.getElementById('edit-panel-body');
+  const body=document.getElementById('edit-panel-body');
 
-  // My Colors: click swatch → apply + close
-  body.querySelectorAll('.my-swatch').forEach(s => {
-    const go = () => {
-      const color = s.dataset.color, tc = s.dataset.textcolor;
-      if (key==='fill'&&tc) applyDOITile(color,tc); else _applyFn?.(color);
-      if (color!=='none') pushRecent(key, color);
+  // Apply swatch
+  body.querySelectorAll('.my-swatch').forEach(s=>{
+    const go=()=>{
+      const color=s.dataset.color,tc=s.dataset.textcolor;
+      if(key==='fill'&&tc)applyDOITile(color,tc);else _applyFn?.(color);
+      if(color!=='none')pushRecent(key,color);
       closeEditPanel();
     };
-    s.addEventListener('click', go);
-    s.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' '){e.preventDefault();go();} });
+    s.addEventListener('click',go);
+    s.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}});
   });
 
-  // My Colors: pencil
-  body.querySelectorAll('.my-edit-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const idx = parseInt(btn.dataset.idx, 10);
-      _openForm = (_openForm&&_openForm.type==='edit'&&_openForm.idx===idx)
-        ? null : { type:'edit', idx };
+  // Pencil edit
+  body.querySelectorAll('.my-edit-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const idx=parseInt(btn.dataset.idx,10);
+      _openForm=(_openForm&&_openForm.type==='edit'&&_openForm.idx===idx)?null:{type:'edit',idx};
       renderEditPanel();
     });
   });
 
-  // My Colors: delete
-  body.querySelectorAll('.my-del-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      deleteColor(key, parseInt(btn.dataset.idx, 10));
-      _openForm = null; renderEditPanel();
+  // Trash delete
+  body.querySelectorAll('.my-del-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      deleteColor(key,parseInt(btn.dataset.idx,10));
+      _openForm=null;renderEditPanel();
     });
   });
 
   // Add New Color toggle
-  document.getElementById('ep-add-toggle').addEventListener('click', () => {
-    _openForm = (_openForm&&_openForm.type==='add') ? null : { type:'add', idx:null };
+  document.getElementById('ep-add-toggle').addEventListener('click',()=>{
+    _openForm=(_openForm&&_openForm.type==='add')?null:{type:'add',idx:null};
     renderEditPanel();
   });
 
   // No Color
-  document.getElementById('ep-no-color').addEventListener('click', () => {
-    if (key==='fill') applyDOITile('none',null); else _applyFn?.('none');
+  document.getElementById('ep-no-color').addEventListener('click',()=>{
+    if(key==='fill')applyDOITile('none',null);else _applyFn?.('none');
     closeEditPanel();
   });
 
-  // Reset to defaults
-  document.getElementById('ep-reset').addEventListener('click', () => {
-    if (!confirm(`Reset ${key} palette to defaults? Your custom colors will be lost.`)) return;
+  // Reset
+  document.getElementById('ep-reset').addEventListener('click',()=>{
+    if(!confirm(`Reset ${key} palette to defaults? Your custom colors will be lost.`))return;
     localStorage.removeItem(`sct_${key}`);
-    _openForm = null; renderEditPanel(); renderMainSwatches(key);
+    _openForm=null;renderEditPanel();renderMainSwatches(key);
   });
 
-  // Wire all open color forms
-  body.querySelectorAll('.color-form').forEach(form => wireColorForm(form, key));
+  // Wire color forms
+  body.querySelectorAll('.color-form').forEach(form=>wireColorForm(form,key));
+
+  // ── Drag-and-drop reordering ──────────────────────────────────
+  const list=document.getElementById('my-colors-list');
+  let dragSrcIdx=null;
+
+  list.querySelectorAll('.my-color-item[draggable]').forEach(item=>{
+    item.addEventListener('dragstart',e=>{
+      dragSrcIdx=parseInt(item.dataset.idx,10);
+      item.classList.add('dragging');
+      e.dataTransfer.effectAllowed='move';
+      e.dataTransfer.setData('text/plain',dragSrcIdx);
+    });
+    item.addEventListener('dragend',()=>{
+      item.classList.remove('dragging');
+      list.querySelectorAll('.my-color-item').forEach(i=>i.classList.remove('drag-over'));
+    });
+    item.addEventListener('dragover',e=>{
+      e.preventDefault();e.dataTransfer.dropEffect='move';
+      list.querySelectorAll('.my-color-item').forEach(i=>i.classList.remove('drag-over'));
+      item.classList.add('drag-over');
+    });
+    item.addEventListener('drop',e=>{
+      e.preventDefault();
+      const destIdx=parseInt(item.dataset.idx,10);
+      if(dragSrcIdx===null||dragSrcIdx===destIdx)return;
+      const arr=getPalette(key);
+      const [moved]=arr.splice(dragSrcIdx,1);
+      arr.splice(destIdx,0,moved);
+      savePalette(key,arr);
+      _openForm=null;
+      renderEditPanel();
+    });
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────
 // Apply functions
 // ─────────────────────────────────────────────────────────────────
 function getSelectedFast(ctx) {
-  const col = ctx.presentation.getSelectedShapes();
-  const out = [];
-  for (let i=0; i<_cachedShapeCount; i++) out.push(col.getItemAt(i));
+  const col=ctx.presentation.getSelectedShapes();
+  const out=[];
+  for(let i=0;i<_cachedShapeCount;i++)out.push(col.getItemAt(i));
   return out;
 }
 
-async function applyDOITile(fillColor, textColor) {
-  const ver = ++_applyVer;
-  if (!_cachedShapeCount) return setStatus('No shape selected.');
-  await PowerPoint.run(async ctx => {
-    if (ver !== _applyVer) return;
-    getSelectedFast(ctx).forEach(s => {
-      if (fillColor==='none') s.fill.clear(); else s.fill.setSolidColor(fillColor);
-      if (textColor && textColor!=='none') {
-        try { s.textFrame.textRange.font.color = textColor; } catch(_) {}
-      }
+async function applyDOITile(fillColor,textColor) {
+  const ver=++_applyVer;
+  if(!_cachedShapeCount)return setStatus('No shape selected.');
+  await PowerPoint.run(async ctx=>{
+    if(ver!==_applyVer)return;
+    getSelectedFast(ctx).forEach(s=>{
+      if(fillColor==='none')s.fill.clear();else s.fill.setSolidColor(fillColor);
+      if(textColor&&textColor!=='none'){try{s.textFrame.textRange.font.color=textColor;}catch(_){}}
     });
     await ctx.sync();
-    if (ver===_applyVer) setStatus(`DOI → ${fillColor==='none'?'cleared':fillColor}`);
+    if(ver===_applyVer)setStatus(`DOI → ${fillColor==='none'?'cleared':fillColor}`);
   });
 }
 
 async function applyBorderColor(color) {
-  const ver = ++_applyVer;
-  if (!_cachedShapeCount) return setStatus('No shape selected.');
-  await PowerPoint.run(async ctx => {
-    if (ver!==_applyVer) return;
-    getSelectedFast(ctx).forEach(s => {
-      if (color==='none') s.lineFormat.visible=false;
-      else { s.lineFormat.visible=true; s.lineFormat.color=color; }
+  const ver=++_applyVer;
+  if(!_cachedShapeCount)return setStatus('No shape selected.');
+  await PowerPoint.run(async ctx=>{
+    if(ver!==_applyVer)return;
+    getSelectedFast(ctx).forEach(s=>{
+      if(color==='none')s.lineFormat.visible=false;
+      else{s.lineFormat.visible=true;s.lineFormat.color=color;}
     });
     await ctx.sync();
-    if (ver===_applyVer) setStatus(`Border → ${color==='none'?'removed':color}`);
+    if(ver===_applyVer)setStatus(`Border → ${color==='none'?'removed':color}`);
   });
 }
 
 async function applyBorderWeight(pts) {
-  const ver = ++_applyVer;
-  if (!_cachedShapeCount) return setStatus('No shape selected.');
-  await PowerPoint.run(async ctx => {
-    if (ver!==_applyVer) return;
-    getSelectedFast(ctx).forEach(s => { s.lineFormat.weight=pts; s.lineFormat.visible=true; });
+  const ver=++_applyVer;
+  if(!_cachedShapeCount)return setStatus('No shape selected.');
+  await PowerPoint.run(async ctx=>{
+    if(ver!==_applyVer)return;
+    getSelectedFast(ctx).forEach(s=>{s.lineFormat.weight=pts;s.lineFormat.visible=true;});
     await ctx.sync();
-    if (ver===_applyVer) setStatus(`Weight → ${pts}pt`);
+    if(ver===_applyVer)setStatus(`Weight → ${pts}pt`);
   });
 }
 
 async function applyBorderDash(style) {
-  const ver = ++_applyVer;
-  if (!_cachedShapeCount) return setStatus('No shape selected.');
-  await PowerPoint.run(async ctx => {
-    if (ver!==_applyVer) return;
+  const ver=++_applyVer;
+  if(!_cachedShapeCount)return setStatus('No shape selected.');
+  await PowerPoint.run(async ctx=>{
+    if(ver!==_applyVer)return;
     let dashVal;
-    switch(style) {
-      case 'dash':     dashVal = PowerPoint.LineDashStyle.dash;     break;
-      case 'roundDot': dashVal = PowerPoint.LineDashStyle.roundDot; break;
-      default:         dashVal = PowerPoint.LineDashStyle.solid;    break;
+    switch(style){
+      case 'dash':     dashVal=PowerPoint.LineDashStyle.dash;     break;
+      case 'roundDot': dashVal=PowerPoint.LineDashStyle.roundDot; break;
+      default:         dashVal=PowerPoint.LineDashStyle.solid;    break;
     }
-    getSelectedFast(ctx).forEach(s => { s.lineFormat.dashStyle=dashVal; s.lineFormat.visible=true; });
+    getSelectedFast(ctx).forEach(s=>{s.lineFormat.dashStyle=dashVal;s.lineFormat.visible=true;});
     await ctx.sync();
-    if (ver===_applyVer) setStatus(`Style → ${style}`);
+    if(ver===_applyVer)setStatus(`Style → ${style}`);
   });
 }
 
 async function applyTextColor(color) {
-  const ver = ++_applyVer;
-  if (!_cachedShapeCount) return setStatus('No shape selected.');
-  await PowerPoint.run(async ctx => {
-    if (ver!==_applyVer) return;
-    getSelectedFast(ctx).forEach(s => {
-      try { s.textFrame.textRange.font.color = color; } catch(_) {}
-    });
+  const ver=++_applyVer;
+  if(!_cachedShapeCount)return setStatus('No shape selected.');
+  await PowerPoint.run(async ctx=>{
+    if(ver!==_applyVer)return;
+    getSelectedFast(ctx).forEach(s=>{try{s.textFrame.textRange.font.color=color;}catch(_){}});
     await ctx.sync();
-    if (ver===_applyVer) setStatus(`Text → ${color}`);
+    if(ver===_applyVer)setStatus(`Text → ${color}`);
   });
 }
 
 async function applyLineEnds() {
-  const sv=el('line-start').value, ev=el('line-end').value;
+  const sv=el('line-start').value,ev=el('line-end').value;
   const ver=++_applyVer;
-  if (!_cachedShapeCount) return setStatus('No shape selected.');
-  await PowerPoint.run(async ctx => {
-    if (ver!==_applyVer) return;
-    getSelectedFast(ctx).forEach(s => {
-      try {
-        s.lineFormat.beginArrowheadStyle = PowerPoint.ArrowheadStyle[sv]??PowerPoint.ArrowheadStyle.none;
-        s.lineFormat.endArrowheadStyle   = PowerPoint.ArrowheadStyle[ev]??PowerPoint.ArrowheadStyle.none;
-      } catch(_) {}
+  if(!_cachedShapeCount)return setStatus('No shape selected.');
+  await PowerPoint.run(async ctx=>{
+    if(ver!==_applyVer)return;
+    getSelectedFast(ctx).forEach(s=>{
+      try{
+        s.lineFormat.beginArrowheadStyle=PowerPoint.ArrowheadStyle[sv]??PowerPoint.ArrowheadStyle.none;
+        s.lineFormat.endArrowheadStyle=PowerPoint.ArrowheadStyle[ev]??PowerPoint.ArrowheadStyle.none;
+      }catch(_){}
     });
     await ctx.sync();
-    if (ver===_applyVer) setStatus(`Ends → ${sv} / ${ev}`);
+    if(ver===_applyVer)setStatus(`Ends → ${sv} / ${ev}`);
   });
 }
 
 // ─────────────────────────────────────────────────────────────────
 // Office ready
 // ─────────────────────────────────────────────────────────────────
-Office.onReady(() => {
+Office.onReady(async () => {
   renderMainSwatches('fill');
   renderMainSwatches('border');
 
-  document.querySelectorAll('[data-weight]').forEach(btn =>
-    btn.addEventListener('click', () => applyBorderWeight(parseFloat(btn.dataset.weight))));
-  document.querySelectorAll('[data-dash]').forEach(btn =>
-    btn.addEventListener('click', () => applyBorderDash(btn.dataset.dash)));
-  document.getElementById('btn-apply-ends')?.addEventListener('click', applyLineEnds);
-  document.getElementById('edit-back-btn').addEventListener('click', closeEditPanel);
+  document.querySelectorAll('[data-weight]').forEach(btn=>
+    btn.addEventListener('click',()=>applyBorderWeight(parseFloat(btn.dataset.weight))));
+  document.querySelectorAll('[data-dash]').forEach(btn=>
+    btn.addEventListener('click',()=>applyBorderDash(btn.dataset.dash)));
+  document.getElementById('btn-apply-ends')?.addEventListener('click',applyLineEnds);
+  document.getElementById('edit-back-btn').addEventListener('click',closeEditPanel);
 
   Office.context.document.addHandlerAsync(
     Office.EventType.DocumentSelectionChanged,
-    () => { if (!_editKey) inspectSelection(); }
+    ()=>{if(!_editKey)inspectSelection();}
   );
   inspectSelection();
+
+  // Load real theme colors from the document (non-blocking)
+  loadThemeColors();
 });
 
 // ─────────────────────────────────────────────────────────────────
@@ -916,62 +893,56 @@ Office.onReady(() => {
 // ─────────────────────────────────────────────────────────────────
 async function inspectSelection() {
   try {
-    await PowerPoint.run(async ctx => {
-      const sel = ctx.presentation.getSelectedShapes();
+    await PowerPoint.run(async ctx=>{
+      const sel=ctx.presentation.getSelectedShapes();
       sel.load('items/type,items/name');
       await ctx.sync();
-      const items = sel.items;
-      if (!items.length) { renderEmpty(); return; }
-      _cachedShapeCount = items.length;
+      const items=sel.items;
+      if(!items.length){renderEmpty();return;}
+      _cachedShapeCount=items.length;
       const merged={fill:false,border:false,text:false,lineEnds:false};
       let allSame=true;
-      const firstKey=toKey(items[0].type), firstName=items[0].name||'';
-      items.forEach(s => {
-        const k=toKey(s.type);
-        if (k!==firstKey) allSame=false;
+      const firstKey=toKey(items[0].type),firstName=items[0].name||'';
+      items.forEach(s=>{
+        const k=toKey(s.type);if(k!==firstKey)allSame=false;
         const caps=CAPABILITIES[k]||{};
-        if (caps.fill)     merged.fill=true;
-        if (caps.border)   merged.border=true;
-        if (caps.text)     merged.text=true;
-        if (caps.lineEnds) merged.lineEnds=true;
+        if(caps.fill)merged.fill=true;
+        if(caps.border)merged.border=true;
+        if(caps.text)merged.text=true;
+        if(caps.lineEnds)merged.lineEnds=true;
       });
-      const meta=allSame
-        ? (TYPE_META[firstKey]||{icon:'?',label:cap(firstKey||'Shape')})
-        : {icon:'⊕',label:'Mixed Selection'};
+      const meta=allSame?(TYPE_META[firstKey]||{icon:'?',label:cap(firstKey||'Shape')}):{icon:'⊕',label:'Mixed Selection'};
       renderUI({merged,meta,firstName,count:items.length,anySupported:Object.values(merged).some(Boolean),isLine:allSame&&firstKey==='line'});
     });
-  } catch(_) { renderEmpty(); }
+  }catch(_){renderEmpty();}
 }
 
-function toKey(raw) {
-  if (!raw) return 'unsupported';
-  const s=String(raw); return s.charAt(0).toLowerCase()+s.slice(1);
-}
-function cap(s) { return s.charAt(0).toUpperCase()+s.slice(1); }
+function toKey(raw){if(!raw)return'unsupported';const s=String(raw);return s.charAt(0).toLowerCase()+s.slice(1);}
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
 
 function renderUI({merged,meta,firstName,count,anySupported,isLine}) {
-  hide('empty-state'); hide('unsupported-state'); show('shape-banner');
-  el('shape-icon').textContent       = meta.icon;
-  el('shape-type-label').textContent = meta.label;
-  el('shape-name').textContent       = firstName?`"${firstName}"` : '';
-  el('shape-count-badge').textContent= `×${count}`;
-  tog('shape-count-badge', count>1);
-  tog('section-fill',      merged.fill);
-  tog('section-border',    merged.border);
-  tog('section-line-ends', merged.lineEnds);
-  el('border-heading').textContent = isLine ? 'Line Style' : 'Post Int Process Owner';
-  if (!anySupported) show('unsupported-state');
+  hide('empty-state');hide('unsupported-state');show('shape-banner');
+  el('shape-icon').textContent=meta.icon;
+  el('shape-type-label').textContent=meta.label;
+  el('shape-name').textContent=firstName?`"${firstName}"` :'';
+  el('shape-count-badge').textContent=`×${count}`;
+  tog('shape-count-badge',count>1);
+  tog('section-fill',merged.fill);
+  tog('section-border',merged.border);
+  tog('section-line-ends',merged.lineEnds);
+  el('border-heading').textContent=isLine?'Line Style':'Post Int Process Owner';
+  if(!anySupported)show('unsupported-state');
 }
 
 function renderEmpty() {
   _cachedShapeCount=0;
-  show('empty-state'); hide('shape-banner'); hide('unsupported-state');
+  show('empty-state');hide('shape-banner');hide('unsupported-state');
   ['section-fill','section-border','section-line-ends'].forEach(hide);
   setStatus('');
 }
 
-function el(id)        { return document.getElementById(id); }
-function show(id)      { el(id)?.classList.remove('hidden'); }
-function hide(id)      { el(id)?.classList.add('hidden'); }
-function tog(id,vis)   { el(id)?.classList.toggle('hidden',!vis); }
-function setStatus(m)  { if(el('status')) el('status').textContent=m; }
+function el(id){return document.getElementById(id);}
+function show(id){el(id)?.classList.remove('hidden');}
+function hide(id){el(id)?.classList.add('hidden');}
+function tog(id,vis){el(id)?.classList.toggle('hidden',!vis);}
+function setStatus(m){if(el('status'))el('status').textContent=m;}
