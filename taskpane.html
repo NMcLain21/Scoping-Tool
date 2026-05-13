@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Scoping Tool</title>
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+  <link rel="stylesheet" href="taskpane.css" />
+</head>
+<body>
+<div id="app">
+
+  <!-- ── Empty state ── -->
+  <div id="empty-state">
+    <div class="empty-icon">◻</div>
+    <p>Select a shape on the slide to begin styling</p>
+  </div>
+
+  <!-- ── Shape banner ── -->
+  <div id="shape-banner" class="hidden">
+    <span id="shape-icon"></span>
+    <div class="banner-text">
+      <strong id="shape-type-label"></strong>
+      <span id="shape-name"></span>
+    </div>
+    <span id="shape-count-badge" class="hidden"></span>
+  </div>
+
+  <!-- ── Fill Color ── -->
+  <section id="section-fill" class="hidden">
+    <h3>Fill Color</h3>
+    <div class="swatch-row">
+      <button class="swatch" style="background:#1F3864;" data-fill="#1F3864" title="Dark Navy"></button>
+      <button class="swatch" style="background:#2E75B6;" data-fill="#2E75B6" title="Corporate Blue"></button>
+      <button class="swatch" style="background:#70AD47;" data-fill="#70AD47" title="Green"></button>
+      <button class="swatch" style="background:#FFC000;" data-fill="#FFC000" title="Amber"></button>
+      <button class="swatch" style="background:#C00000;" data-fill="#C00000" title="Red"></button>
+      <button class="swatch" style="background:#FFFFFF; border:1px solid #ccc;" data-fill="#FFFFFF" title="White"></button>
+      <button class="swatch no-fill" data-fill="none" title="No Fill">∅</button>
+    </div>
+  </section>
+
+  <!-- ── Border / Line Style ── -->
+  <section id="section-border" class="hidden">
+    <h3 id="border-heading">Border</h3>
+
+    <span class="sub-label">Color</span>
+    <div class="swatch-row">
+      <button class="swatch" style="background:#1F3864;" data-border="#1F3864" title="Dark Navy"></button>
+      <button class="swatch" style="background:#2E75B6;" data-border="#2E75B6" title="Corporate Blue"></button>
+      <button class="swatch" style="background:#000000;" data-border="#000000" title="Black"></button>
+      <button class="swatch" style="background:#FFFFFF; border:1px solid #ccc;" data-border="#FFFFFF" title="White"></button>
+      <button class="swatch no-fill" data-border="none" title="No Border">∅</button>
+    </div>
+
+    <span class="sub-label">Weight</span>
+    <div class="option-row">
+      <button class="opt-btn" data-weight="0.75">0.75pt</button>
+      <button class="opt-btn" data-weight="1.5">1.5pt</button>
+      <button class="opt-btn" data-weight="3">3pt</button>
+      <button class="opt-btn" data-weight="6">6pt</button>
+    </div>
+
+    <span class="sub-label">Style</span>
+    <div class="option-row">
+      <button class="opt-btn" data-dash="solid">—— Solid</button>
+      <button class="opt-btn" data-dash="dash">– – Dash</button>
+      <button class="opt-btn" data-dash="dot">··· Dot</button>
+    </div>
+  </section>
+
+  <!-- ── Line Ends ── (Line type only) -->
+  <section id="section-line-ends" class="hidden">
+    <h3>Line Ends</h3>
+    <div class="line-ends-grid">
+      <div>
+        <span class="sub-label">Start</span>
+        <select id="line-start">
+          <option value="none">None</option>
+          <option value="arrow">Arrow ▶</option>
+          <option value="openArrow">Open Arrow</option>
+          <option value="diamond">Diamond ◆</option>
+          <option value="oval">Oval ●</option>
+        </select>
+      </div>
+      <div>
+        <span class="sub-label">End</span>
+        <select id="line-end">
+          <option value="none">None</option>
+          <option value="arrow">Arrow ▶</option>
+          <option value="openArrow">Open Arrow</option>
+          <option value="diamond">Diamond ◆</option>
+          <option value="oval">Oval ●</option>
+        </select>
+      </div>
+    </div>
+    <div class="option-row" style="margin-top:8px;">
+      <button class="opt-btn primary-btn" id="btn-apply-ends">Apply Line Ends</button>
+    </div>
+  </section>
+
+  <!-- ── Text Color ── -->
+  <section id="section-text" class="hidden">
+    <h3>Text Color</h3>
+    <div class="swatch-row">
+      <button class="swatch" style="background:#000000;" data-textcolor="#000000" title="Black"></button>
+      <button class="swatch" style="background:#FFFFFF; border:1px solid #ccc;" data-textcolor="#FFFFFF" title="White"></button>
+      <button class="swatch" style="background:#1F3864;" data-textcolor="#1F3864" title="Dark Navy"></button>
+      <button class="swatch" style="background:#2E75B6;" data-textcolor="#2E75B6" title="Corporate Blue"></button>
+      <button class="swatch" style="background:#70AD47;" data-textcolor="#70AD47" title="Green"></button>
+      <button class="swatch" style="background:#FFC000;" data-textcolor="#FFC000" title="Amber"></button>
+    </div>
+  </section>
+
+  <!-- ── Unsupported notice ── -->
+  <div id="unsupported-state" class="hidden">
+    <p class="unsupported-msg">This shape type doesn't support styling via this panel.</p>
+  </div>
+
+  <!-- ── Status bar ── -->
+  <div id="status-bar"><span id="status"></span></div>
+</div>
+<script src="taskpane.js"></script>
+</body>
+</html>
