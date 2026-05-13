@@ -1,32 +1,22 @@
-/* =============================================================
-   Scoping Tool — Task Pane Styles
-   ============================================================= */
-
-/* ── Reset & base ─────────────────────────────────────────── */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
+/* ── Reset & base ─────────────────────────────────────────────── */
+* { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: "Segoe UI", system-ui, sans-serif;
   font-size: 13px;
   color: #333;
   background: #fff;
 }
-
 #app {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  padding-bottom: 30px;
+  padding-bottom: 58px; /* room for toggle bar + status bar */
 }
 
-/* ── Utility ──────────────────────────────────────────────── */
+/* ── Utility ──────────────────────────────────────────────────── */
 .hidden { display: none !important; }
 
-/* ── Empty state ──────────────────────────────────────────── */
+/* ── Empty state ──────────────────────────────────────────────── */
 #empty-state {
   display: flex;
   flex-direction: column;
@@ -37,18 +27,10 @@ body {
   text-align: center;
   gap: 12px;
 }
+.empty-icon { font-size: 42px; opacity: 0.25; }
+#empty-state p { font-size: 12px; line-height: 1.6; }
 
-.empty-icon {
-  font-size: 42px;
-  opacity: 0.25;
-}
-
-#empty-state p {
-  font-size: 12px;
-  line-height: 1.6;
-}
-
-/* ── Shape banner ─────────────────────────────────────────── */
+/* ── Shape banner ─────────────────────────────────────────────── */
 #shape-banner {
   display: flex;
   align-items: center;
@@ -57,194 +39,209 @@ body {
   background: #f0f4fa;
   border-bottom: 1px solid #d8e2f0;
 }
-
-#shape-icon {
-  font-size: 17px;
-  width: 22px;
-  text-align: center;
-}
-
-.banner-text {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  line-height: 1.35;
-}
-
-.banner-text strong {
-  font-size: 12px;
-  font-weight: 600;
-  color: #1F3864;
-}
-
-.banner-text span {
-  font-size: 11px;
-  color: #888;
-}
-
+#shape-icon { font-size: 17px; width: 22px; text-align: center; }
+.banner-text { flex: 1; display: flex; flex-direction: column; line-height: 1.35; }
+.banner-text strong { font-size: 12px; font-weight: 600; color: #1F3864; }
+.banner-text span   { font-size: 11px; color: #888; }
 #shape-count-badge {
-  background: #2E75B6;
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 10px;
+  background: #2E75B6; color: #fff;
+  font-size: 10px; font-weight: 700;
+  padding: 2px 7px; border-radius: 10px;
 }
 
-/* ── Sections ─────────────────────────────────────────────── */
+/* ── Sections ─────────────────────────────────────────────────── */
 section {
   border-top: 1px solid #eee;
   padding: 10px 12px;
 }
-
 h3 {
-  font-size: 10px;
-  font-weight: 600;
-  color: #999;
-  text-transform: uppercase;
-  letter-spacing: 0.65px;
-  margin-bottom: 8px;
+  font-size: 10px; font-weight: 600;
+  color: #999; text-transform: uppercase;
+  letter-spacing: 0.65px; margin-bottom: 8px;
 }
-
 .sub-label {
   display: block;
-  font-size: 10px;
-  color: #bbb;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
+  font-size: 10px; color: #bbb;
+  text-transform: uppercase; letter-spacing: 0.4px;
   margin: 8px 0 4px;
 }
 
-/* ── Swatches ─────────────────────────────────────────────── */
-.swatch-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-
+/* ── Swatches ─────────────────────────────────────────────────── */
+.swatch-row { display: flex; flex-wrap: wrap; gap: 5px; }
 .swatch {
-  width: 26px;
-  height: 26px;
-  border-radius: 4px;
-  cursor: pointer;
-  border: 2px solid transparent;
+  width: 26px; height: 26px; border-radius: 4px;
+  cursor: pointer; border: 2px solid transparent;
   transition: transform 0.1s, border-color 0.12s;
   outline: none;
 }
-
-.swatch:hover {
-  transform: scale(1.18);
-  border-color: #333;
-}
-
-.swatch:focus-visible {
-  border-color: #2E75B6;
-  box-shadow: 0 0 0 2px #a8c7e8;
-}
-
+.swatch:hover { transform: scale(1.18); border-color: #333; }
+.swatch:focus-visible { border-color: #2E75B6; box-shadow: 0 0 0 2px #a8c7e8; }
+.swatch-light { border: 1px solid #ccc !important; }
 .no-fill {
-  background: #f5f5f5 !important;
-  color: #aaa;
-  font-size: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: #f5f5f5 !important; color: #aaa;
+  font-size: 15px; display: flex;
+  align-items: center; justify-content: center;
 }
 
-/* ── Option buttons ───────────────────────────────────────── */
-.option-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin-bottom: 2px;
-}
-
+/* ── Option buttons ───────────────────────────────────────────── */
+.option-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 2px; }
 .opt-btn {
   padding: 4px 9px;
-  border: 1px solid #d0d0d0;
-  border-radius: 4px;
-  background: #f8f8f8;
-  cursor: pointer;
-  font-size: 11px;
-  color: #444;
+  border: 1px solid #d0d0d0; border-radius: 4px;
+  background: #f8f8f8; cursor: pointer;
+  font-size: 11px; color: #444;
   transition: background 0.1s, border-color 0.1s;
   outline: none;
 }
-
-.opt-btn:hover {
-  background: #e4ecf8;
-  border-color: #2E75B6;
-}
-
-.opt-btn:focus-visible {
-  box-shadow: 0 0 0 2px #a8c7e8;
-}
-
+.opt-btn:hover { background: #e4ecf8; border-color: #2E75B6; }
+.opt-btn:focus-visible { box-shadow: 0 0 0 2px #a8c7e8; }
 .primary-btn {
-  background: #1F3864;
-  color: #fff;
-  border-color: #1F3864;
-  font-weight: 600;
+  background: #1F3864; color: #fff;
+  border-color: #1F3864; font-weight: 600;
 }
-
-.primary-btn:hover {
-  background: #2E75B6;
-  border-color: #2E75B6;
+.primary-btn:hover { background: #2E75B6; border-color: #2E75B6; }
+.reset-btn {
+  background: #f8f0f0; color: #C00000;
+  border-color: #f0d0d0;
 }
+.reset-btn:hover { background: #fde0e0; border-color: #C00000; }
 
-/* ── Line ends grid ───────────────────────────────────────── */
-.line-ends-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
+/* ── Line ends grid ───────────────────────────────────────────── */
+.line-ends-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .line-ends-grid select {
-  width: 100%;
-  padding: 4px 6px;
-  border: 1px solid #d0d0d0;
-  border-radius: 4px;
-  font-size: 12px;
-  background: #fff;
-  color: #333;
-  cursor: pointer;
-  outline: none;
+  width: 100%; padding: 4px 6px;
+  border: 1px solid #d0d0d0; border-radius: 4px;
+  font-size: 12px; background: #fff; color: #333;
+  cursor: pointer; outline: none;
 }
+.line-ends-grid select:focus { border-color: #2E75B6; }
 
-.line-ends-grid select:focus {
-  border-color: #2E75B6;
-}
-
-/* ── Unsupported notice ───────────────────────────────────── */
-#unsupported-state {
-  padding: 20px 12px;
-  border-top: 1px solid #eee;
-}
-
+/* ── Unsupported notice ───────────────────────────────────────── */
+#unsupported-state { padding: 20px 12px; border-top: 1px solid #eee; }
 .unsupported-msg {
-  font-size: 11px;
-  color: #bbb;
-  font-style: italic;
-  text-align: center;
-  line-height: 1.6;
+  font-size: 11px; color: #bbb;
+  font-style: italic; text-align: center; line-height: 1.6;
 }
 
-/* ── Status bar ───────────────────────────────────────────── */
+/* ── Palette Editor Panel ─────────────────────────────────────── */
+#palette-panel {
+  padding: 12px;
+  overflow-y: auto;
+}
+.palette-header { margin-bottom: 12px; }
+.palette-header h3 {
+  font-size: 13px; font-weight: 700;
+  color: #1F3864; text-transform: none;
+  letter-spacing: 0; margin-bottom: 4px;
+}
+.palette-subtext { font-size: 11px; color: #999; line-height: 1.5; }
+
+/* Color list ─────────────────────────────────────────────────── */
+#palette-list { margin-bottom: 16px; }
+
+.palette-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+.palette-item:last-child { border-bottom: none; }
+
+.palette-preview {
+  width: 30px; height: 30px;
+  border-radius: 5px;
+  flex-shrink: 0;
+}
+.palette-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.35;
+  min-width: 0;
+}
+.palette-name {
+  font-size: 12px; font-weight: 500; color: #333;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.palette-hex {
+  font-size: 10px; color: #aaa;
+  font-family: "Courier New", monospace;
+}
+.palette-delete {
+  background: none; border: none;
+  color: #ccc; cursor: pointer;
+  font-size: 12px; padding: 4px 7px;
+  border-radius: 4px;
+  transition: color 0.1s, background 0.1s;
+  flex-shrink: 0;
+}
+.palette-delete:hover { color: #C00000; background: #fde8e8; }
+
+.palette-empty {
+  font-size: 11px; color: #bbb;
+  text-align: center; padding: 20px 0;
+  font-style: italic;
+}
+
+/* Add color form ─────────────────────────────────────────────── */
+.add-color-form {
+  border-top: 1px solid #eee;
+  padding-top: 12px;
+}
+.add-color-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+#new-color-picker {
+  width: 42px; height: 34px;
+  border: 1px solid #d0d0d0; border-radius: 5px;
+  cursor: pointer; padding: 2px;
+  flex-shrink: 0;
+  background: none;
+}
+#new-color-name {
+  flex: 1;
+  padding: 6px 9px;
+  border: 1px solid #d0d0d0; border-radius: 4px;
+  font-size: 12px; color: #333;
+  outline: none;
+  font-family: inherit;
+}
+#new-color-name:focus { border-color: #2E75B6; box-shadow: 0 0 0 2px #ddeaf7; }
+#new-color-name::placeholder { color: #c0c0c0; }
+
+/* ── Palette toggle bar ───────────────────────────────────────── */
+#palette-toggle-bar {
+  position: fixed;
+  bottom: 22px; left: 0; right: 0;
+  background: #fff;
+  border-top: 1px solid #e8e8e8;
+  padding: 5px 10px;
+}
+#btn-toggle-palette {
+  width: 100%;
+  padding: 7px;
+  background: #f0f4fa; color: #1F3864;
+  border: 1px solid #d0d8ea; border-radius: 5px;
+  font-size: 12px; font-weight: 600;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+  font-family: inherit;
+}
+#btn-toggle-palette:hover { background: #dde6f5; color: #2E75B6; }
+
+/* ── Status bar ───────────────────────────────────────────────── */
 #status-bar {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  bottom: 0; left: 0; right: 0;
   background: #f8f8f8;
   border-top: 1px solid #e8e8e8;
-  padding: 4px 12px;
-  min-height: 22px;
+  padding: 4px 12px; min-height: 22px;
 }
-
 #status {
-  font-size: 10px;
-  color: #aaa;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 10px; color: #aaa;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
