@@ -375,6 +375,10 @@ function renderEditPanel() {
       </svg>
       ${NO_LABEL[key] || 'No Color'}
     </button>
+
+    <button class="reset-defaults-btn" id="ep-reset">
+      ↺ Reset to defaults
+    </button>
   `;
 
   bindEditEvents(key);
@@ -521,6 +525,15 @@ function bindEditEvents(key) {
 
   // ── No color ──
   document.getElementById('ep-no-color').addEventListener('click', () => applyAndClose('none'));
+
+  // ── Reset to defaults ──
+  document.getElementById('ep-reset').addEventListener('click', () => {
+    if (!confirm(`Reset ${key} palette to defaults? Your custom colors will be lost.`)) return;
+    localStorage.removeItem(`sct_${key}`);
+    _openForm = null;
+    renderEditPanel();
+    renderMainSwatches(key);
+  });
 
   // ── Wire all open color forms ──
   body.querySelectorAll('.color-form').forEach(form => {
@@ -841,17 +854,17 @@ async function applyBorderWeight(pts) {
 
 async function applyBorderDash(style) {
   const ver = ++_applyVer;
-  // Use string literals — safer than enum refs outside PowerPoint.run
-  // Note: LineDashStyle.dot does not exist; roundDot is the correct value
-  const map = {
-    solid:    'Solid',
-    dash:     'Dash',
-    roundDot: 'RoundDot',
-  };
   if (!_cachedShapeCount) return setStatus('No shape selected.');
   await PowerPoint.run(async ctx => {
     if (ver !== _applyVer) return;
-    const dashVal = map[style] ?? 'Solid';
+    // Resolve enum INSIDE PowerPoint.run where it is guaranteed to be available.
+    // LineDashStyle.dot does not exist in the API — roundDot is the correct dotted value.
+    let dashVal;
+    switch (style) {
+      case 'dash':     dashVal = PowerPoint.LineDashStyle.dash;     break;
+      case 'roundDot': dashVal = PowerPoint.LineDashStyle.roundDot; break;
+      default:         dashVal = PowerPoint.LineDashStyle.solid;    break;
+    }
     getSelectedFast(ctx).forEach(s => {
       s.lineFormat.dashStyle = dashVal;
       s.lineFormat.visible   = true;
