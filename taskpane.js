@@ -267,7 +267,7 @@ function buildPptPicker(pickerType,sufx,startHex,dataAttr,recentKey) {
 
   const recentHtml=recent.length?`
     <div class="acc-section">
-      <button class="acc-hdr" data-acc="recent-${pickerType}-${sufx}" type="button">
+      <button class="acc-hdr" data-acc="acc-recent-${pickerType}-${sufx}" type="button">
         <span>Recent Colors</span>
         <svg class="acc-chevron" width="10" height="10" viewBox="0 0 10 10" fill="none">
           <path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
@@ -287,7 +287,7 @@ function buildPptPicker(pickerType,sufx,startHex,dataAttr,recentKey) {
   return `
     <div class="ppt-picker" data-picker="${pickerType}">
       <div class="acc-section">
-        <button class="acc-hdr acc-open" data-acc="theme-${pickerType}-${sufx}" type="button">
+        <button class="acc-hdr acc-open" data-acc="acc-theme-${pickerType}-${sufx}" type="button">
           <span>Theme Colors</span>
           <svg class="acc-chevron acc-chevron-open" width="10" height="10" viewBox="0 0 10 10" fill="none">
             <path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
@@ -298,7 +298,7 @@ function buildPptPicker(pickerType,sufx,startHex,dataAttr,recentKey) {
         </div>
       </div>
       <div class="acc-section">
-        <button class="acc-hdr" data-acc="std-${pickerType}-${sufx}" type="button">
+        <button class="acc-hdr" data-acc="acc-std-${pickerType}-${sufx}" type="button">
           <span>Standard Colors</span>
           <svg class="acc-chevron" width="10" height="10" viewBox="0 0 10 10" fill="none">
             <path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
@@ -359,8 +359,9 @@ function buildColorForm(type,idx,startHex,startName,startTextHex) {
       <input type="text" class="ep-name-input" id="cfn-${sufx}"
              placeholder="Color name (optional)" maxlength="36"
              value="${esc(startName)}" />
-      <!-- Shape Fill header -->
-      <div class="ppt-sect-hdr">
+      <!-- Shape Fill — collapsible -->
+      <div class="ppt-sect-hdr ppt-sect-toggle acc-open" data-target="fill-picker-${sufx}"
+           id="fill-hdr-${sufx}" style="cursor:pointer;">
         <svg class="ppt-fill-svg" id="fill-svg-${sufx}" width="16" height="16" viewBox="0 0 16 16" fill="none">
           <path d="M3 12.5c0-.9.8-1.7 1.7-1.7s1.7.8 1.7 1.7S4.7 15 4.7 15 3 13.4 3 12.5z"
                 fill="${norm}" stroke="${isLight(norm)?'#aaa':norm}" stroke-width="0.8"/>
@@ -370,11 +371,17 @@ function buildColorForm(type,idx,startHex,startName,startTextHex) {
         <span class="ppt-sect-label">Shape Fill</span>
         <div class="ppt-curr-swatch${isLight(norm)?' light':''}"
              id="fill-swatch-${sufx}" style="background:${norm};"></div>
+        <svg class="acc-chevron acc-chevron-open" width="10" height="10" viewBox="0 0 10 10" fill="none">
+          <path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
       </div>
-      ${fillPicker}
+      <div id="fill-picker-${sufx}" class="ppt-sect-body">
+        ${fillPicker}
+      </div>
       ${isFill?`
-      <!-- Font Color header -->
-      <div class="ppt-sect-hdr" style="margin-top:10px;">
+      <!-- Font Color — collapsible (starts collapsed) -->
+      <div class="ppt-sect-hdr ppt-sect-toggle" data-target="font-picker-${sufx}"
+           id="font-hdr-${sufx}" style="margin-top:8px;cursor:pointer;">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
           <text x="2" y="13" font-family="Segoe UI,sans-serif" font-size="12" font-weight="700"
                 fill="${txNorm}" id="font-svg-${sufx}">A</text>
@@ -384,8 +391,13 @@ function buildColorForm(type,idx,startHex,startName,startTextHex) {
         <span class="ppt-sect-label">Font Color</span>
         <div class="ppt-curr-swatch${isLight(txNorm)?' light':''}"
              id="font-swatch-${sufx}" style="background:${txNorm};"></div>
+        <svg class="acc-chevron" width="10" height="10" viewBox="0 0 10 10" fill="none">
+          <path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
       </div>
-      ${fontPicker}`:''}
+      <div id="font-picker-${sufx}" class="ppt-sect-body hidden">
+        ${fontPicker}
+      </div>`:''}
       <div class="cform-btns">
         <button class="cform-save" type="button" data-type="${type}" data-idx="${idx??''}">
           ${type==='edit'?'Save Changes':'+ Add to My Colors'}
@@ -508,6 +520,18 @@ function wireColorForm(form,key) {
   const cleanFill=wirePicker(form,'fill',sufx,onFillChange);
   const cleanFont=isFill?wirePicker(form,'textcolor',sufx,onFontChange):null;
   const nameInp=document.getElementById(`cfn-${sufx}`);
+
+  // Wire Shape Fill / Font Color section header toggles
+  form.querySelectorAll('.ppt-sect-toggle').forEach(hdr=>{
+    hdr.addEventListener('click',()=>{
+      const targetId=hdr.dataset.target;
+      const body=document.getElementById(targetId);if(!body)return;
+      const opening=body.classList.contains('hidden');
+      body.classList.toggle('hidden',!opening);
+      hdr.classList.toggle('acc-open',opening);
+      hdr.querySelector('.acc-chevron')?.classList.toggle('acc-chevron-open',opening);
+    });
+  });
 
   form.querySelector('.cform-save')?.addEventListener('click',()=>{
     const norm=normalizeHex(currentFill);if(!norm)return;

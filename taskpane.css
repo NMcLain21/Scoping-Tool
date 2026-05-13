@@ -292,7 +292,14 @@ h3 {
   padding: 6px 8px;
   background: var(--bg-subtle); border: 1px solid var(--border);
   border-radius: var(--radius-sm);
+  user-select: none;
 }
+.ppt-sect-toggle { cursor: pointer; transition: background .12s; }
+.ppt-sect-toggle:hover { background: #e8edf6; }
+.ppt-sect-toggle.acc-open { border-color: var(--api-blue); }
+/* Body wrapper for collapsible Shape Fill / Font Color sections */
+.ppt-sect-body { padding: 0; }
+.ppt-sect-body.hidden { display: none !important; }
 .ppt-sect-label {
   flex: 1; font-size: 12px; font-weight: 600; color: var(--text-primary);
 }
