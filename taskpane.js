@@ -249,15 +249,26 @@ function renderMainSwatches(key) {
   const colors = getPalette(key);
 
   row.innerHTML =
-    colors.map(c =>
-      `<button class="main-swatch${isLight(c.hex) ? ' light' : ''}"
+    colors.map(c => {
+      // Border palette — legend-style line tile, not a solid fill box
+      if (key === 'border') {
+        return `<button class="main-swatch border-legend-tile"
+                 data-color="${c.hex}"
+                 title="${esc(c.name)}\n${c.hex}"
+                 aria-label="${esc(c.name)}">
+           <span class="legend-line-sample" style="background:${c.hex}"></span>
+           <span class="legend-line-name">${esc(c.name)}</span>
+         </button>`;
+      }
+      // Fill / text — solid color tile with label
+      return `<button class="main-swatch${isLight(c.hex) ? ' light' : ''}"
                style="background:${c.hex}"
                data-color="${c.hex}"
                title="${esc(c.name)}\n${c.hex}"
                aria-label="${esc(c.name)}">
          <span class="swatch-label${isLight(c.hex) ? ' dark-text' : ''}">${esc(c.name)}</span>
-       </button>`
-    ).join('') +
+       </button>`;
+    }).join('') +
     `<button class="edit-palette-btn" data-key="${key}"
              title="Edit ${key} palette" aria-label="Edit ${key} colors">
        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">

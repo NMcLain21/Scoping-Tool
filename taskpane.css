@@ -145,6 +145,42 @@ h3 {
   text-shadow: none;
 }
 
+
+/* ── Border legend tiles (main panel) ────────────────────────── */
+/* Shows a colored horizontal line + name instead of a filled box */
+.border-legend-tile {
+  background: var(--bg) !important;
+  border: 1px solid var(--border) !important;
+  justify-content: flex-start;
+  gap: 14px;
+  padding: 10px 12px;
+}
+.border-legend-tile:hover {
+  background: var(--bg-subtle) !important;
+  filter: none;
+  border-color: var(--api-blue) !important;
+  box-shadow: var(--shadow-sm);
+}
+
+/* The colored line sample — mimics a border stroke */
+.legend-line-sample {
+  display: block;
+  width: 48px;
+  height: 3px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* The name label next to the line */
+.legend-line-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: left;
+  line-height: 1.3;
+  pointer-events: none;
+}
+
 /* ── Pencil / edit-palette button ─────────────────────────────── */
 .edit-palette-btn {
   width: 100%; height: 30px; border-radius: var(--radius-sm);
