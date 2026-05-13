@@ -1,17 +1,25 @@
 'use strict';
 
 // ─────────────────────────────────────────────────────────────────
-// Constants
+// APi Group brand colors (theme columns)
 // ─────────────────────────────────────────────────────────────────
-
 const BRAND_COLORS = [
-  { hex: '#151F37', name: 'Navy'  },
-  { hex: '#2A3E6D', name: 'Blue'  },
-  { hex: '#D50032', name: 'Red'   },
-  { hex: '#008579', name: 'Teal'  },
-  { hex: '#E2E3E2', name: 'Gray'  },
-  { hex: '#FFFFFF', name: 'White' },
-  { hex: '#000000', name: 'Black' },
+  { hex: '#151F37', name: 'Navy'       },
+  { hex: '#2A3E6D', name: 'Blue'       },
+  { hex: '#D50032', name: 'Red'        },
+  { hex: '#008579', name: 'Teal'       },
+  { hex: '#E2E3E2', name: 'Light Gray' },
+  { hex: '#FFFFFF', name: 'White'      },
+  { hex: '#000000', name: 'Black'      },
+];
+
+// Shade rows beneath base: [lighter 80%, 60%, 40%, darker 25%, 50%]
+const SHADE_STEPS = [
+  { fn: h => tint(h, 0.80),  label: 'Lighter 80%' },
+  { fn: h => tint(h, 0.60),  label: 'Lighter 60%' },
+  { fn: h => tint(h, 0.40),  label: 'Lighter 40%' },
+  { fn: h => darken(h, 0.25),label: 'Darker 25%'  },
+  { fn: h => darken(h, 0.50),label: 'Darker 50%'  },
 ];
 
 const STANDARD_COLORS = [
@@ -35,22 +43,29 @@ const DEFAULT_PALETTES = {
     { hex: '#008579', name: 'Teal'       },
     { hex: '#FFFFFF', name: 'White'      },
     { hex: '#E2E3E2', name: 'Light Gray' },
+    { hex: '#000000', name: 'Black'      },
   ],
   border: [
-    { hex: '#151F37', name: 'Navy'  },
-    { hex: '#2A3E6D', name: 'Blue'  },
-    { hex: '#D50032', name: 'Red'   },
-    { hex: '#000000', name: 'Black' },
-    { hex: '#FFFFFF', name: 'White' },
+    { hex: '#151F37', name: 'Navy'       },
+    { hex: '#2A3E6D', name: 'Blue'       },
+    { hex: '#D50032', name: 'Red'        },
+    { hex: '#000000', name: 'Black'      },
+    { hex: '#FFFFFF', name: 'White'      },
+    { hex: '#E2E3E2', name: 'Light Gray' },
+    { hex: '#008579', name: 'Teal'       },
   ],
   text: [
-    { hex: '#151F37', name: 'Navy'  },
-    { hex: '#2A3E6D', name: 'Blue'  },
-    { hex: '#FFFFFF', name: 'White' },
-    { hex: '#D50032', name: 'Red'   },
-    { hex: '#000000', name: 'Black' },
+    { hex: '#151F37', name: 'Navy'       },
+    { hex: '#2A3E6D', name: 'Blue'       },
+    { hex: '#FFFFFF', name: 'White'      },
+    { hex: '#D50032', name: 'Red'        },
+    { hex: '#000000', name: 'Black'      },
+    { hex: '#008579', name: 'Teal'       },
+    { hex: '#E2E3E2', name: 'Light Gray' },
   ],
 };
+
+const NO_LABEL = { fill: 'No Fill', border: 'No Border', text: 'No Color' };
 
 const CAPABILITIES = {
   geometricShape: { fill: true,  border: true,  text: true,  lineEnds: false },
@@ -76,10 +91,6 @@ const TYPE_META = {
   table:          { icon: '⊟', label: 'Table'            },
 };
 
-const NO_FILL_LABELS = { fill: 'No Fill', border: 'No Border', text: 'No Color' };
-
-const SHADE_NAMES = ['Light 1', 'Light 2', 'Light 3', 'Dark 1', 'Dark 2'];
-
 // ─────────────────────────────────────────────────────────────────
 // Color utilities
 // ─────────────────────────────────────────────────────────────────
@@ -100,219 +111,362 @@ function rgbToHex(r, g, b) {
     .toUpperCase();
 }
 
+function tint(hex, pct) {
+  const { r, g, b } = hexToRgb(hex);
+  return rgbToHex(r + (255 - r) * pct, g + (255 - g) * pct, b + (255 - b) * pct);
+}
+
+function darken(hex, pct) {
+  const { r, g, b } = hexToRgb(hex);
+  return rgbToHex(r * (1 - pct), g * (1 - pct), b * (1 - pct));
+}
+
 function isLight(hex) {
   const { r, g, b } = hexToRgb(hex);
   return (r * 299 + g * 587 + b * 114) / 1000 > 155;
 }
 
-function tintColor(hex, pct) {
-  const { r, g, b } = hexToRgb(hex);
-  return rgbToHex(r + (255 - r) * pct, g + (255 - g) * pct, b + (255 - b) * pct);
+function normalizeHex(raw) {
+  const h = (raw || '').replace('#', '').trim();
+  return /^[0-9A-Fa-f]{6}$/.test(h) ? '#' + h.toUpperCase() : null;
 }
 
-function shadeColor(hex, pct) {
-  const { r, g, b } = hexToRgb(hex);
-  return rgbToHex(r * (1 - pct), g * (1 - pct), b * (1 - pct));
+function esc(s) {
+  return (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-// Generates 5 shade variants: 3 tints (light→base) + 2 shades (base→dark)
-const SHADE_FNS = [
-  h => tintColor(h, 0.80),
-  h => tintColor(h, 0.55),
-  h => tintColor(h, 0.30),
-  h => shadeColor(h, 0.25),
-  h => shadeColor(h, 0.50),
-];
-
 // ─────────────────────────────────────────────────────────────────
-// Storage helpers
+// Storage
 // ─────────────────────────────────────────────────────────────────
 
-function getCustomColors(key) {
+function getCustom(key) {
   try {
-    const s = localStorage.getItem(`sct_custom_${key}`);
+    const s = localStorage.getItem(`sct_${key}`);
     return s ? JSON.parse(s) : [...DEFAULT_PALETTES[key]];
   } catch { return [...DEFAULT_PALETTES[key]]; }
 }
 
-function saveCustomColors(key, colors) {
-  localStorage.setItem(`sct_custom_${key}`, JSON.stringify(colors));
+function saveCustom(key, arr) {
+  localStorage.setItem(`sct_${key}`, JSON.stringify(arr));
 }
 
-function addCustomColor(key, hex, name) {
-  const colors = getCustomColors(key);
-  const norm = hex.toUpperCase();
-  if (!colors.find(c => c.hex.toUpperCase() === norm)) {
-    colors.push({ hex: norm, name: name || norm });
-    saveCustomColors(key, colors);
+function addCustom(key, hex, name) {
+  const norm = normalizeHex(hex);
+  if (!norm) return;
+  const arr = getCustom(key);
+  if (!arr.find(c => c.hex.toUpperCase() === norm)) {
+    arr.push({ hex: norm, name: name || norm });
+    saveCustom(key, arr);
   }
 }
 
-function deleteCustomColor(key, index) {
-  const colors = getCustomColors(key);
-  colors.splice(index, 1);
-  saveCustomColors(key, colors);
+function delCustom(key, idx) {
+  const arr = getCustom(key);
+  arr.splice(idx, 1);
+  saveCustom(key, arr);
 }
 
-function getRecentColors(key) {
-  try {
-    return JSON.parse(localStorage.getItem(`sct_recent_${key}`)) || [];
-  } catch { return []; }
+function getRecent(key) {
+  try { return JSON.parse(localStorage.getItem(`sct_recent_${key}`)) || []; }
+  catch { return []; }
 }
 
-function trackRecent(key, hex) {
+function pushRecent(key, hex) {
   if (!hex || hex === 'none') return;
-  const norm = hex.toUpperCase();
-  let arr = getRecentColors(key).filter(h => h !== norm);
+  const norm = normalizeHex(hex) || hex.toUpperCase();
+  let arr = getRecent(key).filter(h => h !== norm);
   arr.unshift(norm);
   localStorage.setItem(`sct_recent_${key}`, JSON.stringify(arr.slice(0, 10)));
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Color picker renderer
+// Edit panel state
 // ─────────────────────────────────────────────────────────────────
 
-function makeSwatch(hex, name, cls) {
-  const light = isLight(hex) ? ' cp-light' : '';
-  const safeName = (name || hex).replace(/"/g, '&quot;');
-  return `<div class="cp-swatch ${cls}${light}" style="background:${hex}"
-               data-color="${hex}" title="${safeName}&#10;${hex}" tabindex="0" role="button"></div>`;
+let _editKey = null;
+let _applyFn = null;
+
+// ─────────────────────────────────────────────────────────────────
+// Main panel — render 7 swatches + pencil edit button per section
+// ─────────────────────────────────────────────────────────────────
+
+function renderMainSwatches(key) {
+  const row = document.getElementById(`swatches-${key}`);
+  if (!row) return;
+
+  const applyFnMap = { fill: applyFill, border: applyBorderColor, text: applyTextColor };
+  const fn = applyFnMap[key];
+  const colors = getCustom(key);
+
+  row.innerHTML =
+    colors.map(c => `
+      <button class="main-swatch${isLight(c.hex) ? ' light' : ''}"
+              style="background:${c.hex}"
+              data-color="${c.hex}"
+              title="${esc(c.name)}\n${c.hex}"
+              aria-label="${esc(c.name)}">
+      </button>`).join('') +
+    `<button class="edit-palette-btn" data-key="${key}"
+             title="Edit ${key} palette" aria-label="Edit ${key} colors">
+       <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+         <path d="M8.5 1.5a1.414 1.414 0 012 2L4 10H2V8L8.5 1.5z"
+               stroke="currentColor" stroke-width="1.3"
+               stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+       </svg>
+     </button>`;
+
+  // Apply color on swatch click
+  row.querySelectorAll('.main-swatch').forEach(btn => {
+    btn.addEventListener('click', () => {
+      fn(btn.dataset.color);
+      pushRecent(key, btn.dataset.color);
+    });
+  });
+
+  // Open edit panel
+  row.querySelector('.edit-palette-btn').addEventListener('click', () => {
+    openEditPanel(key, fn);
+  });
 }
 
-function renderPicker(containerId, key, applyFn) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
+// ─────────────────────────────────────────────────────────────────
+// Edit panel — open / close / render
+// ─────────────────────────────────────────────────────────────────
 
-  const custom = getCustomColors(key);
-  const recent = getRecentColors(key);
+function openEditPanel(key, fn) {
+  _editKey = key;
+  _applyFn = fn;
+  renderEditPanel();
+  document.getElementById('main-content').classList.add('hidden');
+  document.getElementById('edit-panel').classList.remove('hidden');
+}
 
-  // ── APi Group Colors: base row + 5 shade rows ──
-  const baseRow = `<div class="cp-row">${BRAND_COLORS.map(c => makeSwatch(c.hex, c.name, 'cp-sm')).join('')}</div>`;
-  const shadeRows = SHADE_FNS.map((fn, i) =>
-    `<div class="cp-row">${BRAND_COLORS.map(c => makeSwatch(fn(c.hex), `${c.name} — ${SHADE_NAMES[i]}`, 'cp-sm')).join('')}</div>`
+function closeEditPanel() {
+  document.getElementById('edit-panel').classList.add('hidden');
+  document.getElementById('main-content').classList.remove('hidden');
+  renderMainSwatches(_editKey); // refresh main swatches in case palette changed
+  _editKey = null;
+  _applyFn = null;
+}
+
+function renderEditPanel() {
+  const key = _editKey;
+  const titleMap = { fill: 'Fill Color', border: 'Border Color', text: 'Text Color' };
+  document.getElementById('edit-panel-title').textContent = titleMap[key] || 'Edit Colors';
+
+  // ── APi Group theme colors: base row + 5 shade rows ──
+  const baseRowHtml = BRAND_COLORS.map(c =>
+    `<div class="theme-swatch base-swatch${isLight(c.hex) ? ' light' : ''}"
+          style="background:${c.hex}" data-color="${c.hex}"
+          title="${esc(c.name)}" role="button" tabindex="0"></div>`
+  ).join('');
+
+  const shadeRowsHtml = SHADE_STEPS.map(step =>
+    `<div class="theme-row">${BRAND_COLORS.map(c => {
+      const hex = step.fn(c.hex);
+      return `<div class="theme-swatch${isLight(hex) ? ' light' : ''}"
+                   style="background:${hex}" data-color="${hex}"
+                   title="${esc(c.name)} — ${step.label}" role="button" tabindex="0"></div>`;
+    }).join('')}</div>`
+  ).join('');
+
+  // ── Standard colors ──
+  const standardHtml = STANDARD_COLORS.map(c =>
+    `<div class="std-swatch${isLight(c.hex) ? ' light' : ''}"
+          style="background:${c.hex}" data-color="${c.hex}"
+          title="${esc(c.name)}" role="button" tabindex="0"></div>`
   ).join('');
 
   // ── Custom colors ──
-  const customSwatches = custom.map((c, i) => `
-    <div class="cp-custom-wrap" data-idx="${i}">
-      <div class="cp-swatch cp-md${isLight(c.hex) ? ' cp-light' : ''}"
-           style="background:${c.hex}" data-color="${c.hex}"
-           title="${(c.name || c.hex).replace(/"/g, '&quot;')}&#10;${c.hex}"
-           tabindex="0" role="button"></div>
-      <button class="cp-del" data-key="${key}" data-idx="${i}" title="Remove this color" aria-label="Remove">×</button>
-    </div>`).join('');
-
-  // ── Standard colors ──
-  const standardSwatches = STANDARD_COLORS.map(c => makeSwatch(c.hex, c.name, 'cp-md')).join('');
+  const customColors = getCustom(key);
+  const customHtml = customColors.map((c, i) =>
+    `<div class="custom-wrap">
+       <div class="custom-swatch${isLight(c.hex) ? ' light' : ''}"
+            style="background:${c.hex}" data-color="${c.hex}"
+            title="${esc(c.name)}\n${c.hex}" role="button" tabindex="0"></div>
+       <button class="del-btn" data-idx="${i}" aria-label="Remove ${esc(c.name)}">×</button>
+     </div>`
+  ).join('');
 
   // ── Recent colors ──
+  const recent = getRecent(key);
   const recentHtml = recent.length ? `
-    <div class="cp-section-label">Recent Colors</div>
-    <div class="cp-row cp-recent-row">${recent.map(h => makeSwatch(h, h, 'cp-md')).join('')}</div>` : '';
+    <div class="ep-label">Recent Colors</div>
+    <div class="std-row recent-row">${recent.map(hex =>
+      `<div class="std-swatch${isLight(hex) ? ' light' : ''}"
+            style="background:${hex}" data-color="${hex}"
+            title="${hex}" role="button" tabindex="0"></div>`
+    ).join('')}</div>` : '';
 
-  container.innerHTML = `
-    <div class="cp-section-label">APi Group Colors</div>
-    <div class="cp-brand-grid">
-      ${baseRow}
-      <div class="cp-shade-divider"></div>
-      ${shadeRows}
+  document.getElementById('edit-panel-body').innerHTML = `
+
+    <!-- Theme colors -->
+    <div class="ep-label">APi Group Theme Colors</div>
+    <div class="theme-grid">
+      <div class="theme-row base-row">${baseRowHtml}</div>
+      ${shadeRowsHtml}
     </div>
 
-    <div class="cp-section-label">
-      Custom Colors
-      <span class="cp-custom-hint">hover to remove</span>
+    <!-- Standard colors -->
+    <div class="ep-label">Standard Colors</div>
+    <div class="std-row">${standardHtml}</div>
+
+    <!-- Recent colors -->
+    ${recentHtml}
+
+    <!-- Custom colors -->
+    <div class="ep-label">
+      My Colors
+      <span class="ep-hint">hover to remove</span>
     </div>
-    <div class="cp-row cp-custom-row" id="cr-${key}">
-      ${customSwatches}
-      <button class="cp-add-toggle" data-key="${key}" aria-label="Add custom color" title="Add a color">
+    <div class="custom-row">
+      ${customHtml}
+      <button class="add-toggle-btn" id="ep-add-toggle"
+              aria-label="Add a custom color" title="Add color">
         <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-          <line x1="5.5" y1="1.5" x2="5.5" y2="9.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-          <line x1="1.5" y1="5.5" x2="9.5" y2="5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          <line x1="5.5" y1="1" x2="5.5" y2="10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          <line x1="1" y1="5.5" x2="10" y2="5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
         </svg>
       </button>
     </div>
 
-    <div class="cp-add-row hidden" id="car-${key}">
-      <input type="color" class="cp-color-input" id="cpi-${key}" value="#2E75B6" />
-      <input type="text"  class="cp-name-input"  id="cpn-${key}" placeholder="Color name (optional)" maxlength="24" />
-      <button class="cp-confirm-btn" data-key="${key}">Add</button>
+    <!-- Inline add form -->
+    <div class="add-form hidden" id="ep-add-form">
+      <div class="add-form-inputs">
+        <input type="color" id="ep-wheel" class="ep-wheel" value="#2A3E6D" />
+        <div class="hex-field">
+          <span class="hex-hash">#</span>
+          <input type="text" id="ep-hex" class="ep-hex-input"
+                 value="2A3E6D" maxlength="6" placeholder="RRGGBB" spellcheck="false" />
+        </div>
+        <div class="ep-preview-swatch" id="ep-preview" style="background:#2A3E6D"></div>
+      </div>
+      <input type="text" id="ep-name" class="ep-name-input"
+             placeholder="Color name (optional)" maxlength="28" />
+      <button class="ep-add-btn" id="ep-confirm-add">+ Add to My Colors</button>
     </div>
 
-    <div class="cp-section-label">Standard Colors</div>
-    <div class="cp-row">${standardSwatches}</div>
+    <!-- More colors picker -->
+    <div class="ep-label" style="margin-top:14px">More Colors</div>
+    <div class="more-colors-box">
+      <div class="mc-top">
+        <input type="color" id="mc-wheel" class="mc-wheel" value="#2A3E6D" />
+        <div class="mc-right">
+          <div class="mc-preview" id="mc-preview" style="background:#2A3E6D"></div>
+          <div class="hex-field">
+            <span class="hex-hash">#</span>
+            <input type="text" id="mc-hex" class="ep-hex-input"
+                   value="2A3E6D" maxlength="6" placeholder="RRGGBB" spellcheck="false" />
+          </div>
+        </div>
+      </div>
+      <button class="mc-apply-btn" id="mc-apply">Apply This Color</button>
+    </div>
 
-    ${recentHtml}
-
-    <button class="cp-no-fill-btn" data-key="${key}">
+    <!-- No color -->
+    <button class="no-color-btn" id="ep-no-color">
       <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
         <rect x="1" y="1" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.2"/>
         <line x1="2" y1="11" x2="11" y2="2" stroke="currentColor" stroke-width="1.2"/>
       </svg>
-      ${NO_FILL_LABELS[key] || 'No Color'}
+      ${NO_LABEL[key] || 'No Color'}
     </button>
   `;
 
-  // ── Bind events ──
+  bindEditEvents(key);
+}
 
-  // All color swatches
-  container.querySelectorAll('.cp-swatch[data-color]').forEach(s => {
-    const handler = () => {
-      const color = s.dataset.color;
-      applyFn(color);
-      trackRecent(key, color);
-      renderPicker(containerId, key, applyFn);
-    };
+function bindEditEvents(key) {
+  const body = document.getElementById('edit-panel-body');
+
+  // ── Theme + standard + recent: click to apply and close ──
+  body.querySelectorAll('.theme-swatch, .std-swatch').forEach(s => {
+    const handler = () => applyAndClose(s.dataset.color);
     s.addEventListener('click', handler);
-    s.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); } });
+    s.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); }
+    });
   });
 
-  // Delete custom color
-  container.querySelectorAll('.cp-del').forEach(btn => {
+  // ── Custom swatches: click to apply and close ──
+  body.querySelectorAll('.custom-swatch').forEach(s => {
+    s.addEventListener('click', () => applyAndClose(s.dataset.color));
+  });
+
+  // ── Delete custom color ──
+  body.querySelectorAll('.del-btn').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
-      deleteCustomColor(btn.dataset.key, parseInt(btn.dataset.idx, 10));
-      renderPicker(containerId, key, applyFn);
+      delCustom(key, parseInt(btn.dataset.idx, 10));
+      renderEditPanel();
     });
   });
 
-  // Toggle inline add row
-  const toggleBtn = container.querySelector('.cp-add-toggle');
-  if (toggleBtn) {
-    toggleBtn.addEventListener('click', () => {
-      const row = document.getElementById(`car-${key}`);
-      const opening = row.classList.contains('hidden');
-      row.classList.toggle('hidden');
-      toggleBtn.classList.toggle('active', opening);
-      if (opening) {
-        setTimeout(() => document.getElementById(`cpn-${key}`)?.focus(), 50);
-      }
-    });
-  }
+  // ── Toggle inline add form ──
+  document.getElementById('ep-add-toggle').addEventListener('click', () => {
+    const form    = document.getElementById('ep-add-form');
+    const opening = form.classList.contains('hidden');
+    form.classList.toggle('hidden');
+    document.getElementById('ep-add-toggle').classList.toggle('active', opening);
+    if (opening) setTimeout(() => document.getElementById('ep-hex')?.focus(), 40);
+  });
 
-  // Confirm add
-  const confirmBtn = container.querySelector('.cp-confirm-btn');
-  if (confirmBtn) {
-    confirmBtn.addEventListener('click', () => {
-      const hexVal  = document.getElementById(`cpi-${key}`).value;
-      const nameVal = document.getElementById(`cpn-${key}`).value.trim();
-      addCustomColor(key, hexVal, nameVal || hexVal);
-      renderPicker(containerId, key, applyFn);
-    });
-  }
+  // ── Add form: sync wheel ↔ hex ↔ preview ──
+  const wheel   = document.getElementById('ep-wheel');
+  const hexInp  = document.getElementById('ep-hex');
+  const preview = document.getElementById('ep-preview');
 
-  // Enter key in name field
-  const nameInput = document.getElementById(`cpn-${key}`);
-  if (nameInput) {
-    nameInput.addEventListener('keydown', e => {
-      if (e.key === 'Enter') container.querySelector('.cp-confirm-btn')?.click();
-    });
-  }
+  wheel.addEventListener('input', () => {
+    hexInp.value = wheel.value.replace('#', '').toUpperCase();
+    preview.style.background = wheel.value;
+  });
+  hexInp.addEventListener('input', () => {
+    const norm = normalizeHex(hexInp.value);
+    if (norm) { wheel.value = norm; preview.style.background = norm; }
+  });
 
-  // No fill
-  const noFillBtn = container.querySelector('.cp-no-fill-btn');
-  if (noFillBtn) {
-    noFillBtn.addEventListener('click', () => applyFn('none'));
-  }
+  // ── Confirm add to My Colors ──
+  document.getElementById('ep-confirm-add').addEventListener('click', () => {
+    const norm = normalizeHex(hexInp.value);
+    if (!norm) return;
+    const name = document.getElementById('ep-name').value.trim();
+    addCustom(key, norm, name || norm);
+    document.getElementById('ep-name').value = '';
+    document.getElementById('ep-add-form').classList.add('hidden');
+    document.getElementById('ep-add-toggle').classList.remove('active');
+    renderEditPanel();
+  });
+  document.getElementById('ep-name').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('ep-confirm-add').click();
+  });
+
+  // ── More colors: sync wheel ↔ hex ↔ preview ──
+  const mcWheel   = document.getElementById('mc-wheel');
+  const mcHex     = document.getElementById('mc-hex');
+  const mcPreview = document.getElementById('mc-preview');
+
+  mcWheel.addEventListener('input', () => {
+    mcHex.value = mcWheel.value.replace('#', '').toUpperCase();
+    mcPreview.style.background = mcWheel.value;
+  });
+  mcHex.addEventListener('input', () => {
+    const norm = normalizeHex(mcHex.value);
+    if (norm) { mcWheel.value = norm; mcPreview.style.background = norm; }
+  });
+  document.getElementById('mc-apply').addEventListener('click', () => {
+    const norm = normalizeHex(mcHex.value);
+    if (norm) applyAndClose(norm);
+  });
+
+  // ── No color / no fill ──
+  document.getElementById('ep-no-color').addEventListener('click', () => applyAndClose('none'));
+}
+
+// Apply color, track recent, return to main panel
+function applyAndClose(color) {
+  if (_applyFn) _applyFn(color);
+  if (color !== 'none') pushRecent(_editKey, color);
+  closeEditPanel();
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -320,16 +474,16 @@ function renderPicker(containerId, key, applyFn) {
 // ─────────────────────────────────────────────────────────────────
 
 Office.onReady(() => {
-  // Render all three pickers immediately
-  renderPicker('picker-fill',   'fill',   applyFill);
-  renderPicker('picker-border', 'border', applyBorderColor);
-  renderPicker('picker-text',   'text',   applyTextColor);
+  // Render all three main-panel swatch rows
+  renderMainSwatches('fill');
+  renderMainSwatches('border');
+  renderMainSwatches('text');
 
   // Border weight chips
   document.querySelectorAll('[data-weight]').forEach(btn =>
     btn.addEventListener('click', () => applyBorderWeight(parseFloat(btn.dataset.weight))));
 
-  // Border dash style chips
+  // Border dash chips
   document.querySelectorAll('[data-dash]').forEach(btn =>
     btn.addEventListener('click', () => applyBorderDash(btn.dataset.dash)));
 
@@ -337,10 +491,14 @@ Office.onReady(() => {
   document.getElementById('btn-apply-ends')
     ?.addEventListener('click', applyLineEnds);
 
-  // Selection change
+  // Edit panel back button
+  document.getElementById('edit-back-btn')
+    .addEventListener('click', closeEditPanel);
+
+  // Selection listener — skip while edit panel is open
   Office.context.document.addHandlerAsync(
     Office.EventType.DocumentSelectionChanged,
-    () => inspectSelection()
+    () => { if (!_editKey) inspectSelection(); }
   );
 
   inspectSelection();
@@ -360,9 +518,9 @@ async function inspectSelection() {
       const items = sel.items;
       if (!items.length) { renderEmpty(); return; }
 
-      const merged   = { fill: false, border: false, text: false, lineEnds: false };
-      let   allSame  = true;
-      const firstKey = toKey(items[0].type);
+      const merged    = { fill: false, border: false, text: false, lineEnds: false };
+      let   allSame   = true;
+      const firstKey  = toKey(items[0].type);
       const firstName = items[0].name || '';
 
       items.forEach(s => {
@@ -375,13 +533,13 @@ async function inspectSelection() {
         if (caps.lineEnds) merged.lineEnds = true;
       });
 
+      const anySupported = Object.values(merged).some(Boolean);
       const meta = allSame
         ? (TYPE_META[firstKey] || { icon: '?', label: cap(firstKey || 'Shape') })
         : { icon: '⊕', label: 'Mixed Selection' };
 
-      const anySupported = Object.values(merged).some(Boolean);
-      renderUI({ merged, meta, firstName, count: items.length, anySupported,
-                 isLine: allSame && firstKey === 'line' });
+      renderUI({ merged, meta, firstName, count: items.length,
+                 anySupported, isLine: allSame && firstKey === 'line' });
     });
   } catch (_) { renderEmpty(); }
 }
@@ -407,8 +565,7 @@ function renderUI({ merged, meta, firstName, count, anySupported, isLine }) {
   el('shape-type-label').textContent = meta.label;
   el('shape-name').textContent       = firstName ? `"${firstName}"` : '';
 
-  const badge = el('shape-count-badge');
-  badge.textContent = `×${count}`;
+  el('shape-count-badge').textContent = `×${count}`;
   tog('shape-count-badge', count > 1);
 
   tog('section-fill',      merged.fill);
@@ -425,18 +582,18 @@ function renderEmpty() {
   show('empty-state');
   hide('shape-banner');
   hide('unsupported-state');
-  ['section-fill','section-border','section-line-ends','section-text'].forEach(hide);
+  ['section-fill', 'section-border', 'section-line-ends', 'section-text'].forEach(hide);
   setStatus('');
 }
 
-function el(id)          { return document.getElementById(id); }
-function show(id)        { el(id)?.classList.remove('hidden'); }
-function hide(id)        { el(id)?.classList.add('hidden'); }
-function tog(id, vis)    { el(id)?.classList.toggle('hidden', !vis); }
-function setStatus(msg)  { el('status').textContent = msg; }
+function el(id)         { return document.getElementById(id); }
+function show(id)       { el(id)?.classList.remove('hidden'); }
+function hide(id)       { el(id)?.classList.add('hidden'); }
+function tog(id, vis)   { el(id)?.classList.toggle('hidden', !vis); }
+function setStatus(msg) { el('status').textContent = msg; }
 
 // ─────────────────────────────────────────────────────────────────
-// Apply functions
+// Shared: get selected shapes
 // ─────────────────────────────────────────────────────────────────
 
 async function getSelected(ctx) {
@@ -445,6 +602,10 @@ async function getSelected(ctx) {
   await ctx.sync();
   return col.items;
 }
+
+// ─────────────────────────────────────────────────────────────────
+// Apply functions
+// ─────────────────────────────────────────────────────────────────
 
 async function applyFill(color) {
   await PowerPoint.run(async ctx => {
