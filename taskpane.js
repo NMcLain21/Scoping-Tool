@@ -839,16 +839,19 @@ async function applyBorderWeight(pts) {
 
 async function applyBorderDash(style) {
   const ver = ++_applyVer;
+  // Use string literals — safer than enum refs outside PowerPoint.run
+  // Note: LineDashStyle.dot does not exist; roundDot is the correct value
   const map = {
-    solid: PowerPoint.LineDashStyle.solid,
-    dash:  PowerPoint.LineDashStyle.dash,
-    dot:   PowerPoint.LineDashStyle.dot,
+    solid:    'Solid',
+    dash:     'Dash',
+    roundDot: 'RoundDot',
   };
   if (!_cachedShapeCount) return setStatus('No shape selected.');
   await PowerPoint.run(async ctx => {
     if (ver !== _applyVer) return;
+    const dashVal = map[style] ?? 'Solid';
     getSelectedFast(ctx).forEach(s => {
-      s.lineFormat.dashStyle = map[style] ?? PowerPoint.LineDashStyle.solid;
+      s.lineFormat.dashStyle = dashVal;
       s.lineFormat.visible   = true;
     });
     await ctx.sync();
