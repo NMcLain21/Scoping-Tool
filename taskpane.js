@@ -4,13 +4,13 @@
 // Brand / static color data
 // ─────────────────────────────────────────────────────────────────
 const BRAND_COLORS = [
-  { hex: '#151F37', name: 'Navy'       },
-  { hex: '#2A3E6D', name: 'Blue'       },
-  { hex: '#D50032', name: 'Red'        },
-  { hex: '#008579', name: 'Teal'       },
-  { hex: '#E2E3E2', name: 'Light Gray' },
-  { hex: '#FFFFFF', name: 'White'      },
-  { hex: '#000000', name: 'Black'      },
+  { hex: '#D50032', name: 'APi Corp Red'  },
+  { hex: '#2A3E6D', name: 'Dark Navy'     },
+  { hex: '#008579', name: 'Teal'          },
+  { hex: '#D4D800', name: 'TBD'           },
+  { hex: '#7030A0', name: 'APi Seg'       },
+  { hex: '#00B0F0', name: 'Target HQ'    },
+  { hex: '#92D050', name: 'Target OpCo'  },
 ];
 
 const SHADE_STEPS = [
@@ -36,31 +36,31 @@ const STANDARD_COLORS = [
 
 const DEFAULT_PALETTES = {
   fill: [
-    { hex: '#151F37', name: 'Navy'       },
-    { hex: '#2A3E6D', name: 'Blue'       },
-    { hex: '#D50032', name: 'Red'        },
-    { hex: '#008579', name: 'Teal'       },
-    { hex: '#FFFFFF', name: 'White'      },
-    { hex: '#E2E3E2', name: 'Light Gray' },
-    { hex: '#000000', name: 'Black'      },
+    { hex: '#D50032', name: 'APi Corp Red' },
+    { hex: '#2A3E6D', name: 'Dark Navy'    },
+    { hex: '#008579', name: 'Teal'         },
+    { hex: '#595959', name: 'Dark Gray'    },
+    { hex: '#BFBFBF', name: 'Light Gray'   },
+    { hex: '#FFFFFF', name: 'White'        },
+    { hex: '#000000', name: 'Black'        },
   ],
   border: [
-    { hex: '#151F37', name: 'Navy'       },
-    { hex: '#2A3E6D', name: 'Blue'       },
-    { hex: '#D50032', name: 'Red'        },
-    { hex: '#000000', name: 'Black'      },
-    { hex: '#FFFFFF', name: 'White'      },
-    { hex: '#E2E3E2', name: 'Light Gray' },
-    { hex: '#008579', name: 'Teal'       },
+    { hex: '#D4D800', name: 'TBD'          },
+    { hex: '#D50032', name: 'APi Corp'     },
+    { hex: '#7030A0', name: 'APi Seg'      },
+    { hex: '#00B0F0', name: 'Target HQ'   },
+    { hex: '#92D050', name: 'Target OpCo' },
+    { hex: '#808080', name: 'Gray'         },
+    { hex: '#151F37', name: 'Navy'         },
   ],
   text: [
-    { hex: '#151F37', name: 'Navy'       },
-    { hex: '#2A3E6D', name: 'Blue'       },
-    { hex: '#FFFFFF', name: 'White'      },
-    { hex: '#D50032', name: 'Red'        },
-    { hex: '#000000', name: 'Black'      },
-    { hex: '#008579', name: 'Teal'       },
-    { hex: '#E2E3E2', name: 'Light Gray' },
+    { hex: '#FFFFFF', name: 'White'        },
+    { hex: '#000000', name: 'Black'        },
+    { hex: '#D50032', name: 'APi Corp Red' },
+    { hex: '#2A3E6D', name: 'Dark Navy'    },
+    { hex: '#008579', name: 'Teal'         },
+    { hex: '#595959', name: 'Dark Gray'    },
+    { hex: '#BFBFBF', name: 'Light Gray'   },
   ],
 };
 
@@ -299,13 +299,6 @@ function renderEditPanel() {
   const titleMap = { fill: 'Fill Color', border: 'Border Color', text: 'Text Color' };
   document.getElementById('edit-panel-title').textContent = titleMap[key] || 'Edit Colors';
 
-  // Standard colors (top level — clicking APPLIES immediately)
-  const standardHtml = STANDARD_COLORS.map(c =>
-    `<div class="std-swatch${isLight(c.hex) ? ' light' : ''}"
-          style="background:${c.hex}" data-color="${c.hex}"
-          title="${esc(c.name)}" role="button" tabindex="0"></div>`
-  ).join('');
-
   // My Colors list
   const palette = getPalette(key);
   const myColorsHtml = palette.map((c, i) => {
@@ -351,9 +344,6 @@ function renderEditPanel() {
   const addFormHtml = isAdding ? buildColorForm('add', null, '#2A3E6D', '') : '';
 
   document.getElementById('edit-panel-body').innerHTML = `
-    <div class="ep-label">Standard Colors</div>
-    <div class="std-row">${standardHtml}</div>
-
     <div class="ep-label">
       My Colors
       <span class="ep-hint">click swatch to apply</span>
@@ -483,11 +473,6 @@ function buildColorForm(type, idx, startHex, startName) {
 // ─────────────────────────────────────────────────────────────────
 function bindEditEvents(key) {
   const body = document.getElementById('edit-panel-body');
-
-  // ── Top-level standard + recent: APPLY + close ──
-  body.querySelectorAll('.std-swatch').forEach(s => {
-    s.addEventListener('click', () => applyAndClose(s.dataset.color));
-  });
 
   // ── My Colors: click swatch = APPLY + close ──
   body.querySelectorAll('.my-swatch').forEach(s => {
