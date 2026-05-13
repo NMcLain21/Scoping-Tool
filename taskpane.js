@@ -1,61 +1,57 @@
+'use strict';
+
 // ─────────────────────────────────────────────────────────────────
-// Default palettes — each palette is independent
+// Constants
 // ─────────────────────────────────────────────────────────────────
-const DEFAULTS = {
+
+const BRAND_COLORS = [
+  { hex: '#151F37', name: 'Navy'  },
+  { hex: '#2A3E6D', name: 'Blue'  },
+  { hex: '#D50032', name: 'Red'   },
+  { hex: '#008579', name: 'Teal'  },
+  { hex: '#E2E3E2', name: 'Gray'  },
+  { hex: '#FFFFFF', name: 'White' },
+  { hex: '#000000', name: 'Black' },
+];
+
+const STANDARD_COLORS = [
+  { hex: '#C00000', name: 'Dark Red'    },
+  { hex: '#FF0000', name: 'Red'         },
+  { hex: '#FFC000', name: 'Orange'      },
+  { hex: '#FFFF00', name: 'Yellow'      },
+  { hex: '#92D050', name: 'Light Green' },
+  { hex: '#00B050', name: 'Green'       },
+  { hex: '#00B0F0', name: 'Light Blue'  },
+  { hex: '#0070C0', name: 'Blue'        },
+  { hex: '#002060', name: 'Dark Blue'   },
+  { hex: '#7030A0', name: 'Purple'      },
+];
+
+const DEFAULT_PALETTES = {
   fill: [
-    { hex: "#1F3864", name: "Dark Navy" },
-    { hex: "#2E75B6", name: "Corporate Blue" },
-    { hex: "#70AD47", name: "Green" },
-    { hex: "#FFC000", name: "Amber" },
-    { hex: "#C00000", name: "Red" },
-    { hex: "#FFFFFF", name: "White" },
-    { hex: "#F2F2F2", name: "Light Gray" },
+    { hex: '#151F37', name: 'Navy'       },
+    { hex: '#2A3E6D', name: 'Blue'       },
+    { hex: '#D50032', name: 'Red'        },
+    { hex: '#008579', name: 'Teal'       },
+    { hex: '#FFFFFF', name: 'White'      },
+    { hex: '#E2E3E2', name: 'Light Gray' },
   ],
   border: [
-    { hex: "#1F3864", name: "Dark Navy" },
-    { hex: "#2E75B6", name: "Corporate Blue" },
-    { hex: "#000000", name: "Black" },
-    { hex: "#595959", name: "Dark Gray" },
-    { hex: "#C00000", name: "Red" },
-    { hex: "#FFFFFF", name: "White" },
+    { hex: '#151F37', name: 'Navy'  },
+    { hex: '#2A3E6D', name: 'Blue'  },
+    { hex: '#D50032', name: 'Red'   },
+    { hex: '#000000', name: 'Black' },
+    { hex: '#FFFFFF', name: 'White' },
   ],
   text: [
-    { hex: "#000000", name: "Black" },
-    { hex: "#FFFFFF", name: "White" },
-    { hex: "#1F3864", name: "Dark Navy" },
-    { hex: "#2E75B6", name: "Corporate Blue" },
-    { hex: "#70AD47", name: "Green" },
-    { hex: "#FFC000", name: "Amber" },
-    { hex: "#C00000", name: "Red" },
+    { hex: '#151F37', name: 'Navy'  },
+    { hex: '#2A3E6D', name: 'Blue'  },
+    { hex: '#FFFFFF', name: 'White' },
+    { hex: '#D50032', name: 'Red'   },
+    { hex: '#000000', name: 'Black' },
   ],
 };
 
-const STORAGE_KEYS = {
-  fill:   "scopingToolPalette_fill",
-  border: "scopingToolPalette_border",
-  text:   "scopingToolPalette_text",
-};
-
-// ─────────────────────────────────────────────────────────────────
-// Palette persistence
-// ─────────────────────────────────────────────────────────────────
-function loadPalette(type) {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEYS[type]);
-    if (saved) return JSON.parse(saved);
-  } catch (_) {}
-  return [...DEFAULTS[type]];
-}
-
-function savePalette(type, palette) {
-  try {
-    localStorage.setItem(STORAGE_KEYS[type], JSON.stringify(palette));
-  } catch (_) {}
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Shape capability matrix
-// ─────────────────────────────────────────────────────────────────
 const CAPABILITIES = {
   geometricShape: { fill: true,  border: true,  text: true,  lineEnds: false },
   textBox:        { fill: true,  border: true,  text: true,  lineEnds: false },
@@ -69,431 +65,454 @@ const CAPABILITIES = {
 };
 
 const TYPE_META = {
-  geometricShape: { icon: "◻", label: "Geometric Shape" },
-  textBox:        { icon: "T",  label: "Text Box" },
-  placeholder:    { icon: "⊞", label: "Placeholder" },
-  callout:        { icon: "💬", label: "Callout" },
-  freeform:       { icon: "✏", label: "Freeform" },
-  group:          { icon: "⊡", label: "Group" },
-  line:           { icon: "╱", label: "Line" },
-  image:          { icon: "⬜", label: "Image" },
-  table:          { icon: "⊟", label: "Table" },
+  geometricShape: { icon: '◻', label: 'Geometric Shape' },
+  textBox:        { icon: 'T',  label: 'Text Box'        },
+  placeholder:    { icon: '⊞', label: 'Placeholder'     },
+  callout:        { icon: '💬', label: 'Callout'         },
+  freeform:       { icon: '✏', label: 'Freeform'        },
+  group:          { icon: '⊡', label: 'Group'            },
+  line:           { icon: '╱', label: 'Line'             },
+  image:          { icon: '🖼', label: 'Image'            },
+  table:          { icon: '⊟', label: 'Table'            },
 };
 
-// Track which inline editors are open
-const editorOpen = { fill: false, border: false, text: false };
+const NO_FILL_LABELS = { fill: 'No Fill', border: 'No Border', text: 'No Color' };
+
+const SHADE_NAMES = ['Light 1', 'Light 2', 'Light 3', 'Dark 1', 'Dark 2'];
+
+// ─────────────────────────────────────────────────────────────────
+// Color utilities
+// ─────────────────────────────────────────────────────────────────
+
+function hexToRgb(hex) {
+  const h = hex.replace('#', '');
+  return {
+    r: parseInt(h.slice(0, 2), 16),
+    g: parseInt(h.slice(2, 4), 16),
+    b: parseInt(h.slice(4, 6), 16),
+  };
+}
+
+function rgbToHex(r, g, b) {
+  return '#' + [r, g, b]
+    .map(x => Math.round(Math.min(255, Math.max(0, x))).toString(16).padStart(2, '0'))
+    .join('')
+    .toUpperCase();
+}
+
+function isLight(hex) {
+  const { r, g, b } = hexToRgb(hex);
+  return (r * 299 + g * 587 + b * 114) / 1000 > 155;
+}
+
+function tintColor(hex, pct) {
+  const { r, g, b } = hexToRgb(hex);
+  return rgbToHex(r + (255 - r) * pct, g + (255 - g) * pct, b + (255 - b) * pct);
+}
+
+function shadeColor(hex, pct) {
+  const { r, g, b } = hexToRgb(hex);
+  return rgbToHex(r * (1 - pct), g * (1 - pct), b * (1 - pct));
+}
+
+// Generates 5 shade variants: 3 tints (light→base) + 2 shades (base→dark)
+const SHADE_FNS = [
+  h => tintColor(h, 0.80),
+  h => tintColor(h, 0.55),
+  h => tintColor(h, 0.30),
+  h => shadeColor(h, 0.25),
+  h => shadeColor(h, 0.50),
+];
+
+// ─────────────────────────────────────────────────────────────────
+// Storage helpers
+// ─────────────────────────────────────────────────────────────────
+
+function getCustomColors(key) {
+  try {
+    const s = localStorage.getItem(`sct_custom_${key}`);
+    return s ? JSON.parse(s) : [...DEFAULT_PALETTES[key]];
+  } catch { return [...DEFAULT_PALETTES[key]]; }
+}
+
+function saveCustomColors(key, colors) {
+  localStorage.setItem(`sct_custom_${key}`, JSON.stringify(colors));
+}
+
+function addCustomColor(key, hex, name) {
+  const colors = getCustomColors(key);
+  const norm = hex.toUpperCase();
+  if (!colors.find(c => c.hex.toUpperCase() === norm)) {
+    colors.push({ hex: norm, name: name || norm });
+    saveCustomColors(key, colors);
+  }
+}
+
+function deleteCustomColor(key, index) {
+  const colors = getCustomColors(key);
+  colors.splice(index, 1);
+  saveCustomColors(key, colors);
+}
+
+function getRecentColors(key) {
+  try {
+    return JSON.parse(localStorage.getItem(`sct_recent_${key}`)) || [];
+  } catch { return []; }
+}
+
+function trackRecent(key, hex) {
+  if (!hex || hex === 'none') return;
+  const norm = hex.toUpperCase();
+  let arr = getRecentColors(key).filter(h => h !== norm);
+  arr.unshift(norm);
+  localStorage.setItem(`sct_recent_${key}`, JSON.stringify(arr.slice(0, 10)));
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Color picker renderer
+// ─────────────────────────────────────────────────────────────────
+
+function makeSwatch(hex, name, cls) {
+  const light = isLight(hex) ? ' cp-light' : '';
+  const safeName = (name || hex).replace(/"/g, '&quot;');
+  return `<div class="cp-swatch ${cls}${light}" style="background:${hex}"
+               data-color="${hex}" title="${safeName}&#10;${hex}" tabindex="0" role="button"></div>`;
+}
+
+function renderPicker(containerId, key, applyFn) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const custom = getCustomColors(key);
+  const recent = getRecentColors(key);
+
+  // ── APi Group Colors: base row + 5 shade rows ──
+  const baseRow = `<div class="cp-row">${BRAND_COLORS.map(c => makeSwatch(c.hex, c.name, 'cp-sm')).join('')}</div>`;
+  const shadeRows = SHADE_FNS.map((fn, i) =>
+    `<div class="cp-row">${BRAND_COLORS.map(c => makeSwatch(fn(c.hex), `${c.name} — ${SHADE_NAMES[i]}`, 'cp-sm')).join('')}</div>`
+  ).join('');
+
+  // ── Custom colors ──
+  const customSwatches = custom.map((c, i) => `
+    <div class="cp-custom-wrap" data-idx="${i}">
+      <div class="cp-swatch cp-md${isLight(c.hex) ? ' cp-light' : ''}"
+           style="background:${c.hex}" data-color="${c.hex}"
+           title="${(c.name || c.hex).replace(/"/g, '&quot;')}&#10;${c.hex}"
+           tabindex="0" role="button"></div>
+      <button class="cp-del" data-key="${key}" data-idx="${i}" title="Remove this color" aria-label="Remove">×</button>
+    </div>`).join('');
+
+  // ── Standard colors ──
+  const standardSwatches = STANDARD_COLORS.map(c => makeSwatch(c.hex, c.name, 'cp-md')).join('');
+
+  // ── Recent colors ──
+  const recentHtml = recent.length ? `
+    <div class="cp-section-label">Recent Colors</div>
+    <div class="cp-row cp-recent-row">${recent.map(h => makeSwatch(h, h, 'cp-md')).join('')}</div>` : '';
+
+  container.innerHTML = `
+    <div class="cp-section-label">APi Group Colors</div>
+    <div class="cp-brand-grid">
+      ${baseRow}
+      <div class="cp-shade-divider"></div>
+      ${shadeRows}
+    </div>
+
+    <div class="cp-section-label">
+      Custom Colors
+      <span class="cp-custom-hint">hover to remove</span>
+    </div>
+    <div class="cp-row cp-custom-row" id="cr-${key}">
+      ${customSwatches}
+      <button class="cp-add-toggle" data-key="${key}" aria-label="Add custom color" title="Add a color">
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+          <line x1="5.5" y1="1.5" x2="5.5" y2="9.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          <line x1="1.5" y1="5.5" x2="9.5" y2="5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="cp-add-row hidden" id="car-${key}">
+      <input type="color" class="cp-color-input" id="cpi-${key}" value="#2E75B6" />
+      <input type="text"  class="cp-name-input"  id="cpn-${key}" placeholder="Color name (optional)" maxlength="24" />
+      <button class="cp-confirm-btn" data-key="${key}">Add</button>
+    </div>
+
+    <div class="cp-section-label">Standard Colors</div>
+    <div class="cp-row">${standardSwatches}</div>
+
+    ${recentHtml}
+
+    <button class="cp-no-fill-btn" data-key="${key}">
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+        <rect x="1" y="1" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.2"/>
+        <line x1="2" y1="11" x2="11" y2="2" stroke="currentColor" stroke-width="1.2"/>
+      </svg>
+      ${NO_FILL_LABELS[key] || 'No Color'}
+    </button>
+  `;
+
+  // ── Bind events ──
+
+  // All color swatches
+  container.querySelectorAll('.cp-swatch[data-color]').forEach(s => {
+    const handler = () => {
+      const color = s.dataset.color;
+      applyFn(color);
+      trackRecent(key, color);
+      renderPicker(containerId, key, applyFn);
+    };
+    s.addEventListener('click', handler);
+    s.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); } });
+  });
+
+  // Delete custom color
+  container.querySelectorAll('.cp-del').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      deleteCustomColor(btn.dataset.key, parseInt(btn.dataset.idx, 10));
+      renderPicker(containerId, key, applyFn);
+    });
+  });
+
+  // Toggle inline add row
+  const toggleBtn = container.querySelector('.cp-add-toggle');
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      const row = document.getElementById(`car-${key}`);
+      const opening = row.classList.contains('hidden');
+      row.classList.toggle('hidden');
+      toggleBtn.classList.toggle('active', opening);
+      if (opening) {
+        setTimeout(() => document.getElementById(`cpn-${key}`)?.focus(), 50);
+      }
+    });
+  }
+
+  // Confirm add
+  const confirmBtn = container.querySelector('.cp-confirm-btn');
+  if (confirmBtn) {
+    confirmBtn.addEventListener('click', () => {
+      const hexVal  = document.getElementById(`cpi-${key}`).value;
+      const nameVal = document.getElementById(`cpn-${key}`).value.trim();
+      addCustomColor(key, hexVal, nameVal || hexVal);
+      renderPicker(containerId, key, applyFn);
+    });
+  }
+
+  // Enter key in name field
+  const nameInput = document.getElementById(`cpn-${key}`);
+  if (nameInput) {
+    nameInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') container.querySelector('.cp-confirm-btn')?.click();
+    });
+  }
+
+  // No fill
+  const noFillBtn = container.querySelector('.cp-no-fill-btn');
+  if (noFillBtn) {
+    noFillBtn.addEventListener('click', () => applyFn('none'));
+  }
+}
 
 // ─────────────────────────────────────────────────────────────────
 // Office ready
 // ─────────────────────────────────────────────────────────────────
+
 Office.onReady(() => {
+  // Render all three pickers immediately
+  renderPicker('picker-fill',   'fill',   applyFill);
+  renderPicker('picker-border', 'border', applyBorderColor);
+  renderPicker('picker-text',   'text',   applyTextColor);
 
-  // Render all three swatch rows from saved palettes
-  renderSwatches("fill");
-  renderSwatches("border");
-  renderSwatches("text");
+  // Border weight chips
+  document.querySelectorAll('[data-weight]').forEach(btn =>
+    btn.addEventListener('click', () => applyBorderWeight(parseFloat(btn.dataset.weight))));
 
-  // Border weight buttons
-  document.querySelectorAll("[data-weight]").forEach(btn =>
-    btn.addEventListener("click", () => applyBorderWeight(parseFloat(btn.dataset.weight))));
+  // Border dash style chips
+  document.querySelectorAll('[data-dash]').forEach(btn =>
+    btn.addEventListener('click', () => applyBorderDash(btn.dataset.dash)));
 
-  // Border dash style buttons
-  document.querySelectorAll("[data-dash]").forEach(btn =>
-    btn.addEventListener("click", () => applyBorderDash(btn.dataset.dash)));
+  // Line ends
+  document.getElementById('btn-apply-ends')
+    ?.addEventListener('click', applyLineEnds);
 
-  // Line ends apply button
-  document.getElementById("btn-apply-ends")
-    .addEventListener("click", applyLineEnds);
-
-  // Edit palette buttons (✏) — one per palette type
-  document.querySelectorAll(".edit-palette-btn").forEach(btn =>
-    btn.addEventListener("click", () => toggleEditor(btn.dataset.palette)));
-
-  // Add color buttons — one per palette type
-  document.querySelectorAll(".add-color-btn").forEach(btn =>
-    btn.addEventListener("click", () => addColor(btn.dataset.palette)));
-
-  // Allow Enter in name fields to submit
-  ["fill", "border", "text"].forEach(type => {
-    const nameField = document.getElementById(`name-${type}`);
-    if (nameField) {
-      nameField.addEventListener("keydown", e => { if (e.key === "Enter") addColor(type); });
-    }
-  });
-
-  // Reset buttons — one per palette type
-  document.querySelectorAll(".reset-palette-btn").forEach(btn =>
-    btn.addEventListener("click", () => resetPalette(btn.dataset.palette)));
-
-  // Selection change listener
+  // Selection change
   Office.context.document.addHandlerAsync(
     Office.EventType.DocumentSelectionChanged,
     () => inspectSelection()
   );
 
-  // Initial inspection on open
   inspectSelection();
 });
 
 // ─────────────────────────────────────────────────────────────────
-// Swatch rendering
-// ─────────────────────────────────────────────────────────────────
-function renderSwatches(type) {
-  const palette   = loadPalette(type);
-  const container = document.getElementById(`swatches-${type}`);
-  if (!container) return;
-
-  // Build color swatches
-  const colorBtns = palette.map(({ hex, name }) => {
-    const light = isLightColor(hex);
-    let attr = "";
-    if (type === "fill")   attr = `data-fill="${hex}"`;
-    if (type === "border") attr = `data-border="${hex}"`;
-    if (type === "text")   attr = `data-textcolor="${hex}"`;
-    return `<button class="swatch${light ? " swatch-light" : ""}" style="background:${hex};" ${attr} title="${escapeHtml(name)}"></button>`;
-  }).join("");
-
-  // "None" button for fill and border only
-  let noneBtn = "";
-  if (type === "fill")   noneBtn = `<button class="swatch no-fill" data-fill="none"   title="No Fill">∅</button>`;
-  if (type === "border") noneBtn = `<button class="swatch no-fill" data-border="none" title="No Border">∅</button>`;
-
-  container.innerHTML = colorBtns + noneBtn;
-
-  // Re-attach click handlers after innerHTML rebuild
-  container.querySelectorAll("[data-fill]").forEach(btn =>
-    btn.addEventListener("click", () => applyFill(btn.dataset.fill)));
-  container.querySelectorAll("[data-border]").forEach(btn =>
-    btn.addEventListener("click", () => applyBorderColor(btn.dataset.border)));
-  container.querySelectorAll("[data-textcolor]").forEach(btn =>
-    btn.addEventListener("click", () => applyTextColor(btn.dataset.textcolor)));
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Inline palette editor — toggle open/close
-// ─────────────────────────────────────────────────────────────────
-function toggleEditor(type) {
-  editorOpen[type] = !editorOpen[type];
-  const editorEl = document.getElementById(`editor-${type}`);
-  const editBtn  = document.querySelector(`.edit-palette-btn[data-palette="${type}"]`);
-
-  if (editorOpen[type]) {
-    editorEl.classList.remove("hidden");
-    editBtn.classList.add("active");
-    editBtn.title = "Close editor";
-    renderPaletteList(type);
-  } else {
-    editorEl.classList.add("hidden");
-    editBtn.classList.remove("active");
-    editBtn.title = `Edit ${type} palette`;
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Inline palette list rendering
-// ─────────────────────────────────────────────────────────────────
-function renderPaletteList(type) {
-  const palette   = loadPalette(type);
-  const container = document.getElementById(`palette-list-${type}`);
-  if (!container) return;
-
-  if (palette.length === 0) {
-    container.innerHTML = `<p class="palette-empty">No colors yet. Add one below.</p>`;
-    return;
-  }
-
-  container.innerHTML = palette.map(({ hex, name }, index) => `
-    <div class="palette-item">
-      <div class="palette-preview" style="background:${hex};${isLightColor(hex) ? "border:1px solid #ddd;" : ""}"></div>
-      <div class="palette-info">
-        <span class="palette-name">${escapeHtml(name)}</span>
-        <span class="palette-hex">${hex.toUpperCase()}</span>
-      </div>
-      <button class="palette-delete" data-type="${type}" data-index="${index}" title="Remove">✕</button>
-    </div>
-  `).join("");
-
-  // Wire up delete buttons
-  container.querySelectorAll(".palette-delete").forEach(btn =>
-    btn.addEventListener("click", () => deleteColor(btn.dataset.type, parseInt(btn.dataset.index))));
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Add color to a palette
-// ─────────────────────────────────────────────────────────────────
-function addColor(type) {
-  const hex     = document.getElementById(`picker-${type}`).value;
-  const rawName = document.getElementById(`name-${type}`).value.trim();
-  const name    = rawName || hex.toUpperCase();
-
-  const palette = loadPalette(type);
-
-  if (palette.some(c => c.hex.toLowerCase() === hex.toLowerCase())) {
-    setStatus(`That color is already in the ${type} palette.`);
-    return;
-  }
-
-  palette.push({ hex, name });
-  savePalette(type, palette);
-
-  // Refresh both the list and the swatch row
-  renderPaletteList(type);
-  renderSwatches(type);
-
-  document.getElementById(`name-${type}`).value = "";
-  setStatus(`Added to ${type}: ${name} (${hex.toUpperCase()})`);
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Delete color from a palette
-// ─────────────────────────────────────────────────────────────────
-function deleteColor(type, index) {
-  const palette = loadPalette(type);
-  const removed = palette.splice(index, 1)[0];
-  savePalette(type, palette);
-  renderPaletteList(type);
-  renderSwatches(type);
-  setStatus(`Removed from ${type}: ${removed.name}`);
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Reset a palette to defaults
-// ─────────────────────────────────────────────────────────────────
-function resetPalette(type) {
-  const label = type.charAt(0).toUpperCase() + type.slice(1);
-  if (!confirm(`Reset the ${label} palette to its original defaults? This cannot be undone.`)) return;
-  savePalette(type, [...DEFAULTS[type]]);
-  renderPaletteList(type);
-  renderSwatches(type);
-  setStatus(`${label} palette reset to defaults.`);
-}
-
-// ─────────────────────────────────────────────────────────────────
 // Shape inspection
 // ─────────────────────────────────────────────────────────────────
+
 async function inspectSelection() {
   try {
-    await PowerPoint.run(async (context) => {
-      const selected = context.presentation.getSelectedShapes();
-      selected.load("items/type,items/name");
-      await context.sync();
+    await PowerPoint.run(async ctx => {
+      const sel = ctx.presentation.getSelectedShapes();
+      sel.load('items/type,items/name');
+      await ctx.sync();
 
-      const items = selected.items;
-      if (items.length === 0) { renderEmptyState(); return; }
+      const items = sel.items;
+      if (!items.length) { renderEmpty(); return; }
 
-      const merged = { fill: false, border: false, text: false, lineEnds: false };
-      let allSameType = true;
-      const firstType = toKey(items[0].type);
-      const firstName = items[0].name || "";
+      const merged   = { fill: false, border: false, text: false, lineEnds: false };
+      let   allSame  = true;
+      const firstKey = toKey(items[0].type);
+      const firstName = items[0].name || '';
 
-      items.forEach(shape => {
-        const key = toKey(shape.type);
-        if (key !== firstType) allSameType = false;
-        const caps = CAPABILITIES[key] || {};
+      items.forEach(s => {
+        const k = toKey(s.type);
+        if (k !== firstKey) allSame = false;
+        const caps = CAPABILITIES[k] || {};
         if (caps.fill)     merged.fill     = true;
         if (caps.border)   merged.border   = true;
         if (caps.text)     merged.text     = true;
         if (caps.lineEnds) merged.lineEnds = true;
       });
 
+      const meta = allSame
+        ? (TYPE_META[firstKey] || { icon: '?', label: cap(firstKey || 'Shape') })
+        : { icon: '⊕', label: 'Mixed Selection' };
+
       const anySupported = Object.values(merged).some(Boolean);
-      const meta = allSameType
-        ? (TYPE_META[firstType] || { icon: "?", label: capitalize(firstType || "Shape") })
-        : { icon: "⊕", label: "Mixed Selection" };
-
-      renderUI({
-        capabilities: merged,
-        icon:         meta.icon,
-        typeLabel:    meta.label,
-        shapeName:    items.length === 1 ? firstName : `${items.length} shapes`,
-        count:        items.length,
-        anySupported,
-        isLineOnly:   allSameType && firstType === "line",
-      });
+      renderUI({ merged, meta, firstName, count: items.length, anySupported,
+                 isLine: allSame && firstKey === 'line' });
     });
-  } catch (_) {
-    renderEmptyState();
-  }
+  } catch (_) { renderEmpty(); }
 }
-
-// ─────────────────────────────────────────────────────────────────
-// Render: main UI sections based on capabilities
-// ─────────────────────────────────────────────────────────────────
-function renderUI({ capabilities, icon, typeLabel, shapeName, count, anySupported, isLineOnly }) {
-  setVisible("empty-state",       false);
-  setVisible("unsupported-state", false);
-  setVisible("shape-banner",      true);
-  setVisible("main-content",      true);
-
-  el("shape-icon").textContent       = icon;
-  el("shape-type-label").textContent = typeLabel;
-  el("shape-name").textContent       = shapeName ? `"${shapeName}"` : "";
-
-  const badge = el("shape-count-badge");
-  badge.textContent = `×${count}`;
-  setVisible("shape-count-badge", count > 1);
-
-  setVisible("section-fill",      capabilities.fill);
-  setVisible("section-border",    capabilities.border);
-  setVisible("section-line-ends", capabilities.lineEnds);
-  setVisible("section-text",      capabilities.text);
-
-  el("border-heading").textContent = isLineOnly ? "Line Style" : "Border";
-
-  if (!anySupported) setVisible("unsupported-state", true);
-}
-
-function renderEmptyState() {
-  setVisible("empty-state",        true);
-  setVisible("shape-banner",       false);
-  setVisible("unsupported-state",  false);
-  setVisible("main-content",       true);
-  ["section-fill","section-border","section-line-ends","section-text"]
-    .forEach(id => setVisible(id, false));
-  setStatus("");
-}
-
-// ─────────────────────────────────────────────────────────────────
-// DOM helpers
-// ─────────────────────────────────────────────────────────────────
-function el(id) { return document.getElementById(id); }
-
-function setVisible(id, visible) {
-  const node = el(id);
-  if (!node) return;
-  node.classList.toggle("hidden", !visible);
-}
-
-function setStatus(msg) { el("status").textContent = msg; }
 
 function toKey(raw) {
-  if (!raw) return "unsupported";
-  const s = typeof raw === "string" ? raw : String(raw);
+  if (!raw) return 'unsupported';
+  const s = String(raw);
   return s.charAt(0).toLowerCase() + s.slice(1);
 }
 
-function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
-
-function isLightColor(hex) {
-  try {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
-    return (r * 299 + g * 587 + b * 114) / 1000 > 180;
-  } catch (_) { return false; }
-}
-
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-}
+function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
 // ─────────────────────────────────────────────────────────────────
-// Shared: get selected shapes inside a PowerPoint.run context
+// UI helpers
 // ─────────────────────────────────────────────────────────────────
-async function getSelected(context) {
-  const col = context.presentation.getSelectedShapes();
-  col.load("items");
-  await context.sync();
+
+function renderUI({ merged, meta, firstName, count, anySupported, isLine }) {
+  hide('empty-state');
+  hide('unsupported-state');
+  show('shape-banner');
+
+  el('shape-icon').textContent       = meta.icon;
+  el('shape-type-label').textContent = meta.label;
+  el('shape-name').textContent       = firstName ? `"${firstName}"` : '';
+
+  const badge = el('shape-count-badge');
+  badge.textContent = `×${count}`;
+  tog('shape-count-badge', count > 1);
+
+  tog('section-fill',      merged.fill);
+  tog('section-border',    merged.border);
+  tog('section-line-ends', merged.lineEnds);
+  tog('section-text',      merged.text);
+
+  el('border-heading').textContent = isLine ? 'Line Style' : 'Border';
+
+  if (!anySupported) show('unsupported-state');
+}
+
+function renderEmpty() {
+  show('empty-state');
+  hide('shape-banner');
+  hide('unsupported-state');
+  ['section-fill','section-border','section-line-ends','section-text'].forEach(hide);
+  setStatus('');
+}
+
+function el(id)          { return document.getElementById(id); }
+function show(id)        { el(id)?.classList.remove('hidden'); }
+function hide(id)        { el(id)?.classList.add('hidden'); }
+function tog(id, vis)    { el(id)?.classList.toggle('hidden', !vis); }
+function setStatus(msg)  { el('status').textContent = msg; }
+
+// ─────────────────────────────────────────────────────────────────
+// Apply functions
+// ─────────────────────────────────────────────────────────────────
+
+async function getSelected(ctx) {
+  const col = ctx.presentation.getSelectedShapes();
+  col.load('items');
+  await ctx.sync();
   return col.items;
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Apply: Fill color
-// ─────────────────────────────────────────────────────────────────
 async function applyFill(color) {
-  await PowerPoint.run(async (context) => {
-    const shapes = await getSelected(context);
-    if (!shapes.length) return setStatus("No shape selected.");
+  await PowerPoint.run(async ctx => {
+    const shapes = await getSelected(ctx);
+    if (!shapes.length) return setStatus('No shape selected.');
     shapes.forEach(s => {
-      if (color === "none") s.fill.clear();
+      if (color === 'none') s.fill.clear();
       else s.fill.setSolidColor(color);
     });
-    await context.sync();
-    setStatus(`Fill → ${color === "none" ? "cleared" : color}`);
+    await ctx.sync();
+    setStatus(`Fill → ${color === 'none' ? 'cleared' : color}`);
   });
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Apply: Border color
-// ─────────────────────────────────────────────────────────────────
 async function applyBorderColor(color) {
-  await PowerPoint.run(async (context) => {
-    const shapes = await getSelected(context);
-    if (!shapes.length) return setStatus("No shape selected.");
+  await PowerPoint.run(async ctx => {
+    const shapes = await getSelected(ctx);
+    if (!shapes.length) return setStatus('No shape selected.');
     shapes.forEach(s => {
-      if (color === "none") {
-        s.lineFormat.visible = false;
-      } else {
-        s.lineFormat.visible = true;
-        s.lineFormat.color   = color;
-      }
+      if (color === 'none') { s.lineFormat.visible = false; }
+      else { s.lineFormat.visible = true; s.lineFormat.color = color; }
     });
-    await context.sync();
-    setStatus(`Border color → ${color === "none" ? "removed" : color}`);
+    await ctx.sync();
+    setStatus(`Border → ${color === 'none' ? 'removed' : color}`);
   });
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Apply: Border weight
-// ─────────────────────────────────────────────────────────────────
 async function applyBorderWeight(pts) {
-  await PowerPoint.run(async (context) => {
-    const shapes = await getSelected(context);
-    if (!shapes.length) return setStatus("No shape selected.");
-    shapes.forEach(s => {
-      s.lineFormat.weight  = pts;
-      s.lineFormat.visible = true;
-    });
-    await context.sync();
-    setStatus(`Border weight → ${pts}pt`);
+  await PowerPoint.run(async ctx => {
+    const shapes = await getSelected(ctx);
+    if (!shapes.length) return setStatus('No shape selected.');
+    shapes.forEach(s => { s.lineFormat.weight = pts; s.lineFormat.visible = true; });
+    await ctx.sync();
+    setStatus(`Weight → ${pts}pt`);
   });
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Apply: Border dash style
-// ─────────────────────────────────────────────────────────────────
 async function applyBorderDash(style) {
   const map = {
     solid: PowerPoint.LineDashStyle.solid,
     dash:  PowerPoint.LineDashStyle.dash,
     dot:   PowerPoint.LineDashStyle.dot,
   };
-  await PowerPoint.run(async (context) => {
-    const shapes = await getSelected(context);
-    if (!shapes.length) return setStatus("No shape selected.");
+  await PowerPoint.run(async ctx => {
+    const shapes = await getSelected(ctx);
+    if (!shapes.length) return setStatus('No shape selected.');
     shapes.forEach(s => {
       s.lineFormat.dashStyle = map[style] ?? PowerPoint.LineDashStyle.solid;
-      s.lineFormat.visible   = true;
+      s.lineFormat.visible = true;
     });
-    await context.sync();
-    setStatus(`Border style → ${style}`);
+    await ctx.sync();
+    setStatus(`Style → ${style}`);
   });
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Apply: Text color
-// ─────────────────────────────────────────────────────────────────
 async function applyTextColor(color) {
-  await PowerPoint.run(async (context) => {
-    const shapes = await getSelected(context);
-    if (!shapes.length) return setStatus("No shape selected.");
+  await PowerPoint.run(async ctx => {
+    const shapes = await getSelected(ctx);
+    if (!shapes.length) return setStatus('No shape selected.');
     shapes.forEach(s => {
       try { s.textFrame.textRange.font.color = color; } catch (_) {}
     });
-    await context.sync();
-    setStatus(`Text color → ${color}`);
+    await ctx.sync();
+    setStatus(`Text → ${color}`);
   });
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Apply: Line ends (Line shapes only)
-// ─────────────────────────────────────────────────────────────────
 async function applyLineEnds() {
-  const startVal = el("line-start").value;
-  const endVal   = el("line-end").value;
-
   const arrowMap = {
     none:      PowerPoint.ArrowheadStyle.none,
     arrow:     PowerPoint.ArrowheadStyle.arrow,
@@ -501,18 +520,20 @@ async function applyLineEnds() {
     diamond:   PowerPoint.ArrowheadStyle.diamond,
     oval:      PowerPoint.ArrowheadStyle.oval,
   };
+  const startVal = el('line-start').value;
+  const endVal   = el('line-end').value;
 
-  await PowerPoint.run(async (context) => {
-    const shapes = await getSelected(context);
-    if (!shapes.length) return setStatus("No shape selected.");
+  await PowerPoint.run(async ctx => {
+    const shapes = await getSelected(ctx);
+    if (!shapes.length) return setStatus('No shape selected.');
     shapes.forEach(s => {
-      if (toKey(s.type) !== "line") return;
+      if (toKey(s.type) !== 'line') return;
       try {
         s.lineFormat.beginArrowheadStyle = arrowMap[startVal] ?? PowerPoint.ArrowheadStyle.none;
         s.lineFormat.endArrowheadStyle   = arrowMap[endVal]   ?? PowerPoint.ArrowheadStyle.none;
       } catch (_) {}
     });
-    await context.sync();
-    setStatus(`Line ends → ${startVal} / ${endVal}`);
+    await ctx.sync();
+    setStatus(`Ends → ${startVal} / ${endVal}`);
   });
 }
