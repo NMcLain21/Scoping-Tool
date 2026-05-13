@@ -591,3 +591,49 @@ h3 {
   font-size: 10px; color: var(--text-muted);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+
+/* ── DOI tile — text color indicator dot ─────────────────────── */
+/* Shows a small circle at the bottom-right of a DOI tile
+   indicating the configured font color */
+.doi-tile {
+  position: relative;
+}
+.doi-text-dot {
+  display: block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  position: absolute;
+  bottom: 5px;
+  right: 7px;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+/* ── Text color quick-picks inside the color form ────────────── */
+.tc-qp-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 2px;
+}
+.tc-qp-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform 0.1s, border-color 0.12s;
+  outline: none;
+}
+.tc-qp-swatch:hover {
+  transform: scale(1.18);
+  border-color: #333;
+}
+.tc-qp-swatch.tc-selected {
+  border-color: var(--api-teal, #008579);
+  box-shadow: 0 0 0 2px rgba(0, 133, 121, 0.3);
+}
+.tc-qp-swatch.light {
+  border: 2px solid #ddd;
+}

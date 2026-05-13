@@ -7,18 +7,10 @@ const BRAND_COLORS = [
   { hex: '#D50032', name: 'APi Corp Red'  },
   { hex: '#2A3E6D', name: 'Dark Navy'     },
   { hex: '#008579', name: 'Teal'          },
-  { hex: '#D4D800', name: 'TBD'           },
+  { hex: '#D4D800', name: 'TBD Yellow'    },
   { hex: '#7030A0', name: 'APi Seg'       },
-  { hex: '#00B0F0', name: 'Target HQ'    },
-  { hex: '#92D050', name: 'Target OpCo'  },
-];
-
-const SHADE_STEPS = [
-  { fn: h => tint(h, 0.80),   label: 'Lighter 80%' },
-  { fn: h => tint(h, 0.60),   label: 'Lighter 60%' },
-  { fn: h => tint(h, 0.40),   label: 'Lighter 40%' },
-  { fn: h => darken(h, 0.25), label: 'Darker 25%'  },
-  { fn: h => darken(h, 0.50), label: 'Darker 50%'  },
+  { hex: '#00B0F0', name: 'Target HQ'     },
+  { hex: '#92D050', name: 'Target OpCo'   },
 ];
 
 const STANDARD_COLORS = [
@@ -34,15 +26,30 @@ const STANDARD_COLORS = [
   { hex: '#7030A0', name: 'Purple'      },
 ];
 
+// Text color quick-picks used inside the DOI color form
+const TEXT_QP_COLORS = [
+  { hex: '#FFFFFF', name: 'White'      },
+  { hex: '#000000', name: 'Black'      },
+  { hex: '#D50032', name: 'APi Red'    },
+  { hex: '#2A3E6D', name: 'Dark Navy'  },
+  { hex: '#008579', name: 'Teal'       },
+  { hex: '#595959', name: 'Dark Gray'  },
+  { hex: '#BFBFBF', name: 'Light Gray' },
+];
+
+// Default fill entry text color — white on dark, black on light
+const autoTextHex = hex => isLight(hex) ? '#000000' : '#FFFFFF';
+
 const DEFAULT_PALETTES = {
+  // Each fill entry carries textHex — the font color applied alongside the fill
   fill: [
-    { hex: '#D50032', name: 'Target Converts to Acquiring' },
-    { hex: '#2A3E6D', name: 'APi Corp Entity'               },
-    { hex: '#008579', name: 'Shared Services'               },
-    { hex: '#595959', name: 'Leave As Is'                   },
-    { hex: '#BFBFBF', name: 'To Be Determined'              },
-    { hex: '#FFFFFF', name: 'No Fill'                       },
-    { hex: '#000000', name: 'Divest / Sunset'               },
+    { hex: '#D50032', name: 'Target Converts to Acquiring', textHex: '#FFFFFF' },
+    { hex: '#2A3E6D', name: 'APi Corp Entity',               textHex: '#FFFFFF' },
+    { hex: '#008579', name: 'Shared Services',               textHex: '#FFFFFF' },
+    { hex: '#595959', name: 'Leave As Is',                   textHex: '#FFFFFF' },
+    { hex: '#BFBFBF', name: 'To Be Determined',              textHex: '#000000' },
+    { hex: '#FFFFFF', name: 'No Fill',                       textHex: '#000000' },
+    { hex: '#000000', name: 'Divest / Sunset',               textHex: '#FFFFFF' },
   ],
   border: [
     { hex: '#D4D800', name: 'TBD'                    },
@@ -136,9 +143,7 @@ function esc(s) {
 // HSV ↔ RGB conversions
 // ─────────────────────────────────────────────────────────────────
 function hsvToRgb(h, s, v) {
-  const c = v * s;
-  const x = c * (1 - Math.abs((h / 60) % 2 - 1));
-  const m = v - c;
+  const c = v * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = v - c;
   let r = 0, g = 0, b = 0;
   if      (h < 60)  { r = c; g = x; b = 0; }
   else if (h < 120) { r = x; g = c; b = 0; }
@@ -146,19 +151,14 @@ function hsvToRgb(h, s, v) {
   else if (h < 240) { r = 0; g = x; b = c; }
   else if (h < 300) { r = x; g = 0; b = c; }
   else              { r = c; g = 0; b = x; }
-  return {
-    r: Math.round((r + m) * 255),
-    g: Math.round((g + m) * 255),
-    b: Math.round((b + m) * 255),
-  };
+  return { r: Math.round((r + m) * 255), g: Math.round((g + m) * 255), b: Math.round((b + m) * 255) };
 }
 
 function rgbToHsv(r, g, b) {
   r /= 255; g /= 255; b /= 255;
   const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
   let h = 0;
-  const s = max === 0 ? 0 : d / max;
-  const v = max;
+  const s = max === 0 ? 0 : d / max, v = max;
   if (d !== 0) {
     if      (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) * 60;
     else if (max === g) h = ((b - r) / d + 2) * 60;
@@ -182,8 +182,13 @@ function hsvToHex(h, s, v) {
 // ─────────────────────────────────────────────────────────────────
 function getPalette(key) {
   try {
-    const s = localStorage.getItem(`sct_${key}`);
-    return s ? JSON.parse(s) : JSON.parse(JSON.stringify(DEFAULT_PALETTES[key]));
+    const s   = localStorage.getItem(`sct_${key}`);
+    const arr = s ? JSON.parse(s) : JSON.parse(JSON.stringify(DEFAULT_PALETTES[key]));
+    // Backwards-compat: ensure fill entries have textHex
+    if (key === 'fill') {
+      arr.forEach(c => { if (!c.textHex) c.textHex = autoTextHex(c.hex); });
+    }
+    return arr;
   } catch { return JSON.parse(JSON.stringify(DEFAULT_PALETTES[key])); }
 }
 
@@ -191,16 +196,21 @@ function savePalette(key, arr) {
   localStorage.setItem(`sct_${key}`, JSON.stringify(arr));
 }
 
-function updateColor(key, idx, hex, name) {
+function updateColor(key, idx, hex, name, textHex) {
   const arr = getPalette(key);
-  if (arr[idx]) { arr[idx] = { hex, name: name || hex }; savePalette(key, arr); }
+  if (!arr[idx]) return;
+  arr[idx] = { hex, name: name || hex };
+  if (key === 'fill') arr[idx].textHex = textHex || autoTextHex(hex);
+  savePalette(key, arr);
 }
 
-function addColor(key, hex, name) {
+function addColor(key, hex, name, textHex) {
   const norm = normalizeHex(hex);
   if (!norm) return;
-  const arr = getPalette(key);
-  arr.push({ hex: norm, name: name || norm });
+  const arr   = getPalette(key);
+  const entry = { hex: norm, name: name || norm };
+  if (key === 'fill') entry.textHex = textHex || autoTextHex(norm);
+  arr.push(entry);
   savePalette(key, arr);
 }
 
@@ -218,7 +228,7 @@ function getRecent(key) {
 function pushRecent(key, hex) {
   if (!hex || hex === 'none') return;
   const norm = normalizeHex(hex) || hex.toUpperCase();
-  let arr = getRecent(key).filter(h => h !== norm);
+  let arr    = getRecent(key).filter(h => h !== norm);
   arr.unshift(norm);
   localStorage.setItem(`sct_recent_${key}`, JSON.stringify(arr.slice(0, 10)));
 }
@@ -231,43 +241,56 @@ let _applyFn  = null;
 let _openForm = null; // { type: 'edit'|'add', idx: number|null }
 
 // ─────────────────────────────────────────────────────────────────
-// Performance state — cached from inspectSelection so apply
-// functions skip the first load+sync round-trip entirely
+// Performance state
 // ─────────────────────────────────────────────────────────────────
-let _cachedShapeCount = 0; // number of currently selected shapes
-let _applyVer         = 0; // version counter — drops superseded clicks
+let _cachedShapeCount = 0;
+let _applyVer         = 0;
 
 // ─────────────────────────────────────────────────────────────────
-// Main panel — 7 swatches + pencil button
+// Main panel — 7 labeled tiles + pencil button
 // ─────────────────────────────────────────────────────────────────
 function renderMainSwatches(key) {
-  const row = document.getElementById(`swatches-${key}`);
+  const row    = document.getElementById(`swatches-${key}`);
   if (!row) return;
 
-  const fnMap = { fill: applyFill, border: applyBorderColor, text: applyTextColor };
-  const fn    = fnMap[key];
+  const fnMap  = { fill: applyFill, border: applyBorderColor, text: applyTextColor };
+  const fn     = fnMap[key];
   const colors = getPalette(key);
 
   row.innerHTML =
     colors.map(c => {
-      // Border palette — legend-style line tile, not a solid fill box
+      // ── Border: legend line tile ──
       if (key === 'border') {
         return `<button class="main-swatch border-legend-tile"
-                 data-color="${c.hex}"
-                 title="${esc(c.name)}\n${c.hex}"
-                 aria-label="${esc(c.name)}">
-           <span class="legend-line-sample" style="background:${c.hex}"></span>
-           <span class="legend-line-name">${esc(c.name)}</span>
-         </button>`;
+                         data-color="${c.hex}"
+                         title="${esc(c.name)}\n${c.hex}"
+                         aria-label="${esc(c.name)}">
+                  <span class="legend-line-sample" style="background:${c.hex}"></span>
+                  <span class="legend-line-name">${esc(c.name)}</span>
+                </button>`;
       }
-      // Fill / text — solid color tile with label
+      // ── Fill (DOI): solid tile — label in configured textHex, small text-color indicator ──
+      if (key === 'fill') {
+        const txHex = c.textHex || autoTextHex(c.hex);
+        return `<button class="main-swatch doi-tile"
+                         style="background:${c.hex};"
+                         data-color="${c.hex}"
+                         data-textcolor="${txHex}"
+                         title="${esc(c.name)}\n${c.hex}"
+                         aria-label="${esc(c.name)}">
+                  <span class="swatch-label" style="color:${txHex};">${esc(c.name)}</span>
+                  <span class="doi-text-dot" style="background:${txHex}; outline:2px solid ${c.hex}; outline-offset:1px;" title="Font: ${txHex}"></span>
+                </button>`;
+      }
+      // ── Text: solid color tile ──
+      const txtColor = isLight(c.hex) ? '#000000' : '#FFFFFF';
       return `<button class="main-swatch${isLight(c.hex) ? ' light' : ''}"
-               style="background:${c.hex}"
-               data-color="${c.hex}"
-               title="${esc(c.name)}\n${c.hex}"
-               aria-label="${esc(c.name)}">
-         <span class="swatch-label${isLight(c.hex) ? ' dark-text' : ''}">${esc(c.name)}</span>
-       </button>`;
+                       style="background:${c.hex}"
+                       data-color="${c.hex}"
+                       title="${esc(c.name)}\n${c.hex}"
+                       aria-label="${esc(c.name)}">
+                <span class="swatch-label" style="color:${txtColor};">${esc(c.name)}</span>
+              </button>`;
     }).join('') +
     `<button class="edit-palette-btn" data-key="${key}"
              title="Edit ${key} palette" aria-label="Edit ${key} colors">
@@ -278,13 +301,19 @@ function renderMainSwatches(key) {
        </svg>
      </button>`;
 
+  // Wire swatch clicks
   row.querySelectorAll('.main-swatch').forEach(btn => {
     btn.addEventListener('click', () => {
-      fn(btn.dataset.color);
-      pushRecent(key, btn.dataset.color);
+      const color    = btn.dataset.color;
+      const txtColor = btn.dataset.textcolor;
+      fn(color);
+      // DOI tiles auto-apply their paired font color
+      if (key === 'fill' && txtColor) applyTextColor(txtColor);
+      pushRecent(key, color);
     });
   });
 
+  // Wire edit button
   row.querySelector('.edit-palette-btn').addEventListener('click', () => {
     openEditPanel(key, fn);
   });
@@ -315,28 +344,36 @@ function closeEditPanel() {
 // Edit panel — full render
 // ─────────────────────────────────────────────────────────────────
 function renderEditPanel() {
-  const key = _editKey;
-  const titleMap = { fill: 'Fill Color', border: 'Border Color', text: 'Text Color' };
+  const key      = _editKey;
+  const titleMap = { fill: 'Degree of Integration', border: 'Border Color', text: 'Text Color' };
   document.getElementById('edit-panel-title').textContent = titleMap[key] || 'Edit Colors';
 
-  // My Colors list
   const palette = getPalette(key);
+
   const myColorsHtml = palette.map((c, i) => {
     const isEditing = _openForm && _openForm.type === 'edit' && _openForm.idx === i;
+    const txHex     = c.textHex || autoTextHex(c.hex);
+    // For DOI (fill) swatches in the edit list, show the text-color dot too
+    const swatchInner = (key === 'fill')
+      ? `<span class="doi-text-dot" style="background:${txHex}; outline:2px solid ${c.hex}; outline-offset:1px;"></span>`
+      : '';
+
     return `
       <div class="my-color-item" data-idx="${i}">
         <div class="my-color-top">
           <div class="my-swatch-wrap">
             <div class="my-swatch${isLight(c.hex) ? ' light' : ''}"
                  style="background:${c.hex}"
-                 title="${esc(c.name)}\n${c.hex}"
                  data-color="${c.hex}"
+                 data-textcolor="${txHex}"
                  role="button" tabindex="0"
-                 aria-label="Apply ${esc(c.name)}"></div>
+                 aria-label="Apply ${esc(c.name)}">
+              ${swatchInner}
+            </div>
           </div>
           <div class="my-color-info">
             <span class="my-color-name">${esc(c.name)}</span>
-            <span class="my-color-hex">${c.hex}</span>
+            <span class="my-color-hex">${c.hex}${key === 'fill' ? ` · T: ${txHex}` : ''}</span>
           </div>
           <div class="my-color-actions">
             <button class="my-edit-btn${isEditing ? ' active' : ''}"
@@ -348,7 +385,7 @@ function renderEditPanel() {
               </svg>
             </button>
             <button class="my-del-btn" data-idx="${i}"
-                    aria-label="Delete ${esc(c.name)}" title="Delete color">
+                    aria-label="Delete ${esc(c.name)}" title="Delete">
               <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
                 <line x1="1.5" y1="1.5" x2="8.5" y2="8.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
                 <line x1="8.5" y1="1.5" x2="1.5" y2="8.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
@@ -356,12 +393,12 @@ function renderEditPanel() {
             </button>
           </div>
         </div>
-        ${isEditing ? buildColorForm('edit', i, c.hex, c.name) : ''}
+        ${isEditing ? buildColorForm('edit', i, c.hex, c.name, txHex) : ''}
       </div>`;
   }).join('');
 
   const isAdding    = _openForm && _openForm.type === 'add';
-  const addFormHtml = isAdding ? buildColorForm('add', null, '#2A3E6D', '') : '';
+  const addFormHtml = isAdding ? buildColorForm('add', null, '#2A3E6D', '', '#FFFFFF') : '';
 
   document.getElementById('edit-panel-body').innerHTML = `
     <div class="ep-label">
@@ -387,86 +424,98 @@ function renderEditPanel() {
       ${NO_LABEL[key] || 'No Color'}
     </button>
 
-    <button class="reset-defaults-btn" id="ep-reset">
-      ↺ Reset to defaults
-    </button>
+    <button class="reset-defaults-btn" id="ep-reset">↺ Reset to defaults</button>
   `;
 
   bindEditEvents(key);
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Build color form — APi quick-pick + Standard quick-pick + HSV wheel
-// Clicking quick-pick swatches SETS the picker value, not applies.
-// Only Save / Add button commits the change.
+// Build color form
+// For fill (DOI): includes a text color section below the fill picker.
+// Quick-pick swatches SET the picker value — they don't save/apply.
 // ─────────────────────────────────────────────────────────────────
-function buildColorForm(type, idx, startHex, startName) {
-  const norm   = normalizeHex(startHex) || '#2A3E6D';
-  const hexVal = norm.replace('#', '');
-  const sufx   = type === 'edit' ? `edit-${idx}` : 'add';
+function buildColorForm(type, idx, startHex, startName, startTextHex) {
+  const norm      = normalizeHex(startHex) || '#2A3E6D';
+  const hexVal    = norm.replace('#', '');
+  const sufx      = type === 'edit' ? `edit-${idx}` : 'add';
+  const txNorm    = normalizeHex(startTextHex) || '#FFFFFF';
+  const txHexVal  = txNorm.replace('#', '');
+  const isDOI     = _editKey === 'fill';
 
-  // Quick-pick: APi Group base colors
-  const apiSwatchHtml = BRAND_COLORS.map(c =>
+  // Quick-pick rows
+  const apiQp = BRAND_COLORS.map(c =>
     `<button class="qp-swatch${isLight(c.hex) ? ' light' : ''}"
-             style="background:${c.hex}"
-             data-setcolor="${c.hex}"
-             title="${esc(c.name)}"
-             type="button"></button>`
+             style="background:${c.hex}" data-setcolor="${c.hex}"
+             title="${esc(c.name)}" type="button"></button>`
   ).join('');
 
-  // Quick-pick: Standard colors
-  const stdSwatchHtml = STANDARD_COLORS.map(c =>
+  const stdQp = STANDARD_COLORS.map(c =>
     `<button class="qp-swatch${isLight(c.hex) ? ' light' : ''}"
-             style="background:${c.hex}"
-             data-setcolor="${c.hex}"
-             title="${esc(c.name)}"
-             type="button"></button>`
+             style="background:${c.hex}" data-setcolor="${c.hex}"
+             title="${esc(c.name)}" type="button"></button>`
   ).join('');
 
-  // Quick-pick: Recent colors — uses _editKey to pull the right history
-  const recentColors = getRecent(_editKey);
-  const recentQpHtml = recentColors.length
+  const recent    = getRecent(_editKey);
+  const recentQp  = recent.length
     ? `<div class="cform-qlabel" style="margin-top:7px;">Recent Colors</div>
-       <div class="qp-row recent-qp">${recentColors.map(hex =>
+       <div class="qp-row">${recent.map(hex =>
          `<button class="qp-swatch${isLight(hex) ? ' light' : ''}"
-                  style="background:${hex}"
-                  data-setcolor="${hex}"
-                  title="${hex}"
-                  type="button"></button>`
+                  style="background:${hex}" data-setcolor="${hex}"
+                  title="${hex}" type="button"></button>`
        ).join('')}</div>`
     : '';
+
+  // Text color quick-picks (DOI only)
+  const textQp = isDOI
+    ? TEXT_QP_COLORS.map(c =>
+        `<button class="tc-qp-swatch${isLight(c.hex) ? ' light' : ''}${c.hex.toUpperCase() === txNorm ? ' tc-selected' : ''}"
+                 style="background:${c.hex}" data-settextcolor="${c.hex}"
+                 title="${esc(c.name)}" type="button"></button>`
+      ).join('')
+    : '';
+
+  const textSection = isDOI ? `
+    <!-- ── Text Color section (DOI only) ── -->
+    <div class="cform-divider"><span>Font Color</span></div>
+
+    <div class="tc-qp-row" id="tc-qp-${sufx}">${textQp}</div>
+
+    <div class="cform-row" style="margin-top:6px;">
+      <div class="hex-field">
+        <span class="hex-hash">#</span>
+        <input type="text" class="ep-hex-input" id="tc-hex-${sufx}"
+               value="${txHexVal}" maxlength="6"
+               placeholder="RRGGBB" spellcheck="false" autocomplete="off" />
+      </div>
+      <div class="cform-preview" id="tc-prev-${sufx}" style="background:${txNorm}"></div>
+    </div>
+  ` : '';
 
   return `
     <div class="color-form" id="cform-${sufx}" data-type="${type}" data-idx="${idx ?? ''}">
 
-      <!-- Quick-pick: APi Group Colors -->
       <div class="cform-qlabel">APi Group Colors</div>
-      <div class="qp-row api-qp">${apiSwatchHtml}</div>
+      <div class="qp-row api-qp">${apiQp}</div>
 
-      <!-- Quick-pick: Standard Colors -->
       <div class="cform-qlabel" style="margin-top:7px;">Standard Colors</div>
-      <div class="qp-row std-qp">${stdSwatchHtml}</div>
+      <div class="qp-row std-qp">${stdQp}</div>
 
-      <!-- Quick-pick: Recent Colors (only shown when there are recents) -->
-      ${recentQpHtml}
+      ${recentQp}
 
-      <!-- Divider -->
-      <div class="cform-divider"><span>Custom Color</span></div>
+      <div class="cform-divider"><span>Fill Color</span></div>
 
-      <!-- HSV gradient square -->
       <div class="hsv-square" id="hsv-sq-${sufx}">
         <div class="hsv-layer hsv-sat"></div>
         <div class="hsv-layer hsv-val"></div>
         <div class="hsv-dot" id="hsv-dot-${sufx}"></div>
       </div>
 
-      <!-- Hue slider -->
       <div class="hue-wrap">
         <input type="range" class="hue-slider" id="hue-${sufx}"
                min="0" max="359" step="1" value="0" />
       </div>
 
-      <!-- Hex input + preview -->
       <div class="cform-row">
         <div class="hex-field">
           <span class="hex-hash">#</span>
@@ -477,12 +526,12 @@ function buildColorForm(type, idx, startHex, startName) {
         <div class="cform-preview" id="cfp-${sufx}" style="background:${norm}"></div>
       </div>
 
-      <!-- Color name -->
+      ${textSection}
+
       <input type="text" class="ep-name-input" id="cfn-${sufx}"
              placeholder="Color name (optional)" maxlength="28"
              value="${esc(startName)}" />
 
-      <!-- Save / Cancel -->
       <div class="cform-btns">
         <button class="cform-save" type="button" data-type="${type}" data-idx="${idx ?? ''}">
           ${type === 'edit' ? 'Save Changes' : '+ Add to My Colors'}
@@ -498,26 +547,29 @@ function buildColorForm(type, idx, startHex, startName) {
 function bindEditEvents(key) {
   const body = document.getElementById('edit-panel-body');
 
-  // ── My Colors: click swatch = APPLY + close ──
+  // My Colors: click swatch → APPLY (fill applies text too) + close
   body.querySelectorAll('.my-swatch').forEach(s => {
-    s.addEventListener('click', () => applyAndClose(s.dataset.color));
+    const applyClick = () => {
+      const textColor = (key === 'fill') ? (s.dataset.textcolor || null) : null;
+      applyAndClose(s.dataset.color, textColor);
+    };
+    s.addEventListener('click', applyClick);
     s.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); applyAndClose(s.dataset.color); }
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); applyClick(); }
     });
   });
 
-  // ── My Colors: pencil button — toggle form ──
+  // My Colors: pencil — toggle form
   body.querySelectorAll('.my-edit-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const idx = parseInt(btn.dataset.idx, 10);
       _openForm = (_openForm && _openForm.type === 'edit' && _openForm.idx === idx)
-        ? null
-        : { type: 'edit', idx };
+        ? null : { type: 'edit', idx };
       renderEditPanel();
     });
   });
 
-  // ── My Colors: delete button ──
+  // My Colors: delete
   body.querySelectorAll('.my-del-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       deleteColor(key, parseInt(btn.dataset.idx, 10));
@@ -526,18 +578,17 @@ function bindEditEvents(key) {
     });
   });
 
-  // ── Add New Color toggle ──
+  // Add New Color toggle
   document.getElementById('ep-add-toggle').addEventListener('click', () => {
     _openForm = (_openForm && _openForm.type === 'add')
-      ? null
-      : { type: 'add', idx: null };
+      ? null : { type: 'add', idx: null };
     renderEditPanel();
   });
 
-  // ── No color ──
-  document.getElementById('ep-no-color').addEventListener('click', () => applyAndClose('none'));
+  // No color
+  document.getElementById('ep-no-color').addEventListener('click', () => applyAndClose('none', null));
 
-  // ── Reset to defaults ──
+  // Reset to defaults
   document.getElementById('ep-reset').addEventListener('click', () => {
     if (!confirm(`Reset ${key} palette to defaults? Your custom colors will be lost.`)) return;
     localStorage.removeItem(`sct_${key}`);
@@ -546,21 +597,20 @@ function bindEditEvents(key) {
     renderMainSwatches(key);
   });
 
-  // ── Wire all open color forms ──
-  body.querySelectorAll('.color-form').forEach(form => {
-    wireColorForm(form, key);
-  });
+  // Wire all open color forms
+  body.querySelectorAll('.color-form').forEach(form => wireColorForm(form, key));
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Wire a single color form — HSV picker + quick-select
-// Quick-pick swatches SET the picker value (no auto-apply).
+// Wire a single color form — HSV fill picker + optional text picker
 // ─────────────────────────────────────────────────────────────────
 function wireColorForm(form, key) {
-  const type    = form.dataset.type;
-  const idx     = form.dataset.idx !== '' ? parseInt(form.dataset.idx, 10) : null;
-  const sufx    = type === 'edit' ? `edit-${idx}` : 'add';
+  const type      = form.dataset.type;
+  const idx       = form.dataset.idx !== '' ? parseInt(form.dataset.idx, 10) : null;
+  const sufx      = type === 'edit' ? `edit-${idx}` : 'add';
+  const isDOI     = key === 'fill';
 
+  // Fill picker refs
   const hexInp    = document.getElementById(`cfh-${sufx}`);
   const preview   = document.getElementById(`cfp-${sufx}`);
   const nameInp   = document.getElementById(`cfn-${sufx}`);
@@ -568,124 +618,143 @@ function wireColorForm(form, key) {
   const dot       = document.getElementById(`hsv-dot-${sufx}`);
   const hueSlider = document.getElementById(`hue-${sufx}`);
 
-  // Initialize HSV from starting hex
+  // Text color refs (DOI only)
+  const tcHexInp  = isDOI ? document.getElementById(`tc-hex-${sufx}`) : null;
+  const tcPreview = isDOI ? document.getElementById(`tc-prev-${sufx}`) : null;
+
+  // ── Fill HSV state ──
   const startNorm = normalizeHex('#' + hexInp.value) || '#2A3E6D';
   const startHsv  = hexToHsv(startNorm);
   let H = startHsv.h, S = startHsv.s, V = startHsv.v;
 
-  // ── Sync all UI from current H, S, V ──
   function syncFromHsv() {
     const hex = hsvToHex(H, S, V);
-    hexInp.value            = hex.replace('#', '').toUpperCase();
+    hexInp.value             = hex.replace('#', '').toUpperCase();
     preview.style.background = hex;
-    sq.style.background     = `hsl(${Math.round(H)}, 100%, 50%)`;
-    dot.style.left          = `${S * 100}%`;
-    dot.style.top           = `${(1 - V) * 100}%`;
-    hueSlider.value         = Math.round(H);
+    sq.style.background      = `hsl(${Math.round(H)}, 100%, 50%)`;
+    dot.style.left           = `${S * 100}%`;
+    dot.style.top            = `${(1 - V) * 100}%`;
+    hueSlider.value          = Math.round(H);
   }
 
-  // ── Set color from any hex string — updates H, S, V and all UI ──
-  function setFromHex(rawHex) {
-    const candidate = rawHex.length === 6 && !rawHex.startsWith('#') ? '#' + rawHex : rawHex;
-    const norm = normalizeHex(candidate);
-    if (!norm) return;
-    const hsv = hexToHsv(norm);
+  function setFillFromHex(rawHex) {
+    const c  = rawHex.length === 6 && !rawHex.startsWith('#') ? '#' + rawHex : rawHex;
+    const n  = normalizeHex(c);
+    if (!n) return;
+    const hsv = hexToHsv(n);
     H = hsv.h; S = hsv.s; V = hsv.v;
     syncFromHsv();
   }
 
-  // Initial render
   syncFromHsv();
 
-  // ── Hue slider ──
-  hueSlider.addEventListener('input', () => {
-    H = parseFloat(hueSlider.value);
-    syncFromHsv();
-  });
+  hueSlider.addEventListener('input', () => { H = parseFloat(hueSlider.value); syncFromHsv(); });
 
-  // ── HSV square — click + drag ──
   let dragging = false;
-
   function handleSquareDrag(e) {
     if (!sq.isConnected) { dragging = false; return; }
-    const rect    = sq.getBoundingClientRect();
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    S = Math.max(0, Math.min(1, (clientX - rect.left)  / rect.width));
-    V = Math.max(0, Math.min(1, 1 - (clientY - rect.top) / rect.height));
+    const rect = sq.getBoundingClientRect();
+    const cx   = e.touches ? e.touches[0].clientX : e.clientX;
+    const cy   = e.touches ? e.touches[0].clientY : e.clientY;
+    S = Math.max(0, Math.min(1, (cx - rect.left) / rect.width));
+    V = Math.max(0, Math.min(1, 1 - (cy - rect.top) / rect.height));
     syncFromHsv();
   }
 
-  sq.addEventListener('mousedown', e => {
-    e.preventDefault();
-    dragging = true;
-    handleSquareDrag(e);
-  });
-
-  const onMouseMove = e => { if (dragging) handleSquareDrag(e); };
-  const onMouseUp   = () => { dragging = false; };
-  document.addEventListener('mousemove', onMouseMove);
-  document.addEventListener('mouseup',   onMouseUp);
-
+  sq.addEventListener('mousedown', e => { e.preventDefault(); dragging = true; handleSquareDrag(e); });
+  const onMove = e => { if (dragging) handleSquareDrag(e); };
+  const onUp   = () => { dragging = false; };
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup',   onUp);
   sq.addEventListener('touchstart', e => { e.preventDefault(); handleSquareDrag(e); }, { passive: false });
   sq.addEventListener('touchmove',  e => { e.preventDefault(); handleSquareDrag(e); }, { passive: false });
 
-  // ── Hex input — manual entry ──
-  hexInp.addEventListener('input', () => setFromHex(hexInp.value));
+  hexInp.addEventListener('input', () => setFillFromHex(hexInp.value));
 
-  // ── Quick-pick swatches (APi + Standard inside the form) ──
-  // These SET the picker value — they do NOT apply or save.
+  // Fill quick-picks (APi + Standard + Recent)
   form.querySelectorAll('.qp-swatch').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
-      setFromHex(btn.dataset.setcolor);
-      // Visual feedback: briefly highlight the selected swatch
+      setFillFromHex(btn.dataset.setcolor);
       form.querySelectorAll('.qp-swatch').forEach(b => b.classList.remove('qp-selected'));
       btn.classList.add('qp-selected');
     });
   });
 
-  // ── Save / Add button ──
+  // ── Text color state (DOI only) ──
+  function syncTextPreview(hex) {
+    if (!tcPreview || !tcHexInp) return;
+    const n = normalizeHex(hex.startsWith('#') ? hex : '#' + hex);
+    if (!n) return;
+    tcPreview.style.background = n;
+    tcHexInp.value             = n.replace('#', '').toUpperCase();
+    // Update active state on text QP swatches
+    form.querySelectorAll('.tc-qp-swatch').forEach(b => {
+      b.classList.toggle('tc-selected', b.dataset.settextcolor.toUpperCase() === n);
+    });
+  }
+
+  if (isDOI) {
+    // Text color quick-picks
+    form.querySelectorAll('.tc-qp-swatch').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        syncTextPreview(btn.dataset.settextcolor);
+      });
+    });
+
+    // Text hex manual input
+    tcHexInp.addEventListener('input', () => {
+      const val = tcHexInp.value.trim();
+      if (val.length === 6) syncTextPreview(val);
+    });
+  }
+
+  // ── Save / Add ──
   const cleanup = () => {
-    document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('mouseup',   onMouseUp);
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup',   onUp);
   };
 
   form.querySelector('.cform-save').addEventListener('click', () => {
     const norm = normalizeHex('#' + hexInp.value);
     if (!norm) { hexInp.focus(); hexInp.select(); return; }
-    const name = nameInp.value.trim();
+    const name    = nameInp.value.trim();
+    const txtNorm = isDOI
+      ? (normalizeHex('#' + (tcHexInp ? tcHexInp.value : '')) || '#FFFFFF')
+      : null;
+
     if (type === 'edit' && idx !== null) {
-      updateColor(key, idx, norm, name || norm);
+      updateColor(key, idx, norm, name || norm, txtNorm);
     } else {
-      addColor(key, norm, name);
+      addColor(key, norm, name, txtNorm);
     }
     _openForm = null;
     cleanup();
     renderEditPanel();
   });
 
-  // ── Cancel ──
   form.querySelector('.cform-cancel').addEventListener('click', () => {
     _openForm = null;
     cleanup();
     renderEditPanel();
   });
 
-  // ── Enter in name field = save ──
   nameInp.addEventListener('keydown', e => {
     if (e.key === 'Enter') form.querySelector('.cform-save').click();
   });
 
-  // Auto-select hex input on open
   setTimeout(() => { if (hexInp.isConnected) hexInp.select(); }, 50);
 }
 
 // ─────────────────────────────────────────────────────────────────
 // Apply color and close edit panel
+// textColor is only passed for DOI (fill) entries
 // ─────────────────────────────────────────────────────────────────
-function applyAndClose(color) {
+function applyAndClose(color, textColor) {
   if (_applyFn) _applyFn(color);
+  // DOI: also apply paired text color
+  if (textColor && _editKey === 'fill') applyTextColor(textColor);
   if (color !== 'none') pushRecent(_editKey, color);
   closeEditPanel();
 }
@@ -730,11 +799,11 @@ async function inspectSelection() {
 
       const items = sel.items;
       if (!items.length) { renderEmpty(); return; }
-      _cachedShapeCount = items.length; // cache for fast apply
+      _cachedShapeCount = items.length;
 
-      const merged   = { fill: false, border: false, text: false, lineEnds: false };
-      let   allSame  = true;
-      const firstKey = toKey(items[0].type);
+      const merged    = { fill: false, border: false, text: false, lineEnds: false };
+      let   allSame   = true;
+      const firstKey  = toKey(items[0].type);
       const firstName = items[0].name || '';
 
       items.forEach(s => {
@@ -752,14 +821,7 @@ async function inspectSelection() {
         ? (TYPE_META[firstKey] || { icon: '?', label: cap(firstKey || 'Shape') })
         : { icon: '⊕', label: 'Mixed Selection' };
 
-      renderUI({
-        merged,
-        meta,
-        firstName,
-        count: items.length,
-        anySupported,
-        isLine: allSame && firstKey === 'line',
-      });
+      renderUI({ merged, meta, firstName, count: items.length, anySupported, isLine: allSame && firstKey === 'line' });
     });
   } catch (_) { renderEmpty(); }
 }
@@ -797,9 +859,7 @@ function renderUI({ merged, meta, firstName, count, anySupported, isLine }) {
 
 function renderEmpty() {
   _cachedShapeCount = 0;
-  show('empty-state');
-  hide('shape-banner');
-  hide('unsupported-state');
+  show('empty-state'); hide('shape-banner'); hide('unsupported-state');
   ['section-fill', 'section-border', 'section-line-ends', 'section-text'].forEach(hide);
   setStatus('');
 }
@@ -811,27 +871,22 @@ function tog(id, vis) { el(id)?.classList.toggle('hidden', !vis); }
 function setStatus(m) { if (el('status')) el('status').textContent = m; }
 
 // ─────────────────────────────────────────────────────────────────
-// Apply functions
+// Apply functions — single sync, version-gated
 // ─────────────────────────────────────────────────────────────────
-// Fast helper — no load() needed for write operations.
-// Uses cached count + getItemAt(i) to skip the first sync entirely.
 function getSelectedFast(ctx) {
-  const col    = ctx.presentation.getSelectedShapes();
+  const col = ctx.presentation.getSelectedShapes();
   const shapes = [];
-  for (let i = 0; i < _cachedShapeCount; i++) {
-    shapes.push(col.getItemAt(i));
-  }
-  return shapes; // proxy objects — safe to write to before sync
+  for (let i = 0; i < _cachedShapeCount; i++) shapes.push(col.getItemAt(i));
+  return shapes;
 }
 
 async function applyFill(color) {
   const ver = ++_applyVer;
   if (!_cachedShapeCount) return setStatus('No shape selected.');
   await PowerPoint.run(async ctx => {
-    if (ver !== _applyVer) return; // superseded by a newer click
+    if (ver !== _applyVer) return;
     getSelectedFast(ctx).forEach(s => {
-      if (color === 'none') s.fill.clear();
-      else s.fill.setSolidColor(color);
+      if (color === 'none') s.fill.clear(); else s.fill.setSolidColor(color);
     });
     await ctx.sync();
     if (ver === _applyVer) setStatus(`Fill → ${color === 'none' ? 'cleared' : color}`);
@@ -868,8 +923,6 @@ async function applyBorderDash(style) {
   if (!_cachedShapeCount) return setStatus('No shape selected.');
   await PowerPoint.run(async ctx => {
     if (ver !== _applyVer) return;
-    // Resolve enum INSIDE PowerPoint.run where it is guaranteed to be available.
-    // LineDashStyle.dot does not exist in the API — roundDot is the correct dotted value.
     let dashVal;
     switch (style) {
       case 'dash':     dashVal = PowerPoint.LineDashStyle.dash;     break;
@@ -899,23 +952,16 @@ async function applyTextColor(color) {
 }
 
 async function applyLineEnds() {
-  const aMap = {
-    none:      PowerPoint.ArrowheadStyle.none,
-    arrow:     PowerPoint.ArrowheadStyle.arrow,
-    openArrow: PowerPoint.ArrowheadStyle.openArrow,
-    diamond:   PowerPoint.ArrowheadStyle.diamond,
-    oval:      PowerPoint.ArrowheadStyle.oval,
-  };
-  const sv = el('line-start').value;
-  const ev = el('line-end').value;
+  const sv  = el('line-start').value;
+  const ev  = el('line-end').value;
   const ver = ++_applyVer;
   if (!_cachedShapeCount) return setStatus('No shape selected.');
   await PowerPoint.run(async ctx => {
     if (ver !== _applyVer) return;
     getSelectedFast(ctx).forEach(s => {
       try {
-        s.lineFormat.beginArrowheadStyle = aMap[sv] ?? PowerPoint.ArrowheadStyle.none;
-        s.lineFormat.endArrowheadStyle   = aMap[ev] ?? PowerPoint.ArrowheadStyle.none;
+        s.lineFormat.beginArrowheadStyle = PowerPoint.ArrowheadStyle[sv] ?? PowerPoint.ArrowheadStyle.none;
+        s.lineFormat.endArrowheadStyle   = PowerPoint.ArrowheadStyle[ev] ?? PowerPoint.ArrowheadStyle.none;
       } catch (_) {}
     });
     await ctx.sync();
