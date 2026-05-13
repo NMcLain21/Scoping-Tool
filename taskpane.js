@@ -1,7 +1,7 @@
 'use strict';
 
 // ─────────────────────────────────────────────────────────────────
-// APi Group brand colors (theme columns)
+// Brand / static color data
 // ─────────────────────────────────────────────────────────────────
 const BRAND_COLORS = [
   { hex: '#151F37', name: 'Navy'       },
@@ -13,13 +13,12 @@ const BRAND_COLORS = [
   { hex: '#000000', name: 'Black'      },
 ];
 
-// Shade rows beneath base: [lighter 80%, 60%, 40%, darker 25%, 50%]
 const SHADE_STEPS = [
-  { fn: h => tint(h, 0.80),  label: 'Lighter 80%' },
-  { fn: h => tint(h, 0.60),  label: 'Lighter 60%' },
-  { fn: h => tint(h, 0.40),  label: 'Lighter 40%' },
-  { fn: h => darken(h, 0.25),label: 'Darker 25%'  },
-  { fn: h => darken(h, 0.50),label: 'Darker 50%'  },
+  { fn: h => tint(h, 0.80),   label: 'Lighter 80%' },
+  { fn: h => tint(h, 0.60),   label: 'Lighter 60%' },
+  { fn: h => tint(h, 0.40),   label: 'Lighter 40%' },
+  { fn: h => darken(h, 0.25), label: 'Darker 25%'  },
+  { fn: h => darken(h, 0.50), label: 'Darker 50%'  },
 ];
 
 const STANDARD_COLORS = [
@@ -94,109 +93,92 @@ const TYPE_META = {
 // ─────────────────────────────────────────────────────────────────
 // Color utilities
 // ─────────────────────────────────────────────────────────────────
-
 function hexToRgb(hex) {
   const h = hex.replace('#', '');
-  return {
-    r: parseInt(h.slice(0, 2), 16),
-    g: parseInt(h.slice(2, 4), 16),
-    b: parseInt(h.slice(4, 6), 16),
-  };
+  return { r: parseInt(h.slice(0,2),16), g: parseInt(h.slice(2,4),16), b: parseInt(h.slice(4,6),16) };
 }
-
-function rgbToHex(r, g, b) {
-  return '#' + [r, g, b]
-    .map(x => Math.round(Math.min(255, Math.max(0, x))).toString(16).padStart(2, '0'))
-    .join('')
-    .toUpperCase();
+function rgbToHex(r,g,b) {
+  return '#' + [r,g,b].map(x => Math.round(Math.min(255,Math.max(0,x))).toString(16).padStart(2,'0')).join('').toUpperCase();
 }
-
 function tint(hex, pct) {
-  const { r, g, b } = hexToRgb(hex);
-  return rgbToHex(r + (255 - r) * pct, g + (255 - g) * pct, b + (255 - b) * pct);
+  const {r,g,b} = hexToRgb(hex);
+  return rgbToHex(r+(255-r)*pct, g+(255-g)*pct, b+(255-b)*pct);
 }
-
 function darken(hex, pct) {
-  const { r, g, b } = hexToRgb(hex);
-  return rgbToHex(r * (1 - pct), g * (1 - pct), b * (1 - pct));
+  const {r,g,b} = hexToRgb(hex);
+  return rgbToHex(r*(1-pct), g*(1-pct), b*(1-pct));
 }
-
 function isLight(hex) {
-  const { r, g, b } = hexToRgb(hex);
-  return (r * 299 + g * 587 + b * 114) / 1000 > 155;
+  const {r,g,b} = hexToRgb(hex);
+  return (r*299 + g*587 + b*114)/1000 > 155;
 }
-
 function normalizeHex(raw) {
-  const h = (raw || '').replace('#', '').trim();
-  return /^[0-9A-Fa-f]{6}$/.test(h) ? '#' + h.toUpperCase() : null;
+  const h = (raw||'').replace('#','').trim();
+  return /^[0-9A-Fa-f]{6}$/.test(h) ? '#'+h.toUpperCase() : null;
 }
-
 function esc(s) {
-  return (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 // ─────────────────────────────────────────────────────────────────
 // Storage
 // ─────────────────────────────────────────────────────────────────
-
-function getCustom(key) {
+function getPalette(key) {
   try {
     const s = localStorage.getItem(`sct_${key}`);
-    return s ? JSON.parse(s) : [...DEFAULT_PALETTES[key]];
-  } catch { return [...DEFAULT_PALETTES[key]]; }
+    return s ? JSON.parse(s) : JSON.parse(JSON.stringify(DEFAULT_PALETTES[key]));
+  } catch { return JSON.parse(JSON.stringify(DEFAULT_PALETTES[key])); }
 }
-
-function saveCustom(key, arr) {
+function savePalette(key, arr) {
   localStorage.setItem(`sct_${key}`, JSON.stringify(arr));
 }
-
-function addCustom(key, hex, name) {
+function updateColor(key, idx, hex, name) {
+  const arr = getPalette(key);
+  if (arr[idx]) { arr[idx] = { hex, name: name || hex }; savePalette(key, arr); }
+}
+function addColor(key, hex, name) {
   const norm = normalizeHex(hex);
   if (!norm) return;
-  const arr = getCustom(key);
-  if (!arr.find(c => c.hex.toUpperCase() === norm)) {
-    arr.push({ hex: norm, name: name || norm });
-    saveCustom(key, arr);
-  }
+  const arr = getPalette(key);
+  arr.push({ hex: norm, name: name || norm });
+  savePalette(key, arr);
 }
-
-function delCustom(key, idx) {
-  const arr = getCustom(key);
+function deleteColor(key, idx) {
+  const arr = getPalette(key);
   arr.splice(idx, 1);
-  saveCustom(key, arr);
+  savePalette(key, arr);
 }
-
 function getRecent(key) {
   try { return JSON.parse(localStorage.getItem(`sct_recent_${key}`)) || []; }
   catch { return []; }
 }
-
 function pushRecent(key, hex) {
   if (!hex || hex === 'none') return;
   const norm = normalizeHex(hex) || hex.toUpperCase();
   let arr = getRecent(key).filter(h => h !== norm);
   arr.unshift(norm);
-  localStorage.setItem(`sct_recent_${key}`, JSON.stringify(arr.slice(0, 10)));
+  localStorage.setItem(`sct_recent_${key}`, JSON.stringify(arr.slice(0,10)));
 }
 
 // ─────────────────────────────────────────────────────────────────
 // Edit panel state
 // ─────────────────────────────────────────────────────────────────
+let _editKey  = null;
+let _applyFn  = null;
 
-let _editKey = null;
-let _applyFn = null;
+// Which inline form is currently open: null | { type:'edit'|'add', idx:number|null }
+let _openForm = null;
 
 // ─────────────────────────────────────────────────────────────────
-// Main panel — render 7 swatches + pencil edit button per section
+// Main panel — 7 swatches + pencil button
 // ─────────────────────────────────────────────────────────────────
-
 function renderMainSwatches(key) {
   const row = document.getElementById(`swatches-${key}`);
   if (!row) return;
 
-  const applyFnMap = { fill: applyFill, border: applyBorderColor, text: applyTextColor };
-  const fn = applyFnMap[key];
-  const colors = getCustom(key);
+  const fnMap = { fill: applyFill, border: applyBorderColor, text: applyTextColor };
+  const fn    = fnMap[key];
+  const colors = getPalette(key);
 
   row.innerHTML =
     colors.map(c => `
@@ -204,8 +186,8 @@ function renderMainSwatches(key) {
               style="background:${c.hex}"
               data-color="${c.hex}"
               title="${esc(c.name)}\n${c.hex}"
-              aria-label="${esc(c.name)}">
-      </button>`).join('') +
+              aria-label="${esc(c.name)}"></button>`
+    ).join('') +
     `<button class="edit-palette-btn" data-key="${key}"
              title="Edit ${key} palette" aria-label="Edit ${key} colors">
        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -215,7 +197,6 @@ function renderMainSwatches(key) {
        </svg>
      </button>`;
 
-  // Apply color on swatch click
   row.querySelectorAll('.main-swatch').forEach(btn => {
     btn.addEventListener('click', () => {
       fn(btn.dataset.color);
@@ -223,19 +204,18 @@ function renderMainSwatches(key) {
     });
   });
 
-  // Open edit panel
   row.querySelector('.edit-palette-btn').addEventListener('click', () => {
     openEditPanel(key, fn);
   });
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Edit panel — open / close / render
+// Edit panel — open / close
 // ─────────────────────────────────────────────────────────────────
-
 function openEditPanel(key, fn) {
-  _editKey = key;
-  _applyFn = fn;
+  _editKey  = key;
+  _applyFn  = fn;
+  _openForm = null;
   renderEditPanel();
   document.getElementById('main-content').classList.add('hidden');
   document.getElementById('edit-panel').classList.remove('hidden');
@@ -244,19 +224,23 @@ function openEditPanel(key, fn) {
 function closeEditPanel() {
   document.getElementById('edit-panel').classList.add('hidden');
   document.getElementById('main-content').classList.remove('hidden');
-  renderMainSwatches(_editKey); // refresh main swatches in case palette changed
-  _editKey = null;
-  _applyFn = null;
+  renderMainSwatches(_editKey);
+  _editKey  = null;
+  _applyFn  = null;
+  _openForm = null;
 }
 
+// ─────────────────────────────────────────────────────────────────
+// Edit panel — full render
+// ─────────────────────────────────────────────────────────────────
 function renderEditPanel() {
   const key = _editKey;
   const titleMap = { fill: 'Fill Color', border: 'Border Color', text: 'Text Color' };
   document.getElementById('edit-panel-title').textContent = titleMap[key] || 'Edit Colors';
 
-  // ── APi Group theme colors: base row + 5 shade rows ──
+  // Theme color grid
   const baseRowHtml = BRAND_COLORS.map(c =>
-    `<div class="theme-swatch base-swatch${isLight(c.hex) ? ' light' : ''}"
+    `<div class="theme-swatch base-swatch${isLight(c.hex) ? ' light':''}"
           style="background:${c.hex}" data-color="${c.hex}"
           title="${esc(c.name)}" role="button" tabindex="0"></div>`
   ).join('');
@@ -264,106 +248,102 @@ function renderEditPanel() {
   const shadeRowsHtml = SHADE_STEPS.map(step =>
     `<div class="theme-row">${BRAND_COLORS.map(c => {
       const hex = step.fn(c.hex);
-      return `<div class="theme-swatch${isLight(hex) ? ' light' : ''}"
+      return `<div class="theme-swatch${isLight(hex)?' light':''}"
                    style="background:${hex}" data-color="${hex}"
                    title="${esc(c.name)} — ${step.label}" role="button" tabindex="0"></div>`;
     }).join('')}</div>`
   ).join('');
 
-  // ── Standard colors ──
+  // Standard colors
   const standardHtml = STANDARD_COLORS.map(c =>
-    `<div class="std-swatch${isLight(c.hex) ? ' light' : ''}"
+    `<div class="std-swatch${isLight(c.hex)?' light':''}"
           style="background:${c.hex}" data-color="${c.hex}"
           title="${esc(c.name)}" role="button" tabindex="0"></div>`
   ).join('');
 
-  // ── Custom colors ──
-  const customColors = getCustom(key);
-  const customHtml = customColors.map((c, i) =>
-    `<div class="custom-wrap">
-       <div class="custom-swatch${isLight(c.hex) ? ' light' : ''}"
-            style="background:${c.hex}" data-color="${c.hex}"
-            title="${esc(c.name)}\n${c.hex}" role="button" tabindex="0"></div>
-       <button class="del-btn" data-idx="${i}" aria-label="Remove ${esc(c.name)}">×</button>
-     </div>`
-  ).join('');
-
-  // ── Recent colors ──
+  // Recent colors
   const recent = getRecent(key);
   const recentHtml = recent.length ? `
     <div class="ep-label">Recent Colors</div>
-    <div class="std-row recent-row">${recent.map(hex =>
-      `<div class="std-swatch${isLight(hex) ? ' light' : ''}"
+    <div class="std-row">${recent.map(hex =>
+      `<div class="std-swatch${isLight(hex)?' light':''}"
             style="background:${hex}" data-color="${hex}"
             title="${hex}" role="button" tabindex="0"></div>`
     ).join('')}</div>` : '';
 
+  // My colors — each has edit + delete overlays
+  const palette     = getPalette(key);
+  const myColorsHtml = palette.map((c, i) => {
+    const isEditing = _openForm && _openForm.type === 'edit' && _openForm.idx === i;
+    return `
+      <div class="my-color-item" data-idx="${i}">
+        <div class="my-color-top">
+          <div class="my-swatch-wrap">
+            <div class="my-swatch${isLight(c.hex)?' light':''}"
+                 style="background:${c.hex}"
+                 title="${esc(c.name)}\n${c.hex}"
+                 data-color="${c.hex}"
+                 role="button" tabindex="0"
+                 aria-label="Apply ${esc(c.name)}"></div>
+          </div>
+          <div class="my-color-info">
+            <span class="my-color-name">${esc(c.name)}</span>
+            <span class="my-color-hex">${c.hex}</span>
+          </div>
+          <div class="my-color-actions">
+            <button class="my-edit-btn${isEditing?' active':''}"
+                    data-idx="${i}" aria-label="Edit ${esc(c.name)}" title="Edit color">
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                <path d="M8.5 1.5a1.414 1.414 0 012 2L4 10H2V8L8.5 1.5z"
+                      stroke="currentColor" stroke-width="1.4"
+                      stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              </svg>
+            </button>
+            <button class="my-del-btn" data-idx="${i}"
+                    aria-label="Delete ${esc(c.name)}" title="Delete color">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                <line x1="1.5" y1="1.5" x2="8.5" y2="8.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                <line x1="8.5" y1="1.5" x2="1.5" y2="8.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        ${isEditing ? buildColorForm('edit', i, c.hex, c.name) : ''}
+      </div>`;
+  }).join('');
+
+  // Add new color row + form
+  const isAdding    = _openForm && _openForm.type === 'add';
+  const addFormHtml = isAdding ? buildColorForm('add', null, '#2A3E6D', '') : '';
+
   document.getElementById('edit-panel-body').innerHTML = `
 
-    <!-- Theme colors -->
     <div class="ep-label">APi Group Theme Colors</div>
     <div class="theme-grid">
       <div class="theme-row base-row">${baseRowHtml}</div>
       ${shadeRowsHtml}
     </div>
 
-    <!-- Standard colors -->
     <div class="ep-label">Standard Colors</div>
     <div class="std-row">${standardHtml}</div>
 
-    <!-- Recent colors -->
     ${recentHtml}
 
-    <!-- Custom colors -->
     <div class="ep-label">
       My Colors
-      <span class="ep-hint">hover to remove</span>
+      <span class="ep-hint">click swatch to apply</span>
     </div>
-    <div class="custom-row">
-      ${customHtml}
-      <button class="add-toggle-btn" id="ep-add-toggle"
-              aria-label="Add a custom color" title="Add color">
-        <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-          <line x1="5.5" y1="1" x2="5.5" y2="10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-          <line x1="1" y1="5.5" x2="10" y2="5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-        </svg>
-      </button>
-    </div>
+    <div id="my-colors-list">${myColorsHtml}</div>
 
-    <!-- Inline add form -->
-    <div class="add-form hidden" id="ep-add-form">
-      <div class="add-form-inputs">
-        <input type="color" id="ep-wheel" class="ep-wheel" value="#2A3E6D" />
-        <div class="hex-field">
-          <span class="hex-hash">#</span>
-          <input type="text" id="ep-hex" class="ep-hex-input"
-                 value="2A3E6D" maxlength="6" placeholder="RRGGBB" spellcheck="false" />
-        </div>
-        <div class="ep-preview-swatch" id="ep-preview" style="background:#2A3E6D"></div>
-      </div>
-      <input type="text" id="ep-name" class="ep-name-input"
-             placeholder="Color name (optional)" maxlength="28" />
-      <button class="ep-add-btn" id="ep-confirm-add">+ Add to My Colors</button>
-    </div>
+    <button class="add-new-btn${isAdding?' active':''}" id="ep-add-toggle">
+      <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+        <line x1="5.5" y1="1" x2="5.5" y2="10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <line x1="1" y1="5.5" x2="10" y2="5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+      Add New Color
+    </button>
+    ${addFormHtml}
 
-    <!-- More colors picker -->
-    <div class="ep-label" style="margin-top:14px">More Colors</div>
-    <div class="more-colors-box">
-      <div class="mc-top">
-        <input type="color" id="mc-wheel" class="mc-wheel" value="#2A3E6D" />
-        <div class="mc-right">
-          <div class="mc-preview" id="mc-preview" style="background:#2A3E6D"></div>
-          <div class="hex-field">
-            <span class="hex-hash">#</span>
-            <input type="text" id="mc-hex" class="ep-hex-input"
-                   value="2A3E6D" maxlength="6" placeholder="RRGGBB" spellcheck="false" />
-          </div>
-        </div>
-      </div>
-      <button class="mc-apply-btn" id="mc-apply">Apply This Color</button>
-    </div>
-
-    <!-- No color -->
     <button class="no-color-btn" id="ep-no-color">
       <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
         <rect x="1" y="1" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.2"/>
@@ -376,93 +356,160 @@ function renderEditPanel() {
   bindEditEvents(key);
 }
 
+// ─────────────────────────────────────────────────────────────────
+// Build a color form (used for both edit and add)
+// type: 'edit' | 'add'
+// idx:  number (for edit) | null (for add)
+// ─────────────────────────────────────────────────────────────────
+function buildColorForm(type, idx, startHex, startName) {
+  const norm    = normalizeHex(startHex) || '#2A3E6D';
+  const hexVal  = norm.replace('#','');
+  const idSufx  = type === 'edit' ? `edit-${idx}` : 'add';
+
+  return `
+    <div class="color-form" id="cform-${idSufx}" data-type="${type}" data-idx="${idx ?? ''}">
+      <div class="cform-row">
+        <input type="color" class="cform-wheel" id="cfw-${idSufx}" value="${norm}" />
+        <div class="hex-field">
+          <span class="hex-hash">#</span>
+          <input type="text" class="cform-hex ep-hex-input"
+                 id="cfh-${idSufx}" value="${hexVal}"
+                 maxlength="6" placeholder="RRGGBB" spellcheck="false" />
+        </div>
+        <div class="cform-preview" id="cfp-${idSufx}" style="background:${norm}"></div>
+      </div>
+      <input type="text" class="ep-name-input cform-name" id="cfn-${idSufx}"
+             placeholder="Color name (optional)" maxlength="28"
+             value="${esc(startName)}" />
+      <div class="cform-btns">
+        <button class="cform-save" data-type="${type}" data-idx="${idx ?? ''}">
+          ${type === 'edit' ? 'Save Changes' : '+ Add to My Colors'}
+        </button>
+        <button class="cform-cancel">Cancel</button>
+      </div>
+    </div>`;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Bind all events inside the edit panel
+// ─────────────────────────────────────────────────────────────────
 function bindEditEvents(key) {
   const body = document.getElementById('edit-panel-body');
 
-  // ── Theme + standard + recent: click to apply and close ──
-  body.querySelectorAll('.theme-swatch, .std-swatch').forEach(s => {
-    const handler = () => applyAndClose(s.dataset.color);
-    s.addEventListener('click', handler);
-    s.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); }
-    });
+  // ── Theme swatches: apply + close ──
+  body.querySelectorAll('.theme-swatch').forEach(s => {
+    const apply = () => applyAndClose(s.dataset.color);
+    s.addEventListener('click', apply);
+    s.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' '){e.preventDefault();apply();} });
   });
 
-  // ── Custom swatches: click to apply and close ──
-  body.querySelectorAll('.custom-swatch').forEach(s => {
+  // ── Standard + recent: apply + close ──
+  body.querySelectorAll('.std-swatch').forEach(s => {
     s.addEventListener('click', () => applyAndClose(s.dataset.color));
   });
 
-  // ── Delete custom color ──
-  body.querySelectorAll('.del-btn').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      delCustom(key, parseInt(btn.dataset.idx, 10));
+  // ── My colors: click swatch = apply + close ──
+  body.querySelectorAll('.my-swatch').forEach(s => {
+    s.addEventListener('click', () => applyAndClose(s.dataset.color));
+    s.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' '){e.preventDefault();applyAndClose(s.dataset.color);} });
+  });
+
+  // ── My colors: edit button ──
+  body.querySelectorAll('.my-edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.idx, 10);
+      // Toggle: if this form is already open, close it; otherwise open it
+      if (_openForm && _openForm.type === 'edit' && _openForm.idx === idx) {
+        _openForm = null;
+      } else {
+        _openForm = { type: 'edit', idx };
+      }
       renderEditPanel();
     });
   });
 
-  // ── Toggle inline add form ──
-  document.getElementById('ep-add-toggle').addEventListener('click', () => {
-    const form    = document.getElementById('ep-add-form');
-    const opening = form.classList.contains('hidden');
-    form.classList.toggle('hidden');
-    document.getElementById('ep-add-toggle').classList.toggle('active', opening);
-    if (opening) setTimeout(() => document.getElementById('ep-hex')?.focus(), 40);
+  // ── My colors: delete button ──
+  body.querySelectorAll('.my-del-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      deleteColor(key, parseInt(btn.dataset.idx, 10));
+      _openForm = null;
+      renderEditPanel();
+    });
   });
 
-  // ── Add form: sync wheel ↔ hex ↔ preview ──
-  const wheel   = document.getElementById('ep-wheel');
-  const hexInp  = document.getElementById('ep-hex');
-  const preview = document.getElementById('ep-preview');
+  // ── Add new color toggle ──
+  document.getElementById('ep-add-toggle').addEventListener('click', () => {
+    _openForm = (_openForm && _openForm.type === 'add') ? null : { type: 'add', idx: null };
+    renderEditPanel();
+  });
 
+  // ── No color button ──
+  document.getElementById('ep-no-color').addEventListener('click', () => applyAndClose('none'));
+
+  // ── Wire up all open color forms ──
+  body.querySelectorAll('.color-form').forEach(form => {
+    wireColorForm(form, key);
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Wire a single color form's inputs + buttons
+// ─────────────────────────────────────────────────────────────────
+function wireColorForm(form, key) {
+  const type   = form.dataset.type;
+  const idx    = form.dataset.idx !== '' ? parseInt(form.dataset.idx, 10) : null;
+  const sufx   = type === 'edit' ? `edit-${idx}` : 'add';
+
+  const wheel   = document.getElementById(`cfw-${sufx}`);
+  const hexInp  = document.getElementById(`cfh-${sufx}`);
+  const preview = document.getElementById(`cfp-${sufx}`);
+  const nameInp = document.getElementById(`cfn-${sufx}`);
+
+  // Sync wheel → hex + preview
   wheel.addEventListener('input', () => {
-    hexInp.value = wheel.value.replace('#', '').toUpperCase();
+    hexInp.value = wheel.value.replace('#','').toUpperCase();
     preview.style.background = wheel.value;
   });
+
+  // Sync hex → wheel + preview
   hexInp.addEventListener('input', () => {
     const norm = normalizeHex(hexInp.value);
     if (norm) { wheel.value = norm; preview.style.background = norm; }
   });
 
-  // ── Confirm add to My Colors ──
-  document.getElementById('ep-confirm-add').addEventListener('click', () => {
+  // Save / Add button
+  form.querySelector('.cform-save').addEventListener('click', () => {
     const norm = normalizeHex(hexInp.value);
-    if (!norm) return;
-    const name = document.getElementById('ep-name').value.trim();
-    addCustom(key, norm, name || norm);
-    document.getElementById('ep-name').value = '';
-    document.getElementById('ep-add-form').classList.add('hidden');
-    document.getElementById('ep-add-toggle').classList.remove('active');
+    if (!norm) { hexInp.focus(); return; }
+    const name = nameInp.value.trim();
+
+    if (type === 'edit' && idx !== null) {
+      updateColor(key, idx, norm, name || norm);
+    } else {
+      addColor(key, norm, name);
+    }
+    _openForm = null;
     renderEditPanel();
   });
-  document.getElementById('ep-name').addEventListener('keydown', e => {
-    if (e.key === 'Enter') document.getElementById('ep-confirm-add').click();
+
+  // Cancel
+  form.querySelector('.cform-cancel').addEventListener('click', () => {
+    _openForm = null;
+    renderEditPanel();
   });
 
-  // ── More colors: sync wheel ↔ hex ↔ preview ──
-  const mcWheel   = document.getElementById('mc-wheel');
-  const mcHex     = document.getElementById('mc-hex');
-  const mcPreview = document.getElementById('mc-preview');
-
-  mcWheel.addEventListener('input', () => {
-    mcHex.value = mcWheel.value.replace('#', '').toUpperCase();
-    mcPreview.style.background = mcWheel.value;
-  });
-  mcHex.addEventListener('input', () => {
-    const norm = normalizeHex(mcHex.value);
-    if (norm) { mcWheel.value = norm; mcPreview.style.background = norm; }
-  });
-  document.getElementById('mc-apply').addEventListener('click', () => {
-    const norm = normalizeHex(mcHex.value);
-    if (norm) applyAndClose(norm);
+  // Enter key in name field = save
+  nameInp.addEventListener('keydown', e => {
+    if (e.key === 'Enter') form.querySelector('.cform-save').click();
   });
 
-  // ── No color / no fill ──
-  document.getElementById('ep-no-color').addEventListener('click', () => applyAndClose('none'));
+  // Auto-focus hex input
+  setTimeout(() => hexInp.focus(), 40);
 }
 
-// Apply color, track recent, return to main panel
+// ─────────────────────────────────────────────────────────────────
+// Apply and close
+// ─────────────────────────────────────────────────────────────────
 function applyAndClose(color) {
   if (_applyFn) _applyFn(color);
   if (color !== 'none') pushRecent(_editKey, color);
@@ -472,30 +519,23 @@ function applyAndClose(color) {
 // ─────────────────────────────────────────────────────────────────
 // Office ready
 // ─────────────────────────────────────────────────────────────────
-
 Office.onReady(() => {
-  // Render all three main-panel swatch rows
   renderMainSwatches('fill');
   renderMainSwatches('border');
   renderMainSwatches('text');
 
-  // Border weight chips
   document.querySelectorAll('[data-weight]').forEach(btn =>
     btn.addEventListener('click', () => applyBorderWeight(parseFloat(btn.dataset.weight))));
 
-  // Border dash chips
   document.querySelectorAll('[data-dash]').forEach(btn =>
     btn.addEventListener('click', () => applyBorderDash(btn.dataset.dash)));
 
-  // Line ends
   document.getElementById('btn-apply-ends')
     ?.addEventListener('click', applyLineEnds);
 
-  // Edit panel back button
   document.getElementById('edit-back-btn')
     .addEventListener('click', closeEditPanel);
 
-  // Selection listener — skip while edit panel is open
   Office.context.document.addHandlerAsync(
     Office.EventType.DocumentSelectionChanged,
     () => { if (!_editKey) inspectSelection(); }
@@ -507,7 +547,6 @@ Office.onReady(() => {
 // ─────────────────────────────────────────────────────────────────
 // Shape inspection
 // ─────────────────────────────────────────────────────────────────
-
 async function inspectSelection() {
   try {
     await PowerPoint.run(async ctx => {
@@ -518,10 +557,10 @@ async function inspectSelection() {
       const items = sel.items;
       if (!items.length) { renderEmpty(); return; }
 
-      const merged    = { fill: false, border: false, text: false, lineEnds: false };
-      let   allSame   = true;
-      const firstKey  = toKey(items[0].type);
-      const firstName = items[0].name || '';
+      const merged   = { fill:false, border:false, text:false, lineEnds:false };
+      let   allSame  = true;
+      const firstKey = toKey(items[0].type);
+      const firstName= items[0].name || '';
 
       items.forEach(s => {
         const k = toKey(s.type);
@@ -535,11 +574,10 @@ async function inspectSelection() {
 
       const anySupported = Object.values(merged).some(Boolean);
       const meta = allSame
-        ? (TYPE_META[firstKey] || { icon: '?', label: cap(firstKey || 'Shape') })
-        : { icon: '⊕', label: 'Mixed Selection' };
+        ? (TYPE_META[firstKey] || { icon:'?', label: cap(firstKey||'Shape') })
+        : { icon:'⊕', label:'Mixed Selection' };
 
-      renderUI({ merged, meta, firstName, count: items.length,
-                 anySupported, isLine: allSame && firstKey === 'line' });
+      renderUI({ merged, meta, firstName, count:items.length, anySupported, isLine: allSame && firstKey==='line' });
     });
   } catch (_) { renderEmpty(); }
 }
@@ -549,13 +587,11 @@ function toKey(raw) {
   const s = String(raw);
   return s.charAt(0).toLowerCase() + s.slice(1);
 }
-
 function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
 // ─────────────────────────────────────────────────────────────────
-// UI helpers
+// Render helpers
 // ─────────────────────────────────────────────────────────────────
-
 function renderUI({ merged, meta, firstName, count, anySupported, isLine }) {
   hide('empty-state');
   hide('unsupported-state');
@@ -564,7 +600,6 @@ function renderUI({ merged, meta, firstName, count, anySupported, isLine }) {
   el('shape-icon').textContent       = meta.icon;
   el('shape-type-label').textContent = meta.label;
   el('shape-name').textContent       = firstName ? `"${firstName}"` : '';
-
   el('shape-count-badge').textContent = `×${count}`;
   tog('shape-count-badge', count > 1);
 
@@ -574,7 +609,6 @@ function renderUI({ merged, meta, firstName, count, anySupported, isLine }) {
   tog('section-text',      merged.text);
 
   el('border-heading').textContent = isLine ? 'Line Style' : 'Border';
-
   if (!anySupported) show('unsupported-state');
 }
 
@@ -582,20 +616,19 @@ function renderEmpty() {
   show('empty-state');
   hide('shape-banner');
   hide('unsupported-state');
-  ['section-fill', 'section-border', 'section-line-ends', 'section-text'].forEach(hide);
+  ['section-fill','section-border','section-line-ends','section-text'].forEach(hide);
   setStatus('');
 }
 
-function el(id)         { return document.getElementById(id); }
-function show(id)       { el(id)?.classList.remove('hidden'); }
-function hide(id)       { el(id)?.classList.add('hidden'); }
-function tog(id, vis)   { el(id)?.classList.toggle('hidden', !vis); }
-function setStatus(msg) { el('status').textContent = msg; }
+function el(id)       { return document.getElementById(id); }
+function show(id)     { el(id)?.classList.remove('hidden'); }
+function hide(id)     { el(id)?.classList.add('hidden'); }
+function tog(id, vis) { el(id)?.classList.toggle('hidden', !vis); }
+function setStatus(m) { el('status').textContent = m; }
 
 // ─────────────────────────────────────────────────────────────────
-// Shared: get selected shapes
+// Apply functions
 // ─────────────────────────────────────────────────────────────────
-
 async function getSelected(ctx) {
   const col = ctx.presentation.getSelectedShapes();
   col.load('items');
@@ -603,20 +636,13 @@ async function getSelected(ctx) {
   return col.items;
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Apply functions
-// ─────────────────────────────────────────────────────────────────
-
 async function applyFill(color) {
   await PowerPoint.run(async ctx => {
     const shapes = await getSelected(ctx);
     if (!shapes.length) return setStatus('No shape selected.');
-    shapes.forEach(s => {
-      if (color === 'none') s.fill.clear();
-      else s.fill.setSolidColor(color);
-    });
+    shapes.forEach(s => { if (color==='none') s.fill.clear(); else s.fill.setSolidColor(color); });
     await ctx.sync();
-    setStatus(`Fill → ${color === 'none' ? 'cleared' : color}`);
+    setStatus(`Fill → ${color==='none'?'cleared':color}`);
   });
 }
 
@@ -625,11 +651,11 @@ async function applyBorderColor(color) {
     const shapes = await getSelected(ctx);
     if (!shapes.length) return setStatus('No shape selected.');
     shapes.forEach(s => {
-      if (color === 'none') { s.lineFormat.visible = false; }
-      else { s.lineFormat.visible = true; s.lineFormat.color = color; }
+      if (color==='none') { s.lineFormat.visible=false; }
+      else { s.lineFormat.visible=true; s.lineFormat.color=color; }
     });
     await ctx.sync();
-    setStatus(`Border → ${color === 'none' ? 'removed' : color}`);
+    setStatus(`Border → ${color==='none'?'removed':color}`);
   });
 }
 
@@ -637,25 +663,18 @@ async function applyBorderWeight(pts) {
   await PowerPoint.run(async ctx => {
     const shapes = await getSelected(ctx);
     if (!shapes.length) return setStatus('No shape selected.');
-    shapes.forEach(s => { s.lineFormat.weight = pts; s.lineFormat.visible = true; });
+    shapes.forEach(s => { s.lineFormat.weight=pts; s.lineFormat.visible=true; });
     await ctx.sync();
     setStatus(`Weight → ${pts}pt`);
   });
 }
 
 async function applyBorderDash(style) {
-  const map = {
-    solid: PowerPoint.LineDashStyle.solid,
-    dash:  PowerPoint.LineDashStyle.dash,
-    dot:   PowerPoint.LineDashStyle.dot,
-  };
+  const map = { solid:PowerPoint.LineDashStyle.solid, dash:PowerPoint.LineDashStyle.dash, dot:PowerPoint.LineDashStyle.dot };
   await PowerPoint.run(async ctx => {
     const shapes = await getSelected(ctx);
     if (!shapes.length) return setStatus('No shape selected.');
-    shapes.forEach(s => {
-      s.lineFormat.dashStyle = map[style] ?? PowerPoint.LineDashStyle.solid;
-      s.lineFormat.visible = true;
-    });
+    shapes.forEach(s => { s.lineFormat.dashStyle=map[style]??PowerPoint.LineDashStyle.solid; s.lineFormat.visible=true; });
     await ctx.sync();
     setStatus(`Style → ${style}`);
   });
@@ -665,36 +684,26 @@ async function applyTextColor(color) {
   await PowerPoint.run(async ctx => {
     const shapes = await getSelected(ctx);
     if (!shapes.length) return setStatus('No shape selected.');
-    shapes.forEach(s => {
-      try { s.textFrame.textRange.font.color = color; } catch (_) {}
-    });
+    shapes.forEach(s => { try { s.textFrame.textRange.font.color=color; } catch(_){} });
     await ctx.sync();
     setStatus(`Text → ${color}`);
   });
 }
 
 async function applyLineEnds() {
-  const arrowMap = {
-    none:      PowerPoint.ArrowheadStyle.none,
-    arrow:     PowerPoint.ArrowheadStyle.arrow,
-    openArrow: PowerPoint.ArrowheadStyle.openArrow,
-    diamond:   PowerPoint.ArrowheadStyle.diamond,
-    oval:      PowerPoint.ArrowheadStyle.oval,
-  };
-  const startVal = el('line-start').value;
-  const endVal   = el('line-end').value;
-
+  const aMap = { none:PowerPoint.ArrowheadStyle.none, arrow:PowerPoint.ArrowheadStyle.arrow,
+                 openArrow:PowerPoint.ArrowheadStyle.openArrow, diamond:PowerPoint.ArrowheadStyle.diamond,
+                 oval:PowerPoint.ArrowheadStyle.oval };
+  const sv = el('line-start').value, ev = el('line-end').value;
   await PowerPoint.run(async ctx => {
     const shapes = await getSelected(ctx);
     if (!shapes.length) return setStatus('No shape selected.');
     shapes.forEach(s => {
-      if (toKey(s.type) !== 'line') return;
-      try {
-        s.lineFormat.beginArrowheadStyle = arrowMap[startVal] ?? PowerPoint.ArrowheadStyle.none;
-        s.lineFormat.endArrowheadStyle   = arrowMap[endVal]   ?? PowerPoint.ArrowheadStyle.none;
-      } catch (_) {}
+      if (toKey(s.type)!=='line') return;
+      try { s.lineFormat.beginArrowheadStyle=aMap[sv]??PowerPoint.ArrowheadStyle.none;
+            s.lineFormat.endArrowheadStyle  =aMap[ev]??PowerPoint.ArrowheadStyle.none; } catch(_){}
     });
     await ctx.sync();
-    setStatus(`Ends → ${startVal} / ${endVal}`);
+    setStatus(`Ends → ${sv} / ${ev}`);
   });
 }

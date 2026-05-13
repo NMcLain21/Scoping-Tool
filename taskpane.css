@@ -1,4 +1,4 @@
-/* ── APi Group brand tokens ───────────────────────────────────── */
+/* ── Brand tokens ─────────────────────────────────────────────── */
 :root {
   --api-navy:  #151F37;
   --api-blue:  #2A3E6D;
@@ -33,29 +33,18 @@ button, input, select { font-family: var(--font); }
 .hidden { display: none !important; }
 
 /* ── App shell ────────────────────────────────────────────────── */
-#app {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
-}
+#app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
 /* ── Header ───────────────────────────────────────────────────── */
 #app-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: flex; align-items: center; justify-content: space-between;
   padding: 10px 14px;
   background: var(--api-navy);
   border-bottom: 3px solid var(--api-red);
   flex-shrink: 0;
 }
 .header-wordmark { display: flex; align-items: center; gap: 7px; }
-.header-logo-dot {
-  width: 8px; height: 8px;
-  background: var(--api-red);
-  border-radius: 50%;
-}
+.header-logo-dot { width: 8px; height: 8px; background: var(--api-red); border-radius: 50%; }
 .header-title { font-size: 13px; font-weight: 700; color: #fff; letter-spacing: .2px; }
 .header-sub   { font-size: 10px; color: rgba(255,255,255,.45); text-transform: uppercase; letter-spacing: .6px; }
 
@@ -71,8 +60,7 @@ button, input, select { font-family: var(--font); }
 #shape-banner {
   display: flex; align-items: center; gap: 10px;
   padding: 8px 14px;
-  background: var(--bg-subtle);
-  border-bottom: 1px solid var(--border);
+  background: var(--bg-subtle); border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
 .banner-icon-wrap {
@@ -83,8 +71,8 @@ button, input, select { font-family: var(--font); }
 }
 .banner-text { flex: 1; min-width: 0; }
 .banner-text strong {
-  display: block; font-size: 12px; font-weight: 600;
-  color: var(--api-navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  display: block; font-size: 12px; font-weight: 600; color: var(--api-navy);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .banner-text span {
   font-size: 11px; color: var(--text-muted);
@@ -96,17 +84,8 @@ button, input, select { font-family: var(--font); }
 }
 
 /* ── Content area ─────────────────────────────────────────────── */
-#content-area {
-  position: relative;
-  flex: 1;
-  overflow: hidden;
-}
-
-#main-content {
-  height: 100%;
-  overflow-y: auto;
-  padding-bottom: 30px;
-}
+#content-area { position: relative; flex: 1; overflow: hidden; }
+#main-content  { height: 100%; overflow-y: auto; padding-bottom: 30px; }
 
 /* ── Sections ─────────────────────────────────────────────────── */
 section { padding: 11px 14px 13px; border-bottom: 1px solid var(--border); }
@@ -121,7 +100,7 @@ h3 {
 }
 .control-group { margin-top: 4px; }
 
-/* ── Main panel swatch row ────────────────────────────────────── */
+/* ── Main swatch row ──────────────────────────────────────────── */
 .swatch-row { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
 
 .main-swatch {
@@ -138,7 +117,7 @@ h3 {
 }
 .main-swatch:focus-visible { outline: 2px solid var(--api-teal); outline-offset: 2px; }
 
-/* ── Pencil edit button (end of swatch row) ───────────────────── */
+/* ── Pencil edit-palette button ───────────────────────────────── */
 .edit-palette-btn {
   width: 28px; height: 28px; border-radius: var(--radius-sm);
   border: 1.5px solid var(--border-mid); background: var(--bg-subtle);
@@ -146,11 +125,9 @@ h3 {
   display: flex; align-items: center; justify-content: center;
   transition: all .15s; flex-shrink: 0; margin-left: 2px;
 }
-.edit-palette-btn:hover {
-  background: var(--api-blue); border-color: var(--api-blue); color: #fff;
-}
+.edit-palette-btn:hover { background: var(--api-blue); border-color: var(--api-blue); color: #fff; }
 
-/* ── Chips (weight / style) ───────────────────────────────────── */
+/* ── Chips ────────────────────────────────────────────────────── */
 .chip-row { display: flex; flex-wrap: wrap; gap: 5px; }
 .chip {
   display: inline-flex; align-items: center; gap: 5px;
@@ -169,7 +146,6 @@ h3 {
   width: 100%; padding: 6px 8px;
   border: 1px solid var(--border-mid); border-radius: var(--radius-sm);
   font-size: 12px; background: var(--bg); color: var(--text-primary); outline: none;
-  transition: border-color .15s;
 }
 .line-ends-grid select:focus { border-color: var(--api-blue); }
 
@@ -189,16 +165,14 @@ h3 {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   EDIT PANEL OVERLAY
+   EDIT PANEL
 ═══════════════════════════════════════════════════════════════ */
-
 #edit-panel {
-  position: absolute; inset: 0;
-  background: var(--bg); z-index: 10;
+  position: absolute; inset: 0; background: var(--bg); z-index: 10;
   display: flex; flex-direction: column; overflow: hidden;
 }
 
-/* Back button bar */
+/* Header */
 #edit-panel-header {
   display: flex; align-items: center; gap: 10px;
   padding: 9px 14px;
@@ -212,27 +186,21 @@ h3 {
   padding: 4px 8px; border-radius: var(--radius-sm); transition: background .15s;
 }
 #edit-back-btn:hover { background: rgba(42,62,109,.08); }
-#edit-panel-title {
-  font-size: 12px; font-weight: 600; color: var(--text-primary);
-}
+#edit-panel-title { font-size: 12px; font-weight: 600; color: var(--text-primary); }
 
-/* Scrollable body */
-#edit-panel-body {
-  flex: 1; overflow-y: auto;
-  padding: 12px 14px 36px;
-}
+/* Body */
+#edit-panel-body { flex: 1; overflow-y: auto; padding: 12px 14px 40px; }
 
-/* ── Section labels inside edit panel ─────────────────────────── */
+/* Section labels */
 .ep-label {
   display: flex; align-items: center; justify-content: space-between;
   font-size: 10px; font-weight: 700; color: var(--text-muted);
-  text-transform: uppercase; letter-spacing: .7px;
-  margin: 12px 0 6px;
+  text-transform: uppercase; letter-spacing: .7px; margin: 14px 0 6px;
 }
 .ep-label:first-child { margin-top: 0; }
 .ep-hint { font-size: 9px; color: var(--border-mid); font-weight: 400; text-transform: none; letter-spacing: 0; }
 
-/* ── Theme color grid ─────────────────────────────────────────── */
+/* ── Theme grid ───────────────────────────────────────────────── */
 .theme-grid {
   display: flex; flex-direction: column; gap: 1px;
   background: var(--border-mid);
@@ -241,22 +209,16 @@ h3 {
   overflow: hidden;
 }
 .theme-row { display: flex; gap: 1px; background: var(--border-mid); }
-
 .theme-swatch {
   flex: 1; height: 18px; cursor: pointer; outline: none;
-  transition: filter .1s, transform .1s;
-  position: relative; z-index: 0;
+  transition: filter .1s, transform .1s; position: relative; z-index: 0;
 }
-/* Base row is taller */
-.base-row .theme-swatch,
-.base-row .base-swatch { height: 26px; }
-
+.base-row .theme-swatch { height: 26px; }
 .theme-swatch:hover { filter: brightness(1.12); transform: scaleY(1.08); z-index: 2; }
 .theme-swatch:focus-visible { outline: 2px solid var(--api-teal); outline-offset: -2px; z-index: 3; }
 
-/* ── Standard / recent colors ─────────────────────────────────── */
-.std-row, .recent-row { display: flex; flex-wrap: wrap; gap: 4px; }
-
+/* ── Standard / recent ────────────────────────────────────────── */
+.std-row { display: flex; flex-wrap: wrap; gap: 4px; }
 .std-swatch {
   width: 22px; height: 22px; border-radius: var(--radius-sm);
   cursor: pointer; border: 1.5px solid transparent; outline: none;
@@ -269,60 +231,103 @@ h3 {
 }
 .std-swatch:focus-visible { outline: 2px solid var(--api-teal); outline-offset: 1px; }
 
-/* ── Custom colors row ────────────────────────────────────────── */
-.custom-row { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+/* ── My Colors list ───────────────────────────────────────────── */
+#my-colors-list { display: flex; flex-direction: column; gap: 2px; }
 
-.custom-wrap { position: relative; display: inline-block; }
+.my-color-item {
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid transparent;
+  transition: border-color .15s;
+}
+.my-color-item:hover { border-color: var(--border); }
 
-.custom-swatch {
-  width: 26px; height: 26px; border-radius: var(--radius-sm);
+.my-color-top {
+  display: flex; align-items: center; gap: 9px;
+  padding: 5px 6px;
+}
+.my-swatch-wrap { flex-shrink: 0; }
+.my-swatch {
+  width: 28px; height: 28px; border-radius: var(--radius-sm);
   display: block; cursor: pointer; border: 1.5px solid transparent; outline: none;
   transition: transform .1s, border-color .1s;
 }
-.custom-swatch.light { border-color: var(--border-mid); }
-.custom-swatch:hover { transform: scale(1.1); border-color: var(--api-blue) !important; }
-.custom-swatch:focus-visible { outline: 2px solid var(--api-teal); outline-offset: 1px; }
+.my-swatch.light { border-color: var(--border-mid); }
+.my-swatch:hover { transform: scale(1.1); border-color: var(--api-blue) !important; }
+.my-swatch:focus-visible { outline: 2px solid var(--api-teal); outline-offset: 1px; }
 
-.del-btn {
-  position: absolute; top: -5px; right: -5px;
-  width: 14px; height: 14px; border-radius: 50%;
-  background: var(--api-red); color: #fff;
-  border: 1.5px solid #fff; font-size: 9px; line-height: 1;
-  cursor: pointer; display: flex; align-items: center; justify-content: center;
-  opacity: 0; transition: opacity .15s; z-index: 3; padding: 0;
+.my-color-info {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; justify-content: center;
 }
-.custom-wrap:hover .del-btn { opacity: 1; }
-.del-btn:hover { background: #a0002a; }
+.my-color-name {
+  font-size: 12px; font-weight: 500; color: var(--text-primary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.my-color-hex { font-size: 10px; color: var(--text-muted); font-family: 'Courier New', monospace; }
 
-/* ── Add toggle button ────────────────────────────────────────── */
-.add-toggle-btn {
+.my-color-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+
+.my-edit-btn, .my-del-btn {
   width: 26px; height: 26px; border-radius: var(--radius-sm);
-  border: 1.5px dashed var(--border-mid); background: var(--bg);
-  color: var(--text-muted); cursor: pointer;
+  border: 1px solid var(--border); background: var(--bg-subtle);
   display: flex; align-items: center; justify-content: center;
-  transition: all .15s; flex-shrink: 0;
+  cursor: pointer; color: var(--text-muted); transition: all .15s; outline: none;
 }
-.add-toggle-btn:hover, .add-toggle-btn.active {
+.my-edit-btn:hover, .my-edit-btn.active {
+  background: var(--api-blue); border-color: var(--api-blue); color: #fff;
+}
+.my-del-btn:hover { background: var(--api-red); border-color: var(--api-red); color: #fff; }
+
+/* ── Add New Color button ─────────────────────────────────────── */
+.add-new-btn {
+  display: flex; align-items: center; gap: 7px; width: 100%;
+  margin-top: 10px; padding: 8px 10px;
+  border: 1.5px dashed var(--border-mid); border-radius: var(--radius-md);
+  background: none; color: var(--text-secondary);
+  font-size: 12px; font-weight: 500; cursor: pointer; transition: all .15s;
+}
+.add-new-btn:hover, .add-new-btn.active {
   border-color: var(--api-blue); color: var(--api-blue);
-  background: rgba(42,62,109,.05); border-style: solid;
+  background: rgba(42,62,109,.04); border-style: solid;
 }
 
-/* ── Inline add form ──────────────────────────────────────────── */
-.add-form {
-  margin-top: 8px; padding: 10px;
-  background: var(--bg-subtle); border: 1px solid var(--border);
-  border-radius: var(--radius-md); display: flex; flex-direction: column; gap: 7px;
+/* ── Color form (shared by edit + add) ───────────────────────── */
+.color-form {
+  padding: 10px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  display: flex; flex-direction: column; gap: 8px;
+  animation: slideDown .15s ease;
 }
-.add-form-inputs {
+/* Add form sits below the add button — slightly different rounding */
+.add-new-btn + .color-form {
+  border-top: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  margin-top: 4px;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.cform-row {
   display: flex; align-items: center; gap: 7px;
 }
-.ep-wheel {
+.cform-wheel {
   width: 36px; height: 32px;
   border: 1px solid var(--border-mid); border-radius: var(--radius-sm);
   padding: 2px; cursor: pointer; background: var(--bg); flex-shrink: 0;
 }
+.cform-preview {
+  width: 32px; height: 32px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border-mid); flex-shrink: 0; transition: background .1s;
+}
 
-/* Shared hex field (used in both add form and more colors) */
+/* Shared hex field */
 .hex-field {
   display: flex; align-items: center; flex: 1;
   border: 1px solid var(--border-mid); border-radius: var(--radius-sm);
@@ -341,11 +346,7 @@ h3 {
 }
 .ep-hex-input:focus { background: rgba(42,62,109,.03); }
 
-.ep-preview-swatch {
-  width: 32px; height: 32px; border-radius: var(--radius-sm);
-  border: 1px solid var(--border-mid); flex-shrink: 0; transition: background .1s;
-}
-
+/* Name input */
 .ep-name-input {
   width: 100%; padding: 6px 9px;
   border: 1px solid var(--border-mid); border-radius: var(--radius-sm);
@@ -355,57 +356,29 @@ h3 {
 .ep-name-input:focus { border-color: var(--api-blue); }
 .ep-name-input::placeholder { color: var(--border-mid); }
 
-.ep-add-btn {
-  width: 100%; padding: 7px;
+/* Form buttons */
+.cform-btns { display: flex; gap: 6px; }
+.cform-save {
+  flex: 1; padding: 7px;
   background: var(--api-blue); color: #fff; border: none;
   border-radius: var(--radius-sm); font-size: 12px; font-weight: 600;
   cursor: pointer; transition: background .15s;
 }
-.ep-add-btn:hover { background: #1e2f52; }
-
-/* ── More colors box ──────────────────────────────────────────── */
-.more-colors-box {
-  padding: 10px; background: var(--bg-subtle);
-  border: 1px solid var(--border); border-radius: var(--radius-md);
-  display: flex; flex-direction: column; gap: 9px;
-}
-.mc-top { display: flex; gap: 10px; align-items: stretch; }
-
-/* Large color wheel input */
-.mc-wheel {
-  width: 58px; height: 68px;
+.cform-save:hover { background: #1e2f52; }
+.cform-cancel {
+  padding: 7px 12px;
+  background: var(--bg); color: var(--text-secondary);
   border: 1px solid var(--border-mid); border-radius: var(--radius-sm);
-  padding: 3px; cursor: pointer; background: var(--bg); flex-shrink: 0;
+  font-size: 12px; cursor: pointer; transition: all .15s;
 }
-
-.mc-right {
-  flex: 1; display: flex; flex-direction: column; gap: 7px;
-}
-.mc-preview {
-  flex: 1; min-height: 34px; border-radius: var(--radius-sm);
-  border: 1px solid var(--border-mid); transition: background .1s;
-}
-.mc-hex-row {
-  display: flex; align-items: center;
-  border: 1px solid var(--border-mid); border-radius: var(--radius-sm);
-  overflow: hidden; background: var(--bg);
-}
-
-.mc-apply-btn {
-  width: 100%; padding: 8px;
-  background: var(--api-navy); color: #fff; border: none;
-  border-radius: var(--radius-sm); font-size: 12px; font-weight: 600;
-  cursor: pointer; transition: background .15s;
-}
-.mc-apply-btn:hover { background: var(--api-blue); }
+.cform-cancel:hover { background: var(--bg-subtle); border-color: var(--api-red); color: var(--api-red); }
 
 /* ── No color button ──────────────────────────────────────────── */
 .no-color-btn {
   display: flex; align-items: center; gap: 7px; width: 100%;
-  margin-top: 13px; padding: 8px 10px; background: none;
+  margin-top: 14px; padding: 8px 10px; background: none;
   border: 1px solid var(--border); border-radius: var(--radius-md);
-  color: var(--text-secondary); font-size: 12px; cursor: pointer;
-  transition: all .15s; text-align: left;
+  color: var(--text-secondary); font-size: 12px; cursor: pointer; transition: all .15s;
 }
 .no-color-btn:hover {
   background: rgba(213,0,50,.05);
@@ -418,4 +391,7 @@ h3 {
   background: var(--bg); border-top: 1px solid var(--border);
   padding: 4px 14px; min-height: 22px; z-index: 20;
 }
-#status { font-size: 10px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#status {
+  font-size: 10px; color: var(--text-muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
