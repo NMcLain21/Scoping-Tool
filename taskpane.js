@@ -8,7 +8,7 @@ const BRAND_COLORS = [
   { hex: '#2A3E6D', name: 'Dark Navy'     },
   { hex: '#008579', name: 'Teal'          },
   { hex: '#D4D800', name: 'TBD Yellow'    },
-  { hex: '#7030A0', name: 'APi Seg'       },
+  { hex: '#7030A0', name: 'APi Segment'   },
   { hex: '#00B0F0', name: 'Target HQ'     },
   { hex: '#92D050', name: 'Target OpCo'   },
 ];
@@ -26,7 +26,6 @@ const STANDARD_COLORS = [
   { hex: '#7030A0', name: 'Purple'      },
 ];
 
-// Text color quick-picks used inside the DOI color form
 const TEXT_QP_COLORS = [
   { hex: '#FFFFFF', name: 'White'      },
   { hex: '#000000', name: 'Black'      },
@@ -37,11 +36,9 @@ const TEXT_QP_COLORS = [
   { hex: '#BFBFBF', name: 'Light Gray' },
 ];
 
-// Default fill entry text color — white on dark, black on light
 const autoTextHex = hex => isLight(hex) ? '#000000' : '#FFFFFF';
 
 const DEFAULT_PALETTES = {
-  // Each fill entry carries textHex — the font color applied alongside the fill
   fill: [
     { hex: '#D50032', name: 'Target Converts to Acquiring', textHex: '#FFFFFF' },
     { hex: '#2A3E6D', name: 'APi Corp Entity',               textHex: '#FFFFFF' },
@@ -67,7 +64,7 @@ const DEFAULT_PALETTES = {
     { hex: '#2A3E6D', name: 'Dark Navy'    },
     { hex: '#008579', name: 'Teal'         },
     { hex: '#595959', name: 'Dark Gray'    },
-    { hex: '#BFBFBF', name: 'Light Gray'   },
+    { hex: '#BFBFBF', name: 'Light Gray'  },
   ],
 };
 
@@ -108,39 +105,25 @@ function hexToRgb(hex) {
     b: parseInt(h.slice(4, 6), 16),
   };
 }
-
 function rgbToHex(r, g, b) {
   return '#' + [r, g, b]
     .map(x => Math.round(Math.min(255, Math.max(0, x))).toString(16).padStart(2, '0'))
     .join('').toUpperCase();
 }
-
-function tint(hex, pct) {
-  const { r, g, b } = hexToRgb(hex);
-  return rgbToHex(r + (255 - r) * pct, g + (255 - g) * pct, b + (255 - b) * pct);
-}
-
-function darken(hex, pct) {
-  const { r, g, b } = hexToRgb(hex);
-  return rgbToHex(r * (1 - pct), g * (1 - pct), b * (1 - pct));
-}
-
 function isLight(hex) {
   const { r, g, b } = hexToRgb(hex);
   return (r * 299 + g * 587 + b * 114) / 1000 > 155;
 }
-
 function normalizeHex(raw) {
   const h = (raw || '').replace('#', '').trim();
   return /^[0-9A-Fa-f]{6}$/.test(h) ? '#' + h.toUpperCase() : null;
 }
-
 function esc(s) {
   return (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 // ─────────────────────────────────────────────────────────────────
-// HSV ↔ RGB conversions
+// HSV utilities
 // ─────────────────────────────────────────────────────────────────
 function hsvToRgb(h, s, v) {
   const c = v * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = v - c;
@@ -153,7 +136,6 @@ function hsvToRgb(h, s, v) {
   else              { r = c; g = 0; b = x; }
   return { r: Math.round((r + m) * 255), g: Math.round((g + m) * 255), b: Math.round((b + m) * 255) };
 }
-
 function rgbToHsv(r, g, b) {
   r /= 255; g /= 255; b /= 255;
   const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
@@ -166,12 +148,10 @@ function rgbToHsv(r, g, b) {
   }
   return { h: h < 0 ? h + 360 : h, s, v };
 }
-
 function hexToHsv(hex) {
   const { r, g, b } = hexToRgb(hex);
   return rgbToHsv(r, g, b);
 }
-
 function hsvToHex(h, s, v) {
   const { r, g, b } = hsvToRgb(h, s, v);
   return rgbToHex(r, g, b);
@@ -184,17 +164,11 @@ function getPalette(key) {
   try {
     const s   = localStorage.getItem(`sct_${key}`);
     const arr = s ? JSON.parse(s) : JSON.parse(JSON.stringify(DEFAULT_PALETTES[key]));
-    // Backwards-compat: ensure fill entries have textHex
-    if (key === 'fill') {
-      arr.forEach(c => { if (!c.textHex) c.textHex = autoTextHex(c.hex); });
-    }
+    if (key === 'fill') arr.forEach(c => { if (!c.textHex) c.textHex = autoTextHex(c.hex); });
     return arr;
   } catch { return JSON.parse(JSON.stringify(DEFAULT_PALETTES[key])); }
 }
-
-function savePalette(key, arr) {
-  localStorage.setItem(`sct_${key}`, JSON.stringify(arr));
-}
+function savePalette(key, arr) { localStorage.setItem(`sct_${key}`, JSON.stringify(arr)); }
 
 function updateColor(key, idx, hex, name, textHex) {
   const arr = getPalette(key);
@@ -203,7 +177,6 @@ function updateColor(key, idx, hex, name, textHex) {
   if (key === 'fill') arr[idx].textHex = textHex || autoTextHex(hex);
   savePalette(key, arr);
 }
-
 function addColor(key, hex, name, textHex) {
   const norm = normalizeHex(hex);
   if (!norm) return;
@@ -213,18 +186,15 @@ function addColor(key, hex, name, textHex) {
   arr.push(entry);
   savePalette(key, arr);
 }
-
 function deleteColor(key, idx) {
   const arr = getPalette(key);
   arr.splice(idx, 1);
   savePalette(key, arr);
 }
-
 function getRecent(key) {
   try { return JSON.parse(localStorage.getItem(`sct_recent_${key}`)) || []; }
   catch { return []; }
 }
-
 function pushRecent(key, hex) {
   if (!hex || hex === 'none') return;
   const norm = normalizeHex(hex) || hex.toUpperCase();
@@ -238,7 +208,7 @@ function pushRecent(key, hex) {
 // ─────────────────────────────────────────────────────────────────
 let _editKey  = null;
 let _applyFn  = null;
-let _openForm = null; // { type: 'edit'|'add', idx: number|null }
+let _openForm = null;
 
 // ─────────────────────────────────────────────────────────────────
 // Performance state
@@ -247,46 +217,40 @@ let _cachedShapeCount = 0;
 let _applyVer         = 0;
 
 // ─────────────────────────────────────────────────────────────────
-// Main panel — 7 labeled tiles + pencil button
+// Main panel — labeled tiles + pencil button
 // ─────────────────────────────────────────────────────────────────
 function renderMainSwatches(key) {
-  const row    = document.getElementById(`swatches-${key}`);
+  const row = document.getElementById(`swatches-${key}`);
   if (!row) return;
-
-  const fnMap  = { fill: applyFill, border: applyBorderColor, text: applyTextColor };
-  const fn     = fnMap[key];
   const colors = getPalette(key);
 
   row.innerHTML =
     colors.map(c => {
-      // ── Border: legend line tile ──
       if (key === 'border') {
         return `<button class="main-swatch border-legend-tile"
                          data-color="${c.hex}"
-                         title="${esc(c.name)}\n${c.hex}"
+                         title="${esc(c.name)}"
                          aria-label="${esc(c.name)}">
                   <span class="legend-line-sample" style="background:${c.hex}"></span>
                   <span class="legend-line-name">${esc(c.name)}</span>
                 </button>`;
       }
-      // ── Fill (DOI): solid tile — label in configured textHex, small text-color indicator ──
       if (key === 'fill') {
         const txHex = c.textHex || autoTextHex(c.hex);
         return `<button class="main-swatch doi-tile"
                          style="background:${c.hex};"
                          data-color="${c.hex}"
                          data-textcolor="${txHex}"
-                         title="${esc(c.name)}\n${c.hex}"
+                         title="${esc(c.name)}"
                          aria-label="${esc(c.name)}">
                   <span class="swatch-label" style="color:${txHex};">${esc(c.name)}</span>
                 </button>`;
       }
-      // ── Text: solid color tile ──
       const txtColor = isLight(c.hex) ? '#000000' : '#FFFFFF';
       return `<button class="main-swatch${isLight(c.hex) ? ' light' : ''}"
                        style="background:${c.hex}"
                        data-color="${c.hex}"
-                       title="${esc(c.name)}\n${c.hex}"
+                       title="${esc(c.name)}"
                        aria-label="${esc(c.name)}">
                 <span class="swatch-label" style="color:${txtColor};">${esc(c.name)}</span>
               </button>`;
@@ -300,21 +264,24 @@ function renderMainSwatches(key) {
        </svg>
      </button>`;
 
-  // Wire swatch clicks
   row.querySelectorAll('.main-swatch').forEach(btn => {
     btn.addEventListener('click', () => {
       const color    = btn.dataset.color;
       const txtColor = btn.dataset.textcolor;
-      fn(color);
-      // DOI tiles auto-apply their paired font color
-      if (key === 'fill' && txtColor) applyTextColor(txtColor);
+      if (key === 'fill' && txtColor) {
+        // DOI: apply fill + text in one round-trip
+        applyDOITile(color, txtColor);
+      } else {
+        const fnMap = { border: applyBorderColor, text: applyTextColor };
+        fnMap[key]?.(color);
+      }
       pushRecent(key, color);
     });
   });
 
-  // Wire edit button
   row.querySelector('.edit-palette-btn').addEventListener('click', () => {
-    openEditPanel(key, fn);
+    const fnMap = { fill: applyDOITile, border: applyBorderColor, text: applyTextColor };
+    openEditPanel(key, fnMap[key]);
   });
 }
 
@@ -352,9 +319,6 @@ function renderEditPanel() {
   const myColorsHtml = palette.map((c, i) => {
     const isEditing = _openForm && _openForm.type === 'edit' && _openForm.idx === i;
     const txHex     = c.textHex || autoTextHex(c.hex);
-    // For DOI (fill) swatches in the edit list, show the text-color dot too
-    const swatchInner = '';
-
     return `
       <div class="my-color-item" data-idx="${i}">
         <div class="my-color-top">
@@ -365,7 +329,6 @@ function renderEditPanel() {
                  data-textcolor="${txHex}"
                  role="button" tabindex="0"
                  aria-label="Apply ${esc(c.name)}">
-              ${swatchInner}
             </div>
           </div>
           <div class="my-color-info">
@@ -428,106 +391,135 @@ function renderEditPanel() {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Build color form
-// For fill (DOI): includes a text color section below the fill picker.
-// Quick-pick swatches SET the picker value — they don't save/apply.
+// Build color form — PowerPoint-style accordion dropdowns
 // ─────────────────────────────────────────────────────────────────
 function buildColorForm(type, idx, startHex, startName, startTextHex) {
-  const norm      = normalizeHex(startHex) || '#2A3E6D';
-  const hexVal    = norm.replace('#', '');
-  const sufx      = type === 'edit' ? `edit-${idx}` : 'add';
-  const txNorm    = normalizeHex(startTextHex) || '#FFFFFF';
-  const txHexVal  = txNorm.replace('#', '');
-  const isDOI     = _editKey === 'fill';
+  const norm     = normalizeHex(startHex) || '#2A3E6D';
+  const hexVal   = norm.replace('#', '');
+  const sufx     = type === 'edit' ? `edit-${idx}` : 'add';
+  const txNorm   = normalizeHex(startTextHex) || '#FFFFFF';
+  const txHexVal = txNorm.replace('#', '');
+  const isDOI    = _editKey === 'fill';
 
   // Quick-pick rows
   const apiQp = BRAND_COLORS.map(c =>
     `<button class="qp-swatch${isLight(c.hex) ? ' light' : ''}"
-             style="background:${c.hex}" data-setcolor="${c.hex}"
+             style="background:${c.hex}" data-setfill="${c.hex}"
              title="${esc(c.name)}" type="button"></button>`
   ).join('');
 
   const stdQp = STANDARD_COLORS.map(c =>
     `<button class="qp-swatch${isLight(c.hex) ? ' light' : ''}"
-             style="background:${c.hex}" data-setcolor="${c.hex}"
+             style="background:${c.hex}" data-setfill="${c.hex}"
              title="${esc(c.name)}" type="button"></button>`
   ).join('');
 
-  const recent    = getRecent(_editKey);
-  const recentQp  = recent.length
-    ? `<div class="cform-qlabel" style="margin-top:7px;">Recent Colors</div>
+  const recent   = getRecent(_editKey);
+  const recentQp = recent.length
+    ? `<div class="cform-qlabel">Recent Colors</div>
        <div class="qp-row">${recent.map(hex =>
          `<button class="qp-swatch${isLight(hex) ? ' light' : ''}"
-                  style="background:${hex}" data-setcolor="${hex}"
+                  style="background:${hex}" data-setfill="${hex}"
                   title="${hex}" type="button"></button>`
        ).join('')}</div>`
     : '';
 
-  // Text color quick-picks (DOI only)
-  const textQp = isDOI
-    ? TEXT_QP_COLORS.map(c =>
-        `<button class="tc-qp-swatch${isLight(c.hex) ? ' light' : ''}${c.hex.toUpperCase() === txNorm ? ' tc-selected' : ''}"
-                 style="background:${c.hex}" data-settextcolor="${c.hex}"
-                 title="${esc(c.name)}" type="button"></button>`
-      ).join('')
-    : '';
+  // Text color quick-picks
+  const textQp = TEXT_QP_COLORS.map(c =>
+    `<button class="qp-swatch tc-swatch${isLight(c.hex) ? ' light' : ''}${c.hex.toUpperCase() === txNorm ? ' qp-selected' : ''}"
+             style="background:${c.hex}" data-settextcolor="${c.hex}"
+             title="${esc(c.name)}" type="button"></button>`
+  ).join('');
 
-  const textSection = isDOI ? `
-    <!-- ── Text Color section (DOI only) ── -->
-    <div class="cform-divider"><span>Font Color</span></div>
-
-    <div class="tc-qp-row" id="tc-qp-${sufx}">${textQp}</div>
-
-    <div class="cform-row" style="margin-top:6px;">
-      <div class="hex-field">
-        <span class="hex-hash">#</span>
-        <input type="text" class="ep-hex-input" id="tc-hex-${sufx}"
-               value="${txHexVal}" maxlength="6"
-               placeholder="RRGGBB" spellcheck="false" autocomplete="off" />
+  // Font color section — only for DOI
+  const fontSection = isDOI ? `
+    <!-- ── Font Color accordion ── -->
+    <div class="cf-accordion" id="cfa-text-${sufx}">
+      <button class="cf-accordion-hdr" type="button" data-acc="cfa-text-${sufx}">
+        <div class="cf-acc-icon cf-font-icon">
+          <span class="cf-font-a" style="color:${txNorm};">A</span>
+          <div class="cf-font-bar" style="background:${txNorm};"></div>
+        </div>
+        <span class="cf-acc-label">Font Color</span>
+        <div class="cf-acc-swatch" id="cfa-text-prev-${sufx}" style="background:${txNorm};"></div>
+        <svg class="cf-chevron" width="10" height="10" viewBox="0 0 10 10" fill="none">
+          <path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="cf-accordion-body">
+        <div class="cform-qlabel">APi Group Colors</div>
+        <div class="qp-row">${TEXT_QP_COLORS.map(c =>
+          `<button class="qp-swatch tc-swatch${isLight(c.hex) ? ' light' : ''}${c.hex.toUpperCase() === txNorm ? ' qp-selected' : ''}"
+                   style="background:${c.hex}" data-settextcolor="${c.hex}"
+                   title="${esc(c.name)}" type="button"></button>`
+        ).join('')}</div>
+        <div class="cform-row" style="margin-top:8px;">
+          <div class="hex-field">
+            <span class="hex-hash">#</span>
+            <input type="text" class="ep-hex-input" id="tc-hex-${sufx}"
+                   value="${txHexVal}" maxlength="6"
+                   placeholder="RRGGBB" spellcheck="false" autocomplete="off" />
+          </div>
+          <div class="cform-preview" id="tc-prev-${sufx}" style="background:${txNorm}"></div>
+        </div>
       </div>
-      <div class="cform-preview" id="tc-prev-${sufx}" style="background:${txNorm}"></div>
     </div>
   ` : '';
 
   return `
     <div class="color-form" id="cform-${sufx}" data-type="${type}" data-idx="${idx ?? ''}">
 
-      <div class="cform-qlabel">APi Group Colors</div>
-      <div class="qp-row api-qp">${apiQp}</div>
-
-      <div class="cform-qlabel" style="margin-top:7px;">Standard Colors</div>
-      <div class="qp-row std-qp">${stdQp}</div>
-
-      ${recentQp}
-
-      <div class="cform-divider"><span>Fill Color</span></div>
-
-      <div class="hsv-square" id="hsv-sq-${sufx}">
-        <div class="hsv-layer hsv-sat"></div>
-        <div class="hsv-layer hsv-val"></div>
-        <div class="hsv-dot" id="hsv-dot-${sufx}"></div>
-      </div>
-
-      <div class="hue-wrap">
-        <input type="range" class="hue-slider" id="hue-${sufx}"
-               min="0" max="359" step="1" value="0" />
-      </div>
-
-      <div class="cform-row">
-        <div class="hex-field">
-          <span class="hex-hash">#</span>
-          <input type="text" class="ep-hex-input" id="cfh-${sufx}"
-                 value="${hexVal}" maxlength="6"
-                 placeholder="RRGGBB" spellcheck="false" autocomplete="off" />
-        </div>
-        <div class="cform-preview" id="cfp-${sufx}" style="background:${norm}"></div>
-      </div>
-
-      ${textSection}
-
       <input type="text" class="ep-name-input" id="cfn-${sufx}"
-             placeholder="Color name (optional)" maxlength="28"
+             placeholder="Color name (optional)" maxlength="36"
              value="${esc(startName)}" />
+
+      <!-- ── Shape Fill accordion ── -->
+      <div class="cf-accordion" id="cfa-fill-${sufx}">
+        <button class="cf-accordion-hdr" type="button" data-acc="cfa-fill-${sufx}">
+          <div class="cf-acc-icon">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M2 10.5c0-.8.7-1.5 1.5-1.5S5 9.7 5 10.5 3.5 13 3.5 13 2 11.3 2 10.5z"
+                    fill="${norm}" stroke="${isLight(norm) ? '#999' : norm}" stroke-width="0.8"/>
+              <path d="M4.3 8.8L9.5 3.6a1 1 0 011.4 0l.5.5a1 1 0 010 1.4L6.2 10.7"
+                    stroke="${isLight(norm) ? '#555' : norm}" stroke-width="1.1"
+                    stroke-linecap="round" fill="none"/>
+            </svg>
+          </div>
+          <span class="cf-acc-label">Shape Fill</span>
+          <div class="cf-acc-swatch" id="cfa-fill-prev-${sufx}" style="background:${norm};${isLight(norm) ? 'border:1px solid #ccc;' : ''}"></div>
+          <svg class="cf-chevron" width="10" height="10" viewBox="0 0 10 10" fill="none">
+            <path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="cf-accordion-body">
+          <div class="cform-qlabel">APi Group Colors</div>
+          <div class="qp-row api-qp">${apiQp}</div>
+          <div class="cform-qlabel" style="margin-top:6px;">Standard Colors</div>
+          <div class="qp-row std-qp">${stdQp}</div>
+          ${recentQp}
+          <div class="cform-divider"><span>Custom Color</span></div>
+          <div class="hsv-square" id="hsv-sq-${sufx}">
+            <div class="hsv-layer hsv-sat"></div>
+            <div class="hsv-layer hsv-val"></div>
+            <div class="hsv-dot" id="hsv-dot-${sufx}"></div>
+          </div>
+          <div class="hue-wrap">
+            <input type="range" class="hue-slider" id="hue-${sufx}"
+                   min="0" max="359" step="1" value="0" />
+          </div>
+          <div class="cform-row">
+            <div class="hex-field">
+              <span class="hex-hash">#</span>
+              <input type="text" class="ep-hex-input" id="cfh-${sufx}"
+                     value="${hexVal}" maxlength="6"
+                     placeholder="RRGGBB" spellcheck="false" autocomplete="off" />
+            </div>
+            <div class="cform-preview" id="cfp-${sufx}" style="background:${norm}"></div>
+          </div>
+        </div>
+      </div>
+
+      ${fontSection}
 
       <div class="cform-btns">
         <button class="cform-save" type="button" data-type="${type}" data-idx="${idx ?? ''}">
@@ -544,11 +536,18 @@ function buildColorForm(type, idx, startHex, startName, startTextHex) {
 function bindEditEvents(key) {
   const body = document.getElementById('edit-panel-body');
 
-  // My Colors: click swatch → APPLY (fill applies text too) + close
+  // My Colors: click swatch → apply + close
   body.querySelectorAll('.my-swatch').forEach(s => {
     const applyClick = () => {
+      const color     = s.dataset.color;
       const textColor = (key === 'fill') ? (s.dataset.textcolor || null) : null;
-      applyAndClose(s.dataset.color, textColor);
+      if (key === 'fill' && textColor) {
+        applyDOITile(color, textColor);
+      } else {
+        _applyFn?.(color);
+      }
+      if (color !== 'none') pushRecent(key, color);
+      closeEditPanel();
     };
     s.addEventListener('click', applyClick);
     s.addEventListener('keydown', e => {
@@ -556,7 +555,7 @@ function bindEditEvents(key) {
     });
   });
 
-  // My Colors: pencil — toggle form
+  // My Colors: pencil
   body.querySelectorAll('.my-edit-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const idx = parseInt(btn.dataset.idx, 10);
@@ -575,15 +574,18 @@ function bindEditEvents(key) {
     });
   });
 
-  // Add New Color toggle
+  // Add New Color
   document.getElementById('ep-add-toggle').addEventListener('click', () => {
-    _openForm = (_openForm && _openForm.type === 'add')
-      ? null : { type: 'add', idx: null };
+    _openForm = (_openForm && _openForm.type === 'add') ? null : { type: 'add', idx: null };
     renderEditPanel();
   });
 
   // No color
-  document.getElementById('ep-no-color').addEventListener('click', () => applyAndClose('none', null));
+  document.getElementById('ep-no-color').addEventListener('click', () => {
+    if (key === 'fill') applyDOITile('none', null);
+    else _applyFn?.('none');
+    closeEditPanel();
+  });
 
   // Reset to defaults
   document.getElementById('ep-reset').addEventListener('click', () => {
@@ -594,12 +596,20 @@ function bindEditEvents(key) {
     renderMainSwatches(key);
   });
 
+  // Accordion toggles
+  body.querySelectorAll('.cf-accordion-hdr').forEach(hdr => {
+    hdr.addEventListener('click', () => {
+      const acc = hdr.closest('.cf-accordion');
+      acc.classList.toggle('open');
+    });
+  });
+
   // Wire all open color forms
   body.querySelectorAll('.color-form').forEach(form => wireColorForm(form, key));
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Wire a single color form — HSV fill picker + optional text picker
+// Wire a single color form
 // ─────────────────────────────────────────────────────────────────
 function wireColorForm(form, key) {
   const type      = form.dataset.type;
@@ -610,46 +620,53 @@ function wireColorForm(form, key) {
   // Fill picker refs
   const hexInp    = document.getElementById(`cfh-${sufx}`);
   const preview   = document.getElementById(`cfp-${sufx}`);
+  const fillPrev  = document.getElementById(`cfa-fill-prev-${sufx}`);
   const nameInp   = document.getElementById(`cfn-${sufx}`);
   const sq        = document.getElementById(`hsv-sq-${sufx}`);
   const dot       = document.getElementById(`hsv-dot-${sufx}`);
   const hueSlider = document.getElementById(`hue-${sufx}`);
 
   // Text color refs (DOI only)
-  const tcHexInp  = isDOI ? document.getElementById(`tc-hex-${sufx}`) : null;
-  const tcPreview = isDOI ? document.getElementById(`tc-prev-${sufx}`) : null;
+  const tcHexInp   = isDOI ? document.getElementById(`tc-hex-${sufx}`)      : null;
+  const tcPreview  = isDOI ? document.getElementById(`tc-prev-${sufx}`)     : null;
+  const tcAccPrev  = isDOI ? document.getElementById(`cfa-text-prev-${sufx}`) : null;
 
   // ── Fill HSV state ──
-  const startNorm = normalizeHex('#' + hexInp.value) || '#2A3E6D';
+  const startNorm = normalizeHex('#' + (hexInp?.value || '')) || '#2A3E6D';
   const startHsv  = hexToHsv(startNorm);
   let H = startHsv.h, S = startHsv.s, V = startHsv.v;
 
   function syncFromHsv() {
     const hex = hsvToHex(H, S, V);
-    hexInp.value             = hex.replace('#', '').toUpperCase();
-    preview.style.background = hex;
-    sq.style.background      = `hsl(${Math.round(H)}, 100%, 50%)`;
-    dot.style.left           = `${S * 100}%`;
-    dot.style.top            = `${(1 - V) * 100}%`;
-    hueSlider.value          = Math.round(H);
+    if (hexInp)  hexInp.value              = hex.replace('#', '').toUpperCase();
+    if (preview) preview.style.background  = hex;
+    if (fillPrev) {
+      fillPrev.style.background = hex;
+      fillPrev.style.border     = isLight(hex) ? '1px solid #ccc' : 'none';
+    }
+    if (sq) {
+      sq.style.background = `hsl(${Math.round(H)}, 100%, 50%)`;
+      if (dot) { dot.style.left = `${S * 100}%`; dot.style.top = `${(1 - V) * 100}%`; }
+    }
+    if (hueSlider) hueSlider.value = Math.round(H);
   }
 
   function setFillFromHex(rawHex) {
-    const c  = rawHex.length === 6 && !rawHex.startsWith('#') ? '#' + rawHex : rawHex;
-    const n  = normalizeHex(c);
+    const c = rawHex.length === 6 && !rawHex.startsWith('#') ? '#' + rawHex : rawHex;
+    const n = normalizeHex(c);
     if (!n) return;
     const hsv = hexToHsv(n);
     H = hsv.h; S = hsv.s; V = hsv.v;
     syncFromHsv();
   }
 
-  syncFromHsv();
+  if (sq) syncFromHsv();
 
-  hueSlider.addEventListener('input', () => { H = parseFloat(hueSlider.value); syncFromHsv(); });
+  hueSlider?.addEventListener('input', () => { H = parseFloat(hueSlider.value); syncFromHsv(); });
 
   let dragging = false;
   function handleSquareDrag(e) {
-    if (!sq.isConnected) { dragging = false; return; }
+    if (!sq?.isConnected) { dragging = false; return; }
     const rect = sq.getBoundingClientRect();
     const cx   = e.touches ? e.touches[0].clientX : e.clientX;
     const cy   = e.touches ? e.touches[0].clientY : e.clientY;
@@ -658,52 +675,54 @@ function wireColorForm(form, key) {
     syncFromHsv();
   }
 
-  sq.addEventListener('mousedown', e => { e.preventDefault(); dragging = true; handleSquareDrag(e); });
+  if (sq) {
+    sq.addEventListener('mousedown', e => { e.preventDefault(); dragging = true; handleSquareDrag(e); });
+    sq.addEventListener('touchstart', e => { e.preventDefault(); handleSquareDrag(e); }, { passive: false });
+    sq.addEventListener('touchmove',  e => { e.preventDefault(); handleSquareDrag(e); }, { passive: false });
+  }
   const onMove = e => { if (dragging) handleSquareDrag(e); };
   const onUp   = () => { dragging = false; };
   document.addEventListener('mousemove', onMove);
   document.addEventListener('mouseup',   onUp);
-  sq.addEventListener('touchstart', e => { e.preventDefault(); handleSquareDrag(e); }, { passive: false });
-  sq.addEventListener('touchmove',  e => { e.preventDefault(); handleSquareDrag(e); }, { passive: false });
 
-  hexInp.addEventListener('input', () => setFillFromHex(hexInp.value));
+  hexInp?.addEventListener('input', () => setFillFromHex(hexInp.value));
 
-  // Fill quick-picks (APi + Standard + Recent)
-  form.querySelectorAll('.qp-swatch').forEach(btn => {
+  // Fill quick-picks
+  form.querySelectorAll('[data-setfill]').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
-      setFillFromHex(btn.dataset.setcolor);
-      form.querySelectorAll('.qp-swatch').forEach(b => b.classList.remove('qp-selected'));
+      setFillFromHex(btn.dataset.setfill);
+      form.querySelectorAll('[data-setfill]').forEach(b => b.classList.remove('qp-selected'));
       btn.classList.add('qp-selected');
     });
   });
 
-  // ── Text color state (DOI only) ──
-  function syncTextPreview(hex) {
-    if (!tcPreview || !tcHexInp) return;
+  // ── Text color (DOI only) ──
+  function syncTextColor(hex) {
     const n = normalizeHex(hex.startsWith('#') ? hex : '#' + hex);
     if (!n) return;
-    tcPreview.style.background = n;
-    tcHexInp.value             = n.replace('#', '').toUpperCase();
-    // Update active state on text QP swatches
-    form.querySelectorAll('.tc-qp-swatch').forEach(b => {
-      b.classList.toggle('tc-selected', b.dataset.settextcolor.toUpperCase() === n);
+    if (tcPreview) tcPreview.style.background  = n;
+    if (tcAccPrev) tcAccPrev.style.background  = n;
+    if (tcHexInp)  tcHexInp.value              = n.replace('#', '').toUpperCase();
+    // Update font icon in header
+    const accHdr = document.querySelector(`#cfa-text-${sufx} .cf-font-a`);
+    const accBar = document.querySelector(`#cfa-text-${sufx} .cf-font-bar`);
+    if (accHdr) accHdr.style.color      = n;
+    if (accBar) accBar.style.background = n;
+    form.querySelectorAll('[data-settextcolor]').forEach(b => {
+      b.classList.toggle('qp-selected', b.dataset.settextcolor.toUpperCase() === n);
     });
   }
 
   if (isDOI) {
-    // Text color quick-picks
-    form.querySelectorAll('.tc-qp-swatch').forEach(btn => {
+    form.querySelectorAll('[data-settextcolor]').forEach(btn => {
       btn.addEventListener('click', e => {
         e.stopPropagation();
-        syncTextPreview(btn.dataset.settextcolor);
+        syncTextColor(btn.dataset.settextcolor);
       });
     });
-
-    // Text hex manual input
-    tcHexInp.addEventListener('input', () => {
-      const val = tcHexInp.value.trim();
-      if (val.length === 6) syncTextPreview(val);
+    tcHexInp?.addEventListener('input', () => {
+      if (tcHexInp.value.length === 6) syncTextColor(tcHexInp.value);
     });
   }
 
@@ -713,12 +732,12 @@ function wireColorForm(form, key) {
     document.removeEventListener('mouseup',   onUp);
   };
 
-  form.querySelector('.cform-save').addEventListener('click', () => {
-    const norm = normalizeHex('#' + hexInp.value);
-    if (!norm) { hexInp.focus(); hexInp.select(); return; }
-    const name    = nameInp.value.trim();
+  form.querySelector('.cform-save')?.addEventListener('click', () => {
+    const norm    = normalizeHex('#' + (hexInp?.value || ''));
+    if (!norm) { hexInp?.focus(); hexInp?.select(); return; }
+    const name    = nameInp?.value.trim() || '';
     const txtNorm = isDOI
-      ? (normalizeHex('#' + (tcHexInp ? tcHexInp.value : '')) || '#FFFFFF')
+      ? (normalizeHex('#' + (tcHexInp?.value || '')) || '#FFFFFF')
       : null;
 
     if (type === 'edit' && idx !== null) {
@@ -731,150 +750,50 @@ function wireColorForm(form, key) {
     renderEditPanel();
   });
 
-  form.querySelector('.cform-cancel').addEventListener('click', () => {
+  form.querySelector('.cform-cancel')?.addEventListener('click', () => {
     _openForm = null;
     cleanup();
     renderEditPanel();
   });
 
-  nameInp.addEventListener('keydown', e => {
-    if (e.key === 'Enter') form.querySelector('.cform-save').click();
+  nameInp?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') form.querySelector('.cform-save')?.click();
   });
 
-  setTimeout(() => { if (hexInp.isConnected) hexInp.select(); }, 50);
+  // Open the fill accordion by default
+  document.getElementById(`cfa-fill-${sufx}`)?.classList.add('open');
+
+  setTimeout(() => { if (nameInp?.isConnected) nameInp.select(); }, 50);
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Apply color and close edit panel
-// textColor is only passed for DOI (fill) entries
-// ─────────────────────────────────────────────────────────────────
-function applyAndClose(color, textColor) {
-  if (_applyFn) _applyFn(color);
-  // DOI: also apply paired text color
-  if (textColor && _editKey === 'fill') applyTextColor(textColor);
-  if (color !== 'none') pushRecent(_editKey, color);
-  closeEditPanel();
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Office ready
-// ─────────────────────────────────────────────────────────────────
-Office.onReady(() => {
-  renderMainSwatches('fill');
-  renderMainSwatches('border');
-  renderMainSwatches('text');
-
-  document.querySelectorAll('[data-weight]').forEach(btn =>
-    btn.addEventListener('click', () => applyBorderWeight(parseFloat(btn.dataset.weight))));
-
-  document.querySelectorAll('[data-dash]').forEach(btn =>
-    btn.addEventListener('click', () => applyBorderDash(btn.dataset.dash)));
-
-  document.getElementById('btn-apply-ends')
-    ?.addEventListener('click', applyLineEnds);
-
-  document.getElementById('edit-back-btn')
-    .addEventListener('click', closeEditPanel);
-
-  Office.context.document.addHandlerAsync(
-    Office.EventType.DocumentSelectionChanged,
-    () => { if (!_editKey) inspectSelection(); }
-  );
-
-  inspectSelection();
-});
-
-// ─────────────────────────────────────────────────────────────────
-// Shape inspection
-// ─────────────────────────────────────────────────────────────────
-async function inspectSelection() {
-  try {
-    await PowerPoint.run(async ctx => {
-      const sel = ctx.presentation.getSelectedShapes();
-      sel.load('items/type,items/name');
-      await ctx.sync();
-
-      const items = sel.items;
-      if (!items.length) { renderEmpty(); return; }
-      _cachedShapeCount = items.length;
-
-      const merged    = { fill: false, border: false, text: false, lineEnds: false };
-      let   allSame   = true;
-      const firstKey  = toKey(items[0].type);
-      const firstName = items[0].name || '';
-
-      items.forEach(s => {
-        const k = toKey(s.type);
-        if (k !== firstKey) allSame = false;
-        const caps = CAPABILITIES[k] || {};
-        if (caps.fill)     merged.fill     = true;
-        if (caps.border)   merged.border   = true;
-        if (caps.text)     merged.text     = true;
-        if (caps.lineEnds) merged.lineEnds = true;
-      });
-
-      const anySupported = Object.values(merged).some(Boolean);
-      const meta = allSame
-        ? (TYPE_META[firstKey] || { icon: '?', label: cap(firstKey || 'Shape') })
-        : { icon: '⊕', label: 'Mixed Selection' };
-
-      renderUI({ merged, meta, firstName, count: items.length, anySupported, isLine: allSame && firstKey === 'line' });
-    });
-  } catch (_) { renderEmpty(); }
-}
-
-function toKey(raw) {
-  if (!raw) return 'unsupported';
-  const s = String(raw);
-  return s.charAt(0).toLowerCase() + s.slice(1);
-}
-
-function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
-
-// ─────────────────────────────────────────────────────────────────
-// Render helpers
-// ─────────────────────────────────────────────────────────────────
-function renderUI({ merged, meta, firstName, count, anySupported, isLine }) {
-  hide('empty-state');
-  hide('unsupported-state');
-  show('shape-banner');
-
-  el('shape-icon').textContent        = meta.icon;
-  el('shape-type-label').textContent  = meta.label;
-  el('shape-name').textContent        = firstName ? `"${firstName}"` : '';
-  el('shape-count-badge').textContent = `×${count}`;
-  tog('shape-count-badge', count > 1);
-
-  tog('section-fill',      merged.fill);
-  tog('section-border',    merged.border);
-  tog('section-line-ends', merged.lineEnds);
-  tog('section-text',      merged.text);
-
-  el('border-heading').textContent = isLine ? 'Line Style' : 'Border';
-  if (!anySupported) show('unsupported-state');
-}
-
-function renderEmpty() {
-  _cachedShapeCount = 0;
-  show('empty-state'); hide('shape-banner'); hide('unsupported-state');
-  ['section-fill', 'section-border', 'section-line-ends', 'section-text'].forEach(hide);
-  setStatus('');
-}
-
-function el(id)       { return document.getElementById(id); }
-function show(id)     { el(id)?.classList.remove('hidden'); }
-function hide(id)     { el(id)?.classList.add('hidden'); }
-function tog(id, vis) { el(id)?.classList.toggle('hidden', !vis); }
-function setStatus(m) { if (el('status')) el('status').textContent = m; }
-
-// ─────────────────────────────────────────────────────────────────
-// Apply functions — single sync, version-gated
+// Apply functions
 // ─────────────────────────────────────────────────────────────────
 function getSelectedFast(ctx) {
-  const col = ctx.presentation.getSelectedShapes();
+  const col    = ctx.presentation.getSelectedShapes();
   const shapes = [];
   for (let i = 0; i < _cachedShapeCount; i++) shapes.push(col.getItemAt(i));
   return shapes;
+}
+
+// DOI: apply fill + text in one single PowerPoint.run
+async function applyDOITile(fillColor, textColor) {
+  const ver = ++_applyVer;
+  if (!_cachedShapeCount) return setStatus('No shape selected.');
+  await PowerPoint.run(async ctx => {
+    if (ver !== _applyVer) return;
+    getSelectedFast(ctx).forEach(s => {
+      // Apply fill
+      if (fillColor === 'none') s.fill.clear();
+      else s.fill.setSolidColor(fillColor);
+      // Apply text color
+      if (textColor && textColor !== 'none') {
+        try { s.textFrame.textRange.font.color = textColor; } catch (_) {}
+      }
+    });
+    await ctx.sync();
+    if (ver === _applyVer) setStatus(`DOI → ${fillColor === 'none' ? 'cleared' : fillColor} / T: ${textColor || 'unchanged'}`);
+  });
 }
 
 async function applyFill(color) {
@@ -965,3 +884,108 @@ async function applyLineEnds() {
     if (ver === _applyVer) setStatus(`Ends → ${sv} / ${ev}`);
   });
 }
+
+// ─────────────────────────────────────────────────────────────────
+// Office ready
+// ─────────────────────────────────────────────────────────────────
+Office.onReady(() => {
+  renderMainSwatches('fill');
+  renderMainSwatches('border');
+  renderMainSwatches('text');
+
+  document.querySelectorAll('[data-weight]').forEach(btn =>
+    btn.addEventListener('click', () => applyBorderWeight(parseFloat(btn.dataset.weight))));
+
+  document.querySelectorAll('[data-dash]').forEach(btn =>
+    btn.addEventListener('click', () => applyBorderDash(btn.dataset.dash)));
+
+  document.getElementById('btn-apply-ends')
+    ?.addEventListener('click', applyLineEnds);
+
+  document.getElementById('edit-back-btn')
+    .addEventListener('click', closeEditPanel);
+
+  Office.context.document.addHandlerAsync(
+    Office.EventType.DocumentSelectionChanged,
+    () => { if (!_editKey) inspectSelection(); }
+  );
+
+  inspectSelection();
+});
+
+// ─────────────────────────────────────────────────────────────────
+// Shape inspection
+// ─────────────────────────────────────────────────────────────────
+async function inspectSelection() {
+  try {
+    await PowerPoint.run(async ctx => {
+      const sel = ctx.presentation.getSelectedShapes();
+      sel.load('items/type,items/name');
+      await ctx.sync();
+
+      const items = sel.items;
+      if (!items.length) { renderEmpty(); return; }
+      _cachedShapeCount = items.length;
+
+      const merged   = { fill: false, border: false, text: false, lineEnds: false };
+      let   allSame  = true;
+      const firstKey = toKey(items[0].type);
+      const firstName = items[0].name || '';
+
+      items.forEach(s => {
+        const k = toKey(s.type);
+        if (k !== firstKey) allSame = false;
+        const caps = CAPABILITIES[k] || {};
+        if (caps.fill)     merged.fill     = true;
+        if (caps.border)   merged.border   = true;
+        if (caps.text)     merged.text     = true;
+        if (caps.lineEnds) merged.lineEnds = true;
+      });
+
+      const anySupported = Object.values(merged).some(Boolean);
+      const meta = allSame
+        ? (TYPE_META[firstKey] || { icon: '?', label: cap(firstKey || 'Shape') })
+        : { icon: '⊕', label: 'Mixed Selection' };
+
+      renderUI({ merged, meta, firstName, count: items.length, anySupported, isLine: allSame && firstKey === 'line' });
+    });
+  } catch (_) { renderEmpty(); }
+}
+
+function toKey(raw) {
+  if (!raw) return 'unsupported';
+  const s = String(raw);
+  return s.charAt(0).toLowerCase() + s.slice(1);
+}
+function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+// ─────────────────────────────────────────────────────────────────
+// Render helpers
+// ─────────────────────────────────────────────────────────────────
+function renderUI({ merged, meta, firstName, count, anySupported, isLine }) {
+  hide('empty-state'); hide('unsupported-state'); show('shape-banner');
+  el('shape-icon').textContent        = meta.icon;
+  el('shape-type-label').textContent  = meta.label;
+  el('shape-name').textContent        = firstName ? `"${firstName}"` : '';
+  el('shape-count-badge').textContent = `×${count}`;
+  tog('shape-count-badge', count > 1);
+  tog('section-fill',      merged.fill);
+  tog('section-border',    merged.border);
+  tog('section-line-ends', merged.lineEnds);
+  tog('section-text',      merged.text);
+  el('border-heading').textContent = isLine ? 'Line Style' : 'Border';
+  if (!anySupported) show('unsupported-state');
+}
+
+function renderEmpty() {
+  _cachedShapeCount = 0;
+  show('empty-state'); hide('shape-banner'); hide('unsupported-state');
+  ['section-fill', 'section-border', 'section-line-ends', 'section-text'].forEach(hide);
+  setStatus('');
+}
+
+function el(id)       { return document.getElementById(id); }
+function show(id)     { el(id)?.classList.remove('hidden'); }
+function hide(id)     { el(id)?.classList.add('hidden'); }
+function tog(id, vis) { el(id)?.classList.toggle('hidden', !vis); }
+function setStatus(m) { if (el('status')) el('status').textContent = m; }

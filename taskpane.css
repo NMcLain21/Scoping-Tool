@@ -625,3 +625,97 @@ h3 {
 .tc-qp-swatch.light {
   border: 2px solid #ddd;
 }
+
+/* ── Color Form Accordion ─────────────────────────────────────── */
+.cf-accordion {
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  overflow: hidden;
+}
+
+.cf-accordion-hdr {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 10px;
+  background: #f7f9fc;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+  border-bottom: 1px solid transparent;
+}
+.cf-accordion-hdr:hover { background: #edf1f7; }
+.cf-accordion.open .cf-accordion-hdr {
+  background: #edf1f7;
+  border-bottom-color: #e2e8f0;
+}
+
+.cf-acc-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Font color "A" icon — matches PowerPoint style */
+.cf-font-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+.cf-font-a {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  font-family: "Aptos", "Segoe UI", sans-serif;
+  transition: color 0.15s;
+}
+.cf-font-bar {
+  width: 14px;
+  height: 3px;
+  border-radius: 1px;
+  transition: background 0.15s;
+}
+
+.cf-acc-label {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 500;
+  color: #2d3748;
+}
+
+/* Small color preview swatch in accordion header */
+.cf-acc-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  border: 1px solid rgba(0,0,0,0.12);
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+/* Chevron rotates when open */
+.cf-chevron {
+  flex-shrink: 0;
+  color: #888;
+  transition: transform 0.2s;
+}
+.cf-accordion.open .cf-chevron {
+  transform: rotate(180deg);
+}
+
+/* Accordion body — hidden by default */
+.cf-accordion-body {
+  display: none;
+  padding: 10px 10px 8px;
+  background: #fff;
+}
+.cf-accordion.open .cf-accordion-body {
+  display: block;
+}
