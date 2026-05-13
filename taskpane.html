@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Scoping Tool</title>
   <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
   <link rel="stylesheet" href="taskpane.css" />
@@ -9,15 +10,32 @@
 <body>
 <div id="app">
 
+  <!-- ── Header bar ── -->
+  <header id="app-header">
+    <div class="header-wordmark">
+      <span class="header-logo-dot"></span>
+      <span class="header-title">Scoping Tool</span>
+    </div>
+    <span class="header-sub">APi Group</span>
+  </header>
+
   <!-- ── Empty state ── -->
   <div id="empty-state">
-    <div class="empty-icon">◻</div>
-    <p>Select a shape on the slide to begin styling</p>
+    <div class="empty-illustration">
+      <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="8" y="8" width="32" height="32" rx="4" stroke="#C8D0E0" stroke-width="2" fill="none"/>
+        <rect x="15" y="15" width="18" height="18" rx="2" stroke="#C8D0E0" stroke-width="2" fill="none" stroke-dasharray="4 3"/>
+      </svg>
+    </div>
+    <p class="empty-title">No shape selected</p>
+    <p class="empty-sub">Click any shape on the slide to begin styling</p>
   </div>
 
   <!-- ── Shape banner ── -->
   <div id="shape-banner" class="hidden">
-    <span id="shape-icon"></span>
+    <div class="banner-icon-wrap">
+      <span id="shape-icon"></span>
+    </div>
     <div class="banner-text">
       <strong id="shape-type-label"></strong>
       <span id="shape-name"></span>
@@ -25,23 +43,28 @@
     <span id="shape-count-badge" class="hidden"></span>
   </div>
 
-  <!-- ── Main styling sections ── -->
+  <!-- ── Main content ── -->
   <div id="main-content">
 
     <!-- ── Fill Color ── -->
     <section id="section-fill" class="hidden">
-      <h3>Fill Color</h3>
-      <div class="swatch-row-wrapper">
-        <div class="swatch-row" id="swatches-fill"></div>
-        <button class="edit-palette-btn" data-palette="fill" title="Edit fill palette">✏</button>
+      <div class="section-header">
+        <h3>Fill Color</h3>
+        <button class="edit-palette-btn" data-palette="fill" title="Edit fill palette">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8.5 1.5L10.5 3.5L4 10H2V8L8.5 1.5Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" fill="none"/>
+          </svg>
+          Edit
+        </button>
       </div>
+      <div class="swatch-row" id="swatches-fill"></div>
       <div id="editor-fill" class="inline-editor hidden">
         <div class="inline-editor-inner">
           <div id="palette-list-fill" class="inline-palette-list"></div>
           <div class="inline-add-row">
             <input type="color" id="picker-fill" value="#2E75B6" />
             <input type="text"  id="name-fill"   placeholder="Color name" maxlength="28" />
-            <button class="add-color-btn" data-palette="fill">+ Add</button>
+            <button class="add-color-btn" data-palette="fill">Add</button>
           </div>
           <button class="reset-palette-btn" data-palette="fill">↺ Reset to defaults</button>
         </div>
@@ -50,46 +73,62 @@
 
     <!-- ── Border / Line Style ── -->
     <section id="section-border" class="hidden">
-      <h3 id="border-heading">Border</h3>
-
-      <span class="sub-label">Color</span>
-      <div class="swatch-row-wrapper">
-        <div class="swatch-row" id="swatches-border"></div>
-        <button class="edit-palette-btn" data-palette="border" title="Edit border palette">✏</button>
+      <div class="section-header">
+        <h3 id="border-heading">Border</h3>
+        <button class="edit-palette-btn" data-palette="border" title="Edit border palette">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8.5 1.5L10.5 3.5L4 10H2V8L8.5 1.5Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" fill="none"/>
+          </svg>
+          Edit
+        </button>
       </div>
+      <div class="swatch-row" id="swatches-border"></div>
       <div id="editor-border" class="inline-editor hidden">
         <div class="inline-editor-inner">
           <div id="palette-list-border" class="inline-palette-list"></div>
           <div class="inline-add-row">
             <input type="color" id="picker-border" value="#1F3864" />
             <input type="text"  id="name-border"   placeholder="Color name" maxlength="28" />
-            <button class="add-color-btn" data-palette="border">+ Add</button>
+            <button class="add-color-btn" data-palette="border">Add</button>
           </div>
           <button class="reset-palette-btn" data-palette="border">↺ Reset to defaults</button>
         </div>
       </div>
 
-      <span class="sub-label">Weight</span>
-      <div class="option-row">
-        <button class="opt-btn" data-weight="0.75">0.75pt</button>
-        <button class="opt-btn" data-weight="1.5">1.5pt</button>
-        <button class="opt-btn" data-weight="3">3pt</button>
-        <button class="opt-btn" data-weight="6">6pt</button>
+      <div class="control-group">
+        <span class="sub-label">Weight</span>
+        <div class="chip-row">
+          <button class="chip" data-weight="0.75">0.75pt</button>
+          <button class="chip" data-weight="1.5">1.5pt</button>
+          <button class="chip" data-weight="3">3pt</button>
+          <button class="chip" data-weight="6">6pt</button>
+        </div>
       </div>
 
-      <span class="sub-label">Style</span>
-      <div class="option-row">
-        <button class="opt-btn" data-dash="solid">—— Solid</button>
-        <button class="opt-btn" data-dash="dash">– – Dash</button>
-        <button class="opt-btn" data-dash="dot">··· Dot</button>
+      <div class="control-group">
+        <span class="sub-label">Style</span>
+        <div class="chip-row">
+          <button class="chip" data-dash="solid">
+            <svg width="28" height="8" viewBox="0 0 28 8"><line x1="0" y1="4" x2="28" y2="4" stroke="currentColor" stroke-width="2"/></svg>
+            Solid
+          </button>
+          <button class="chip" data-dash="dash">
+            <svg width="28" height="8" viewBox="0 0 28 8"><line x1="0" y1="4" x2="28" y2="4" stroke="currentColor" stroke-width="2" stroke-dasharray="5 3"/></svg>
+            Dash
+          </button>
+          <button class="chip" data-dash="dot">
+            <svg width="28" height="8" viewBox="0 0 28 8"><line x1="0" y1="4" x2="28" y2="4" stroke="currentColor" stroke-width="2" stroke-dasharray="2 3"/></svg>
+            Dot
+          </button>
+        </div>
       </div>
     </section>
 
-    <!-- ── Line Ends (Line shapes only) ── -->
+    <!-- ── Line Ends ── -->
     <section id="section-line-ends" class="hidden">
-      <h3>Line Ends</h3>
+      <div class="section-header"><h3>Line Ends</h3></div>
       <div class="line-ends-grid">
-        <div>
+        <div class="line-end-field">
           <span class="sub-label">Start</span>
           <select id="line-start">
             <option value="none">None</option>
@@ -99,7 +138,7 @@
             <option value="oval">Oval ●</option>
           </select>
         </div>
-        <div>
+        <div class="line-end-field">
           <span class="sub-label">End</span>
           <select id="line-end">
             <option value="none">None</option>
@@ -110,25 +149,28 @@
           </select>
         </div>
       </div>
-      <div class="option-row" style="margin-top:8px;">
-        <button class="opt-btn primary-btn" id="btn-apply-ends">Apply Line Ends</button>
-      </div>
+      <button class="primary-action-btn" id="btn-apply-ends">Apply Line Ends</button>
     </section>
 
     <!-- ── Text Color ── -->
     <section id="section-text" class="hidden">
-      <h3>Text Color</h3>
-      <div class="swatch-row-wrapper">
-        <div class="swatch-row" id="swatches-text"></div>
-        <button class="edit-palette-btn" data-palette="text" title="Edit text palette">✏</button>
+      <div class="section-header">
+        <h3>Text Color</h3>
+        <button class="edit-palette-btn" data-palette="text" title="Edit text palette">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8.5 1.5L10.5 3.5L4 10H2V8L8.5 1.5Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" fill="none"/>
+          </svg>
+          Edit
+        </button>
       </div>
+      <div class="swatch-row" id="swatches-text"></div>
       <div id="editor-text" class="inline-editor hidden">
         <div class="inline-editor-inner">
           <div id="palette-list-text" class="inline-palette-list"></div>
           <div class="inline-add-row">
             <input type="color" id="picker-text" value="#000000" />
             <input type="text"  id="name-text"   placeholder="Color name" maxlength="28" />
-            <button class="add-color-btn" data-palette="text">+ Add</button>
+            <button class="add-color-btn" data-palette="text">Add</button>
           </div>
           <button class="reset-palette-btn" data-palette="text">↺ Reset to defaults</button>
         </div>
