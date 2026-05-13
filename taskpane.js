@@ -36,22 +36,22 @@ const STANDARD_COLORS = [
 
 const DEFAULT_PALETTES = {
   fill: [
-    { hex: '#D50032', name: 'APi Corp Red' },
-    { hex: '#2A3E6D', name: 'Dark Navy'    },
-    { hex: '#008579', name: 'Teal'         },
-    { hex: '#595959', name: 'Dark Gray'    },
-    { hex: '#BFBFBF', name: 'Light Gray'   },
-    { hex: '#FFFFFF', name: 'White'        },
-    { hex: '#000000', name: 'Black'        },
+    { hex: '#D50032', name: 'Target Converts to Acquiring' },
+    { hex: '#2A3E6D', name: 'APi Corp Entity'               },
+    { hex: '#008579', name: 'Shared Services'               },
+    { hex: '#595959', name: 'Leave As Is'                   },
+    { hex: '#BFBFBF', name: 'To Be Determined'              },
+    { hex: '#FFFFFF', name: 'No Fill'                       },
+    { hex: '#000000', name: 'Divest / Sunset'               },
   ],
   border: [
-    { hex: '#D4D800', name: 'TBD'          },
-    { hex: '#D50032', name: 'APi Corp'     },
-    { hex: '#7030A0', name: 'APi Seg'      },
-    { hex: '#00B0F0', name: 'Target HQ'   },
-    { hex: '#92D050', name: 'Target OpCo' },
-    { hex: '#808080', name: 'Gray'         },
-    { hex: '#151F37', name: 'Navy'         },
+    { hex: '#D4D800', name: 'TBD'                    },
+    { hex: '#D50032', name: 'APi Corp'               },
+    { hex: '#7030A0', name: 'APi Segment'            },
+    { hex: '#00B0F0', name: 'Target HQ'              },
+    { hex: '#92D050', name: 'Target OpCo'            },
+    { hex: '#808080', name: 'No Reporting Structure' },
+    { hex: '#151F37', name: 'Acquiring Entity'       },
   ],
   text: [
     { hex: '#FFFFFF', name: 'White'        },
@@ -254,7 +254,9 @@ function renderMainSwatches(key) {
                style="background:${c.hex}"
                data-color="${c.hex}"
                title="${esc(c.name)}\n${c.hex}"
-               aria-label="${esc(c.name)}"></button>`
+               aria-label="${esc(c.name)}">
+         <span class="swatch-label${isLight(c.hex) ? ' dark-text' : ''}">${esc(c.name)}</span>
+       </button>`
     ).join('') +
     `<button class="edit-palette-btn" data-key="${key}"
              title="Edit ${key} palette" aria-label="Edit ${key} colors">

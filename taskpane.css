@@ -103,31 +103,60 @@ h3 {
 .control-group { margin-top: 4px; }
 
 /* ── Main swatch row ──────────────────────────────────────────── */
-.swatch-row { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.swatch-row {
+  display: flex; flex-direction: column;
+  gap: 5px; align-items: stretch;
+}
 
 .main-swatch {
-  width: 28px; height: 28px; border-radius: var(--radius-sm);
-  cursor: pointer; border: 1.5px solid transparent;
-  transition: transform .12s, border-color .12s, box-shadow .12s;
+  width: 100%;
+  min-height: 44px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: filter .12s, border-color .12s, box-shadow .12s;
   outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  position: relative;
 }
 .main-swatch.light { border-color: var(--border-mid); }
 .main-swatch:hover {
-  transform: scale(1.18); z-index: 2;
+  filter: brightness(1.08); z-index: 2;
   border-color: var(--api-blue) !important;
   box-shadow: var(--shadow-md);
 }
 .main-swatch:focus-visible { outline: 2px solid var(--api-teal); outline-offset: 2px; }
 
+.swatch-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  text-align: center;
+  line-height: 1.3;
+  pointer-events: none;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.45);
+  letter-spacing: 0.2px;
+}
+.swatch-label.dark-text {
+  color: #1a1a1a;
+  text-shadow: none;
+}
+
 /* ── Pencil / edit-palette button ─────────────────────────────── */
 .edit-palette-btn {
-  width: 28px; height: 28px; border-radius: var(--radius-sm);
-  border: 1.5px solid var(--border-mid); background: var(--bg-subtle);
+  width: 100%; height: 30px; border-radius: var(--radius-sm);
+  border: 1px dashed var(--border-mid); background: transparent;
   color: var(--text-muted); cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  transition: all .15s; flex-shrink: 0; margin-left: 2px;
+  gap: 5px; font-size: 10px; letter-spacing: 0.4px;
+  transition: background .12s, color .12s, border-color .12s;
+  margin-top: 2px;
 }
-.edit-palette-btn:hover { background: var(--api-blue); border-color: var(--api-blue); color: #fff; }
+.edit-palette-btn:hover { background: var(--api-blue); color: #fff; border-color: var(--api-blue); }
+.edit-palette-btn::after { content: 'Edit Colors'; }
 
 /* ── Chips ────────────────────────────────────────────────────── */
 .chip-row { display: flex; flex-wrap: wrap; gap: 5px; }
