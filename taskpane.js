@@ -1,29 +1,55 @@
 // ─────────────────────────────────────────────────────────────────
-// Default palette & localStorage persistence
+// Default palettes — each palette is independent
 // ─────────────────────────────────────────────────────────────────
-const DEFAULT_PALETTE = [
-  { hex: "#1F3864", name: "Dark Navy" },
-  { hex: "#2E75B6", name: "Corporate Blue" },
-  { hex: "#70AD47", name: "Green" },
-  { hex: "#FFC000", name: "Amber" },
-  { hex: "#C00000", name: "Red" },
-  { hex: "#FFFFFF", name: "White" },
-  { hex: "#000000", name: "Black" },
-];
+const DEFAULTS = {
+  fill: [
+    { hex: "#1F3864", name: "Dark Navy" },
+    { hex: "#2E75B6", name: "Corporate Blue" },
+    { hex: "#70AD47", name: "Green" },
+    { hex: "#FFC000", name: "Amber" },
+    { hex: "#C00000", name: "Red" },
+    { hex: "#FFFFFF", name: "White" },
+    { hex: "#F2F2F2", name: "Light Gray" },
+  ],
+  border: [
+    { hex: "#1F3864", name: "Dark Navy" },
+    { hex: "#2E75B6", name: "Corporate Blue" },
+    { hex: "#000000", name: "Black" },
+    { hex: "#595959", name: "Dark Gray" },
+    { hex: "#C00000", name: "Red" },
+    { hex: "#FFFFFF", name: "White" },
+  ],
+  text: [
+    { hex: "#000000", name: "Black" },
+    { hex: "#FFFFFF", name: "White" },
+    { hex: "#1F3864", name: "Dark Navy" },
+    { hex: "#2E75B6", name: "Corporate Blue" },
+    { hex: "#70AD47", name: "Green" },
+    { hex: "#FFC000", name: "Amber" },
+    { hex: "#C00000", name: "Red" },
+  ],
+};
 
-const STORAGE_KEY = "scopingToolPalette";
+const STORAGE_KEYS = {
+  fill:   "scopingToolPalette_fill",
+  border: "scopingToolPalette_border",
+  text:   "scopingToolPalette_text",
+};
 
-function loadPalette() {
+// ─────────────────────────────────────────────────────────────────
+// Palette persistence
+// ─────────────────────────────────────────────────────────────────
+function loadPalette(type) {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = localStorage.getItem(STORAGE_KEYS[type]);
     if (saved) return JSON.parse(saved);
   } catch (_) {}
-  return [...DEFAULT_PALETTE];
+  return [...DEFAULTS[type]];
 }
 
-function savePalette(palette) {
+function savePalette(type, palette) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(palette));
+    localStorage.setItem(STORAGE_KEYS[type], JSON.stringify(palette));
   } catch (_) {}
 }
 
@@ -54,89 +80,87 @@ const TYPE_META = {
   table:          { icon: "⊟", label: "Table" },
 };
 
-// ─────────────────────────────────────────────────────────────────
-// App state
-// ─────────────────────────────────────────────────────────────────
-let paletteEditorOpen = false;
+// Track which inline editors are open
+const editorOpen = { fill: false, border: false, text: false };
 
 // ─────────────────────────────────────────────────────────────────
-// Office ready — wire up static controls, render swatches, start
+// Office ready
 // ─────────────────────────────────────────────────────────────────
 Office.onReady(() => {
 
-  // Border weight
+  // Render all three swatch rows from saved palettes
+  renderSwatches("fill");
+  renderSwatches("border");
+  renderSwatches("text");
+
+  // Border weight buttons
   document.querySelectorAll("[data-weight]").forEach(btn =>
     btn.addEventListener("click", () => applyBorderWeight(parseFloat(btn.dataset.weight))));
 
-  // Border dash style
+  // Border dash style buttons
   document.querySelectorAll("[data-dash]").forEach(btn =>
     btn.addEventListener("click", () => applyBorderDash(btn.dataset.dash)));
 
-  // Line ends
+  // Line ends apply button
   document.getElementById("btn-apply-ends")
     .addEventListener("click", applyLineEnds);
 
-  // Palette toggle
-  document.getElementById("btn-toggle-palette")
-    .addEventListener("click", togglePaletteEditor);
+  // Edit palette buttons (✏) — one per palette type
+  document.querySelectorAll(".edit-palette-btn").forEach(btn =>
+    btn.addEventListener("click", () => toggleEditor(btn.dataset.palette)));
 
-  // Add color button
-  document.getElementById("btn-add-color")
-    .addEventListener("click", addColor);
+  // Add color buttons — one per palette type
+  document.querySelectorAll(".add-color-btn").forEach(btn =>
+    btn.addEventListener("click", () => addColor(btn.dataset.palette)));
 
-  // Reset defaults button
-  document.getElementById("btn-reset-palette")
-    .addEventListener("click", resetToDefaults);
+  // Allow Enter in name fields to submit
+  ["fill", "border", "text"].forEach(type => {
+    const nameField = document.getElementById(`name-${type}`);
+    if (nameField) {
+      nameField.addEventListener("keydown", e => { if (e.key === "Enter") addColor(type); });
+    }
+  });
 
-  // Allow Enter key in name field to submit
-  document.getElementById("new-color-name")
-    .addEventListener("keydown", e => { if (e.key === "Enter") addColor(); });
+  // Reset buttons — one per palette type
+  document.querySelectorAll(".reset-palette-btn").forEach(btn =>
+    btn.addEventListener("click", () => resetPalette(btn.dataset.palette)));
 
-  // Render dynamic swatches from saved palette
-  renderAllSwatches();
-
-  // Selection change listener — skip if palette editor is open
+  // Selection change listener
   Office.context.document.addHandlerAsync(
     Office.EventType.DocumentSelectionChanged,
-    () => { if (!paletteEditorOpen) inspectSelection(); }
+    () => inspectSelection()
   );
 
-  // Initial inspection
+  // Initial inspection on open
   inspectSelection();
 });
 
 // ─────────────────────────────────────────────────────────────────
-// Swatch rendering — builds swatch buttons dynamically from palette
+// Swatch rendering
 // ─────────────────────────────────────────────────────────────────
-function renderAllSwatches() {
-  renderSectionSwatches("fill");
-  renderSectionSwatches("border");
-  renderSectionSwatches("text");
-}
-
-function renderSectionSwatches(type) {
-  const palette  = loadPalette();
+function renderSwatches(type) {
+  const palette   = loadPalette(type);
   const container = document.getElementById(`swatches-${type}`);
   if (!container) return;
 
-  // Build swatch buttons from palette
-  const buttons = palette.map(({ hex, name }) => {
+  // Build color swatches
+  const colorBtns = palette.map(({ hex, name }) => {
     const light = isLightColor(hex);
     let attr = "";
     if (type === "fill")   attr = `data-fill="${hex}"`;
     if (type === "border") attr = `data-border="${hex}"`;
     if (type === "text")   attr = `data-textcolor="${hex}"`;
-    return `<button class="swatch${light ? " swatch-light" : ""}" style="background:${hex};" ${attr} title="${name}"></button>`;
+    return `<button class="swatch${light ? " swatch-light" : ""}" style="background:${hex};" ${attr} title="${escapeHtml(name)}"></button>`;
   }).join("");
 
-  // "No fill" / "No border" always appended
+  // "None" button for fill and border only
   let noneBtn = "";
   if (type === "fill")   noneBtn = `<button class="swatch no-fill" data-fill="none"   title="No Fill">∅</button>`;
   if (type === "border") noneBtn = `<button class="swatch no-fill" data-border="none" title="No Border">∅</button>`;
 
-  container.innerHTML = buttons + noneBtn;
+  container.innerHTML = colorBtns + noneBtn;
 
-  // Re-attach click handlers after innerHTML replacement
+  // Re-attach click handlers after innerHTML rebuild
   container.querySelectorAll("[data-fill]").forEach(btn =>
     btn.addEventListener("click", () => applyFill(btn.dataset.fill)));
   container.querySelectorAll("[data-border]").forEach(btn =>
@@ -145,113 +169,107 @@ function renderSectionSwatches(type) {
     btn.addEventListener("click", () => applyTextColor(btn.dataset.textcolor)));
 }
 
-// Returns true if the hex color is light (needs a border to be visible on white)
-function isLightColor(hex) {
-  try {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
-    return (r * 299 + g * 587 + b * 114) / 1000 > 180;
-  } catch (_) { return false; }
-}
-
 // ─────────────────────────────────────────────────────────────────
-// Palette editor — toggle, render, add, delete, reset
+// Inline palette editor — toggle open/close
 // ─────────────────────────────────────────────────────────────────
-function togglePaletteEditor() {
-  paletteEditorOpen = !paletteEditorOpen;
-  const btn = document.getElementById("btn-toggle-palette");
+function toggleEditor(type) {
+  editorOpen[type] = !editorOpen[type];
+  const editorEl = document.getElementById(`editor-${type}`);
+  const editBtn  = document.querySelector(`.edit-palette-btn[data-palette="${type}"]`);
 
-  if (paletteEditorOpen) {
-    // Hide main UI, show palette panel
-    setVisible("empty-state",        false);
-    setVisible("shape-banner",       false);
-    setVisible("main-content",       false);
-    setVisible("unsupported-state",  false);
-    setVisible("palette-panel",      true);
-    btn.textContent = "← Back to Styling";
-    renderPaletteManager();
+  if (editorOpen[type]) {
+    editorEl.classList.remove("hidden");
+    editBtn.classList.add("active");
+    editBtn.title = "Close editor";
+    renderPaletteList(type);
   } else {
-    // Hide palette panel, restore main UI
-    setVisible("palette-panel", false);
-    btn.textContent = "🎨 Edit Palette";
-    inspectSelection();
+    editorEl.classList.add("hidden");
+    editBtn.classList.remove("active");
+    editBtn.title = `Edit ${type} palette`;
   }
 }
 
-function renderPaletteManager() {
-  const palette   = loadPalette();
-  const container = document.getElementById("palette-list");
+// ─────────────────────────────────────────────────────────────────
+// Inline palette list rendering
+// ─────────────────────────────────────────────────────────────────
+function renderPaletteList(type) {
+  const palette   = loadPalette(type);
+  const container = document.getElementById(`palette-list-${type}`);
+  if (!container) return;
 
   if (palette.length === 0) {
     container.innerHTML = `<p class="palette-empty">No colors yet. Add one below.</p>`;
     return;
   }
 
-  container.innerHTML = palette.map((color, index) => `
+  container.innerHTML = palette.map(({ hex, name }, index) => `
     <div class="palette-item">
-      <div class="palette-preview"
-           style="background:${color.hex};${isLightColor(color.hex) ? "border:1px solid #ddd;" : ""}">
-      </div>
+      <div class="palette-preview" style="background:${hex};${isLightColor(hex) ? "border:1px solid #ddd;" : ""}"></div>
       <div class="palette-info">
-        <span class="palette-name">${escapeHtml(color.name)}</span>
-        <span class="palette-hex">${color.hex.toUpperCase()}</span>
+        <span class="palette-name">${escapeHtml(name)}</span>
+        <span class="palette-hex">${hex.toUpperCase()}</span>
       </div>
-      <button class="palette-delete" data-index="${index}" title="Remove color">✕</button>
+      <button class="palette-delete" data-type="${type}" data-index="${index}" title="Remove">✕</button>
     </div>
   `).join("");
 
+  // Wire up delete buttons
   container.querySelectorAll(".palette-delete").forEach(btn =>
-    btn.addEventListener("click", () => deleteColor(parseInt(btn.dataset.index))));
+    btn.addEventListener("click", () => deleteColor(btn.dataset.type, parseInt(btn.dataset.index))));
 }
 
-function addColor() {
-  const hex     = document.getElementById("new-color-picker").value;
-  const rawName = document.getElementById("new-color-name").value.trim();
+// ─────────────────────────────────────────────────────────────────
+// Add color to a palette
+// ─────────────────────────────────────────────────────────────────
+function addColor(type) {
+  const hex     = document.getElementById(`picker-${type}`).value;
+  const rawName = document.getElementById(`name-${type}`).value.trim();
   const name    = rawName || hex.toUpperCase();
 
-  const palette = loadPalette();
+  const palette = loadPalette(type);
 
-  // Prevent exact duplicate hex values
   if (palette.some(c => c.hex.toLowerCase() === hex.toLowerCase())) {
-    setStatus("That color is already in the palette.");
+    setStatus(`That color is already in the ${type} palette.`);
     return;
   }
 
   palette.push({ hex, name });
-  savePalette(palette);
-  renderPaletteManager();
-  renderAllSwatches();
+  savePalette(type, palette);
 
-  // Reset the name field but keep the color picker on the last chosen color
-  document.getElementById("new-color-name").value = "";
-  setStatus(`Added: ${name} (${hex.toUpperCase()})`);
-}
+  // Refresh both the list and the swatch row
+  renderPaletteList(type);
+  renderSwatches(type);
 
-function deleteColor(index) {
-  const palette = loadPalette();
-  const removed = palette.splice(index, 1)[0];
-  savePalette(palette);
-  renderPaletteManager();
-  renderAllSwatches();
-  setStatus(`Removed: ${removed.name}`);
-}
-
-function resetToDefaults() {
-  if (!confirm("Reset palette to the original default colors? This cannot be undone.")) return;
-  savePalette([...DEFAULT_PALETTE]);
-  renderPaletteManager();
-  renderAllSwatches();
-  setStatus("Palette reset to defaults.");
-}
-
-// Prevent XSS from user-supplied color names
-function escapeHtml(str) {
-  return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  document.getElementById(`name-${type}`).value = "";
+  setStatus(`Added to ${type}: ${name} (${hex.toUpperCase()})`);
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Shape inspection — reads type of selected shapes, updates UI
+// Delete color from a palette
+// ─────────────────────────────────────────────────────────────────
+function deleteColor(type, index) {
+  const palette = loadPalette(type);
+  const removed = palette.splice(index, 1)[0];
+  savePalette(type, palette);
+  renderPaletteList(type);
+  renderSwatches(type);
+  setStatus(`Removed from ${type}: ${removed.name}`);
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Reset a palette to defaults
+// ─────────────────────────────────────────────────────────────────
+function resetPalette(type) {
+  const label = type.charAt(0).toUpperCase() + type.slice(1);
+  if (!confirm(`Reset the ${label} palette to its original defaults? This cannot be undone.`)) return;
+  savePalette(type, [...DEFAULTS[type]]);
+  renderPaletteList(type);
+  renderSwatches(type);
+  setStatus(`${label} palette reset to defaults.`);
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Shape inspection
 // ─────────────────────────────────────────────────────────────────
 async function inspectSelection() {
   try {
@@ -298,18 +316,8 @@ async function inspectSelection() {
   }
 }
 
-function toKey(raw) {
-  if (!raw) return "unsupported";
-  const s = typeof raw === "string" ? raw : String(raw);
-  return s.charAt(0).toLowerCase() + s.slice(1);
-}
-
-function capitalize(s) {
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
-
 // ─────────────────────────────────────────────────────────────────
-// Render: main styling UI based on capability flags
+// Render: main UI sections based on capabilities
 // ─────────────────────────────────────────────────────────────────
 function renderUI({ capabilities, icon, typeLabel, shapeName, count, anySupported, isLineOnly }) {
   setVisible("empty-state",       false);
@@ -357,6 +365,29 @@ function setVisible(id, visible) {
 }
 
 function setStatus(msg) { el("status").textContent = msg; }
+
+function toKey(raw) {
+  if (!raw) return "unsupported";
+  const s = typeof raw === "string" ? raw : String(raw);
+  return s.charAt(0).toLowerCase() + s.slice(1);
+}
+
+function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+function isLightColor(hex) {
+  try {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return (r * 299 + g * 587 + b * 114) / 1000 > 180;
+  } catch (_) { return false; }
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
 
 // ─────────────────────────────────────────────────────────────────
 // Shared: get selected shapes inside a PowerPoint.run context

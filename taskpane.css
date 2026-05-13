@@ -10,7 +10,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  padding-bottom: 58px; /* room for toggle bar + status bar */
+  padding-bottom: 26px; /* room for status bar */
 }
 
 /* ── Utility ──────────────────────────────────────────────────── */
@@ -66,13 +66,44 @@ h3 {
   margin: 8px 0 4px;
 }
 
+/* ── Swatch row wrapper — holds swatches + edit button inline ─── */
+.swatch-row-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.swatch-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  flex: 1;
+}
+
+/* ── Edit palette button (✏) ──────────────────────────────────── */
+.edit-palette-btn {
+  flex-shrink: 0;
+  width: 26px; height: 26px;
+  border: 1px solid #d8d8d8; border-radius: 4px;
+  background: #f5f5f5; color: #aaa;
+  font-size: 12px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+  outline: none;
+}
+.edit-palette-btn:hover {
+  background: #e4ecf8; color: #2E75B6; border-color: #2E75B6;
+}
+.edit-palette-btn.active {
+  background: #2E75B6; color: #fff; border-color: #2E75B6;
+}
+
 /* ── Swatches ─────────────────────────────────────────────────── */
-.swatch-row { display: flex; flex-wrap: wrap; gap: 5px; }
 .swatch {
   width: 26px; height: 26px; border-radius: 4px;
   cursor: pointer; border: 2px solid transparent;
   transition: transform 0.1s, border-color 0.12s;
   outline: none;
+  flex-shrink: 0;
 }
 .swatch:hover { transform: scale(1.18); border-color: #333; }
 .swatch:focus-visible { border-color: #2E75B6; box-shadow: 0 0 0 2px #a8c7e8; }
@@ -83,6 +114,116 @@ h3 {
   align-items: center; justify-content: center;
 }
 
+/* ── Inline palette editor ────────────────────────────────────── */
+.inline-editor {
+  margin-top: 8px;
+}
+.inline-editor-inner {
+  background: #f8fafd;
+  border: 1px solid #d8e2f0;
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+/* Palette item rows inside the editor */
+.inline-palette-list { margin-bottom: 8px; }
+
+.palette-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 0;
+  border-bottom: 1px solid #eeeeee;
+}
+.palette-item:last-child { border-bottom: none; }
+
+.palette-preview {
+  width: 22px; height: 22px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.palette-info {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+.palette-name {
+  font-size: 11px; font-weight: 500; color: #444;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 110px;
+}
+.palette-hex {
+  font-size: 10px; color: #bbb;
+  font-family: "Courier New", monospace;
+  flex-shrink: 0;
+}
+.palette-delete {
+  background: none; border: none;
+  color: #ccc; cursor: pointer;
+  font-size: 11px; padding: 3px 6px;
+  border-radius: 3px;
+  transition: color 0.1s, background 0.1s;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.palette-delete:hover { color: #C00000; background: #fde8e8; }
+
+.palette-empty {
+  font-size: 11px; color: #bbb;
+  text-align: center; padding: 10px 0;
+  font-style: italic;
+}
+
+/* Add color row inside editor */
+.inline-add-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.inline-add-row input[type="color"] {
+  width: 36px; height: 28px;
+  border: 1px solid #d0d0d0; border-radius: 4px;
+  cursor: pointer; padding: 2px;
+  flex-shrink: 0; background: none;
+}
+.inline-add-row input[type="text"] {
+  flex: 1;
+  padding: 5px 7px;
+  border: 1px solid #d0d0d0; border-radius: 4px;
+  font-size: 11px; color: #333; outline: none;
+  font-family: inherit; min-width: 0;
+}
+.inline-add-row input[type="text"]:focus {
+  border-color: #2E75B6; box-shadow: 0 0 0 2px #ddeaf7;
+}
+.inline-add-row input[type="text"]::placeholder { color: #c0c0c0; }
+.add-color-btn {
+  flex-shrink: 0;
+  padding: 5px 9px;
+  background: #1F3864; color: #fff;
+  border: none; border-radius: 4px;
+  font-size: 11px; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+  transition: background 0.1s;
+}
+.add-color-btn:hover { background: #2E75B6; }
+
+/* Reset button inside editor */
+.reset-palette-btn {
+  display: block;
+  width: 100%;
+  padding: 4px;
+  background: none; border: none;
+  color: #bbb; cursor: pointer;
+  font-size: 10px; text-align: center;
+  font-family: inherit;
+  transition: color 0.1s;
+}
+.reset-palette-btn:hover { color: #C00000; }
+
 /* ── Option buttons ───────────────────────────────────────────── */
 .option-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 2px; }
 .opt-btn {
@@ -91,7 +232,7 @@ h3 {
   background: #f8f8f8; cursor: pointer;
   font-size: 11px; color: #444;
   transition: background 0.1s, border-color 0.1s;
-  outline: none;
+  outline: none; font-family: inherit;
 }
 .opt-btn:hover { background: #e4ecf8; border-color: #2E75B6; }
 .opt-btn:focus-visible { box-shadow: 0 0 0 2px #a8c7e8; }
@@ -100,11 +241,6 @@ h3 {
   border-color: #1F3864; font-weight: 600;
 }
 .primary-btn:hover { background: #2E75B6; border-color: #2E75B6; }
-.reset-btn {
-  background: #f8f0f0; color: #C00000;
-  border-color: #f0d0d0;
-}
-.reset-btn:hover { background: #fde0e0; border-color: #C00000; }
 
 /* ── Line ends grid ───────────────────────────────────────────── */
 .line-ends-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -122,116 +258,6 @@ h3 {
   font-size: 11px; color: #bbb;
   font-style: italic; text-align: center; line-height: 1.6;
 }
-
-/* ── Palette Editor Panel ─────────────────────────────────────── */
-#palette-panel {
-  padding: 12px;
-  overflow-y: auto;
-}
-.palette-header { margin-bottom: 12px; }
-.palette-header h3 {
-  font-size: 13px; font-weight: 700;
-  color: #1F3864; text-transform: none;
-  letter-spacing: 0; margin-bottom: 4px;
-}
-.palette-subtext { font-size: 11px; color: #999; line-height: 1.5; }
-
-/* Color list ─────────────────────────────────────────────────── */
-#palette-list { margin-bottom: 16px; }
-
-.palette-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-.palette-item:last-child { border-bottom: none; }
-
-.palette-preview {
-  width: 30px; height: 30px;
-  border-radius: 5px;
-  flex-shrink: 0;
-}
-.palette-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  line-height: 1.35;
-  min-width: 0;
-}
-.palette-name {
-  font-size: 12px; font-weight: 500; color: #333;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.palette-hex {
-  font-size: 10px; color: #aaa;
-  font-family: "Courier New", monospace;
-}
-.palette-delete {
-  background: none; border: none;
-  color: #ccc; cursor: pointer;
-  font-size: 12px; padding: 4px 7px;
-  border-radius: 4px;
-  transition: color 0.1s, background 0.1s;
-  flex-shrink: 0;
-}
-.palette-delete:hover { color: #C00000; background: #fde8e8; }
-
-.palette-empty {
-  font-size: 11px; color: #bbb;
-  text-align: center; padding: 20px 0;
-  font-style: italic;
-}
-
-/* Add color form ─────────────────────────────────────────────── */
-.add-color-form {
-  border-top: 1px solid #eee;
-  padding-top: 12px;
-}
-.add-color-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-bottom: 8px;
-}
-#new-color-picker {
-  width: 42px; height: 34px;
-  border: 1px solid #d0d0d0; border-radius: 5px;
-  cursor: pointer; padding: 2px;
-  flex-shrink: 0;
-  background: none;
-}
-#new-color-name {
-  flex: 1;
-  padding: 6px 9px;
-  border: 1px solid #d0d0d0; border-radius: 4px;
-  font-size: 12px; color: #333;
-  outline: none;
-  font-family: inherit;
-}
-#new-color-name:focus { border-color: #2E75B6; box-shadow: 0 0 0 2px #ddeaf7; }
-#new-color-name::placeholder { color: #c0c0c0; }
-
-/* ── Palette toggle bar ───────────────────────────────────────── */
-#palette-toggle-bar {
-  position: fixed;
-  bottom: 22px; left: 0; right: 0;
-  background: #fff;
-  border-top: 1px solid #e8e8e8;
-  padding: 5px 10px;
-}
-#btn-toggle-palette {
-  width: 100%;
-  padding: 7px;
-  background: #f0f4fa; color: #1F3864;
-  border: 1px solid #d0d8ea; border-radius: 5px;
-  font-size: 12px; font-weight: 600;
-  cursor: pointer;
-  transition: background 0.1s, color 0.1s;
-  font-family: inherit;
-}
-#btn-toggle-palette:hover { background: #dde6f5; color: #2E75B6; }
 
 /* ── Status bar ───────────────────────────────────────────────── */
 #status-bar {

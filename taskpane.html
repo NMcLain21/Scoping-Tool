@@ -28,18 +28,46 @@
   <!-- ── Main styling sections ── -->
   <div id="main-content">
 
-    <!-- Fill Color -->
+    <!-- ── Fill Color ── -->
     <section id="section-fill" class="hidden">
       <h3>Fill Color</h3>
-      <div class="swatch-row" id="swatches-fill"></div>
+      <div class="swatch-row-wrapper">
+        <div class="swatch-row" id="swatches-fill"></div>
+        <button class="edit-palette-btn" data-palette="fill" title="Edit fill palette">✏</button>
+      </div>
+      <div id="editor-fill" class="inline-editor hidden">
+        <div class="inline-editor-inner">
+          <div id="palette-list-fill" class="inline-palette-list"></div>
+          <div class="inline-add-row">
+            <input type="color" id="picker-fill" value="#2E75B6" />
+            <input type="text"  id="name-fill"   placeholder="Color name" maxlength="28" />
+            <button class="add-color-btn" data-palette="fill">+ Add</button>
+          </div>
+          <button class="reset-palette-btn" data-palette="fill">↺ Reset to defaults</button>
+        </div>
+      </div>
     </section>
 
-    <!-- Border / Line Style -->
+    <!-- ── Border / Line Style ── -->
     <section id="section-border" class="hidden">
       <h3 id="border-heading">Border</h3>
 
       <span class="sub-label">Color</span>
-      <div class="swatch-row" id="swatches-border"></div>
+      <div class="swatch-row-wrapper">
+        <div class="swatch-row" id="swatches-border"></div>
+        <button class="edit-palette-btn" data-palette="border" title="Edit border palette">✏</button>
+      </div>
+      <div id="editor-border" class="inline-editor hidden">
+        <div class="inline-editor-inner">
+          <div id="palette-list-border" class="inline-palette-list"></div>
+          <div class="inline-add-row">
+            <input type="color" id="picker-border" value="#1F3864" />
+            <input type="text"  id="name-border"   placeholder="Color name" maxlength="28" />
+            <button class="add-color-btn" data-palette="border">+ Add</button>
+          </div>
+          <button class="reset-palette-btn" data-palette="border">↺ Reset to defaults</button>
+        </div>
+      </div>
 
       <span class="sub-label">Weight</span>
       <div class="option-row">
@@ -57,7 +85,7 @@
       </div>
     </section>
 
-    <!-- Line Ends (Line shapes only) -->
+    <!-- ── Line Ends (Line shapes only) ── -->
     <section id="section-line-ends" class="hidden">
       <h3>Line Ends</h3>
       <div class="line-ends-grid">
@@ -87,49 +115,32 @@
       </div>
     </section>
 
-    <!-- Text Color -->
+    <!-- ── Text Color ── -->
     <section id="section-text" class="hidden">
       <h3>Text Color</h3>
-      <div class="swatch-row" id="swatches-text"></div>
+      <div class="swatch-row-wrapper">
+        <div class="swatch-row" id="swatches-text"></div>
+        <button class="edit-palette-btn" data-palette="text" title="Edit text palette">✏</button>
+      </div>
+      <div id="editor-text" class="inline-editor hidden">
+        <div class="inline-editor-inner">
+          <div id="palette-list-text" class="inline-palette-list"></div>
+          <div class="inline-add-row">
+            <input type="color" id="picker-text" value="#000000" />
+            <input type="text"  id="name-text"   placeholder="Color name" maxlength="28" />
+            <button class="add-color-btn" data-palette="text">+ Add</button>
+          </div>
+          <button class="reset-palette-btn" data-palette="text">↺ Reset to defaults</button>
+        </div>
+      </div>
     </section>
 
-    <!-- Unsupported notice -->
+    <!-- ── Unsupported notice ── -->
     <div id="unsupported-state" class="hidden">
       <p class="unsupported-msg">This shape type doesn't support styling via this panel.</p>
     </div>
 
   </div><!-- /#main-content -->
-
-  <!-- ── Palette Editor Panel ── -->
-  <div id="palette-panel" class="hidden">
-
-    <div class="palette-header">
-      <h3>Edit Color Palette</h3>
-      <p class="palette-subtext">Colors here appear in all Fill, Border, and Text sections. Saved automatically.</p>
-    </div>
-
-    <!-- Current colors list -->
-    <div id="palette-list"></div>
-
-    <!-- Add new color -->
-    <div class="add-color-form">
-      <span class="sub-label">Add New Color</span>
-      <div class="add-color-row">
-        <input type="color" id="new-color-picker" value="#2E75B6" title="Pick a color" />
-        <input type="text"  id="new-color-name"   placeholder="Name (e.g. Brand Blue)" maxlength="28" />
-      </div>
-      <div class="option-row">
-        <button class="opt-btn primary-btn" id="btn-add-color">+ Add to Palette</button>
-        <button class="opt-btn reset-btn"   id="btn-reset-palette">↺ Reset Defaults</button>
-      </div>
-    </div>
-
-  </div><!-- /#palette-panel -->
-
-  <!-- ── Palette toggle bar (always visible) ── -->
-  <div id="palette-toggle-bar">
-    <button id="btn-toggle-palette">🎨 Edit Palette</button>
-  </div>
 
   <!-- ── Status bar ── -->
   <div id="status-bar"><span id="status"></span></div>
