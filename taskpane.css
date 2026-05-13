@@ -592,22 +592,10 @@ h3 {
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
-/* ── DOI tile — text color indicator dot ─────────────────────── */
-/* Shows a small circle at the bottom-right of a DOI tile
-   indicating the configured font color */
+/* ── DOI tile ─────────────────────────────────────────────────── */
+/* Label text color is set inline to the configured font color */
 .doi-tile {
   position: relative;
-}
-.doi-text-dot {
-  display: block;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  position: absolute;
-  bottom: 5px;
-  right: 7px;
-  pointer-events: none;
-  flex-shrink: 0;
 }
 
 /* ── Text color quick-picks inside the color form ────────────── */

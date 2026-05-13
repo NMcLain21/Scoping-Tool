@@ -279,7 +279,6 @@ function renderMainSwatches(key) {
                          title="${esc(c.name)}\n${c.hex}"
                          aria-label="${esc(c.name)}">
                   <span class="swatch-label" style="color:${txHex};">${esc(c.name)}</span>
-                  <span class="doi-text-dot" style="background:${txHex}; outline:2px solid ${c.hex}; outline-offset:1px;" title="Font: ${txHex}"></span>
                 </button>`;
       }
       // ── Text: solid color tile ──
@@ -354,9 +353,7 @@ function renderEditPanel() {
     const isEditing = _openForm && _openForm.type === 'edit' && _openForm.idx === i;
     const txHex     = c.textHex || autoTextHex(c.hex);
     // For DOI (fill) swatches in the edit list, show the text-color dot too
-    const swatchInner = (key === 'fill')
-      ? `<span class="doi-text-dot" style="background:${txHex}; outline:2px solid ${c.hex}; outline-offset:1px;"></span>`
-      : '';
+    const swatchInner = '';
 
     return `
       <div class="my-color-item" data-idx="${i}">
