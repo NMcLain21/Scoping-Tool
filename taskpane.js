@@ -299,38 +299,12 @@ function renderEditPanel() {
   const titleMap = { fill: 'Fill Color', border: 'Border Color', text: 'Text Color' };
   document.getElementById('edit-panel-title').textContent = titleMap[key] || 'Edit Colors';
 
-  // Theme grid (top level — clicking APPLIES immediately)
-  const baseRowHtml = BRAND_COLORS.map(c =>
-    `<div class="theme-swatch base-swatch${isLight(c.hex) ? ' light' : ''}"
-          style="background:${c.hex}" data-color="${c.hex}"
-          title="${esc(c.name)}" role="button" tabindex="0"></div>`
-  ).join('');
-
-  const shadeRowsHtml = SHADE_STEPS.map(step =>
-    `<div class="theme-row">${BRAND_COLORS.map(c => {
-      const hex = step.fn(c.hex);
-      return `<div class="theme-swatch${isLight(hex) ? ' light' : ''}"
-                   style="background:${hex}" data-color="${hex}"
-                   title="${esc(c.name)} — ${step.label}" role="button" tabindex="0"></div>`;
-    }).join('')}</div>`
-  ).join('');
-
   // Standard colors (top level — clicking APPLIES immediately)
   const standardHtml = STANDARD_COLORS.map(c =>
     `<div class="std-swatch${isLight(c.hex) ? ' light' : ''}"
           style="background:${c.hex}" data-color="${c.hex}"
           title="${esc(c.name)}" role="button" tabindex="0"></div>`
   ).join('');
-
-  // Recent colors
-  const recent = getRecent(key);
-  const recentHtml = recent.length ? `
-    <div class="ep-label">Recent Colors</div>
-    <div class="std-row">${recent.map(hex =>
-      `<div class="std-swatch${isLight(hex) ? ' light' : ''}"
-            style="background:${hex}" data-color="${hex}"
-            title="${hex}" role="button" tabindex="0"></div>`
-    ).join('')}</div>` : '';
 
   // My Colors list
   const palette = getPalette(key);
@@ -377,16 +351,8 @@ function renderEditPanel() {
   const addFormHtml = isAdding ? buildColorForm('add', null, '#2A3E6D', '') : '';
 
   document.getElementById('edit-panel-body').innerHTML = `
-    <div class="ep-label">APi Group Theme Colors</div>
-    <div class="theme-grid">
-      <div class="theme-row base-row">${baseRowHtml}</div>
-      ${shadeRowsHtml}
-    </div>
-
     <div class="ep-label">Standard Colors</div>
     <div class="std-row">${standardHtml}</div>
-
-    ${recentHtml}
 
     <div class="ep-label">
       My Colors
@@ -443,6 +409,19 @@ function buildColorForm(type, idx, startHex, startName) {
              type="button"></button>`
   ).join('');
 
+  // Quick-pick: Recent colors — uses _editKey to pull the right history
+  const recentColors = getRecent(_editKey);
+  const recentQpHtml = recentColors.length
+    ? `<div class="cform-qlabel" style="margin-top:7px;">Recent Colors</div>
+       <div class="qp-row recent-qp">${recentColors.map(hex =>
+         `<button class="qp-swatch${isLight(hex) ? ' light' : ''}"
+                  style="background:${hex}"
+                  data-setcolor="${hex}"
+                  title="${hex}"
+                  type="button"></button>`
+       ).join('')}</div>`
+    : '';
+
   return `
     <div class="color-form" id="cform-${sufx}" data-type="${type}" data-idx="${idx ?? ''}">
 
@@ -453,6 +432,9 @@ function buildColorForm(type, idx, startHex, startName) {
       <!-- Quick-pick: Standard Colors -->
       <div class="cform-qlabel" style="margin-top:7px;">Standard Colors</div>
       <div class="qp-row std-qp">${stdSwatchHtml}</div>
+
+      <!-- Quick-pick: Recent Colors (only shown when there are recents) -->
+      ${recentQpHtml}
 
       <!-- Divider -->
       <div class="cform-divider"><span>Custom Color</span></div>
@@ -501,15 +483,6 @@ function buildColorForm(type, idx, startHex, startName) {
 // ─────────────────────────────────────────────────────────────────
 function bindEditEvents(key) {
   const body = document.getElementById('edit-panel-body');
-
-  // ── Top-level theme swatches: APPLY + close ──
-  body.querySelectorAll('.theme-swatch').forEach(s => {
-    const apply = () => applyAndClose(s.dataset.color);
-    s.addEventListener('click', apply);
-    s.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); apply(); }
-    });
-  });
 
   // ── Top-level standard + recent: APPLY + close ──
   body.querySelectorAll('.std-swatch').forEach(s => {
