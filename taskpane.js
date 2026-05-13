@@ -231,6 +231,13 @@ let _applyFn  = null;
 let _openForm = null; // { type: 'edit'|'add', idx: number|null }
 
 // ─────────────────────────────────────────────────────────────────
+// Performance state — cached from inspectSelection so apply
+// functions skip the first load+sync round-trip entirely
+// ─────────────────────────────────────────────────────────────────
+let _cachedShapeCount = 0; // number of currently selected shapes
+let _applyVer         = 0; // version counter — drops superseded clicks
+
+// ─────────────────────────────────────────────────────────────────
 // Main panel — 7 swatches + pencil button
 // ─────────────────────────────────────────────────────────────────
 function renderMainSwatches(key) {
@@ -697,6 +704,7 @@ async function inspectSelection() {
 
       const items = sel.items;
       if (!items.length) { renderEmpty(); return; }
+      _cachedShapeCount = items.length; // cache for fast apply
 
       const merged   = { fill: false, border: false, text: false, lineEnds: false };
       let   allSame  = true;
@@ -762,6 +770,7 @@ function renderUI({ merged, meta, firstName, count, anySupported, isLine }) {
 }
 
 function renderEmpty() {
+  _cachedShapeCount = 0;
   show('empty-state');
   hide('shape-banner');
   hide('unsupported-state');
@@ -778,74 +787,85 @@ function setStatus(m) { if (el('status')) el('status').textContent = m; }
 // ─────────────────────────────────────────────────────────────────
 // Apply functions
 // ─────────────────────────────────────────────────────────────────
-async function getSelected(ctx) {
-  const col = ctx.presentation.getSelectedShapes();
-  col.load('items');
-  await ctx.sync();
-  return col.items;
+// Fast helper — no load() needed for write operations.
+// Uses cached count + getItemAt(i) to skip the first sync entirely.
+function getSelectedFast(ctx) {
+  const col    = ctx.presentation.getSelectedShapes();
+  const shapes = [];
+  for (let i = 0; i < _cachedShapeCount; i++) {
+    shapes.push(col.getItemAt(i));
+  }
+  return shapes; // proxy objects — safe to write to before sync
 }
 
 async function applyFill(color) {
+  const ver = ++_applyVer;
+  if (!_cachedShapeCount) return setStatus('No shape selected.');
   await PowerPoint.run(async ctx => {
-    const shapes = await getSelected(ctx);
-    if (!shapes.length) return setStatus('No shape selected.');
-    shapes.forEach(s => {
+    if (ver !== _applyVer) return; // superseded by a newer click
+    getSelectedFast(ctx).forEach(s => {
       if (color === 'none') s.fill.clear();
       else s.fill.setSolidColor(color);
     });
     await ctx.sync();
-    setStatus(`Fill → ${color === 'none' ? 'cleared' : color}`);
+    if (ver === _applyVer) setStatus(`Fill → ${color === 'none' ? 'cleared' : color}`);
   });
 }
 
 async function applyBorderColor(color) {
+  const ver = ++_applyVer;
+  if (!_cachedShapeCount) return setStatus('No shape selected.');
   await PowerPoint.run(async ctx => {
-    const shapes = await getSelected(ctx);
-    if (!shapes.length) return setStatus('No shape selected.');
-    shapes.forEach(s => {
+    if (ver !== _applyVer) return;
+    getSelectedFast(ctx).forEach(s => {
       if (color === 'none') s.lineFormat.visible = false;
       else { s.lineFormat.visible = true; s.lineFormat.color = color; }
     });
     await ctx.sync();
-    setStatus(`Border → ${color === 'none' ? 'removed' : color}`);
+    if (ver === _applyVer) setStatus(`Border → ${color === 'none' ? 'removed' : color}`);
   });
 }
 
 async function applyBorderWeight(pts) {
+  const ver = ++_applyVer;
+  if (!_cachedShapeCount) return setStatus('No shape selected.');
   await PowerPoint.run(async ctx => {
-    const shapes = await getSelected(ctx);
-    if (!shapes.length) return setStatus('No shape selected.');
-    shapes.forEach(s => { s.lineFormat.weight = pts; s.lineFormat.visible = true; });
+    if (ver !== _applyVer) return;
+    getSelectedFast(ctx).forEach(s => { s.lineFormat.weight = pts; s.lineFormat.visible = true; });
     await ctx.sync();
-    setStatus(`Weight → ${pts}pt`);
+    if (ver === _applyVer) setStatus(`Weight → ${pts}pt`);
   });
 }
 
 async function applyBorderDash(style) {
+  const ver = ++_applyVer;
   const map = {
     solid: PowerPoint.LineDashStyle.solid,
     dash:  PowerPoint.LineDashStyle.dash,
     dot:   PowerPoint.LineDashStyle.dot,
   };
+  if (!_cachedShapeCount) return setStatus('No shape selected.');
   await PowerPoint.run(async ctx => {
-    const shapes = await getSelected(ctx);
-    if (!shapes.length) return setStatus('No shape selected.');
-    shapes.forEach(s => {
+    if (ver !== _applyVer) return;
+    getSelectedFast(ctx).forEach(s => {
       s.lineFormat.dashStyle = map[style] ?? PowerPoint.LineDashStyle.solid;
       s.lineFormat.visible   = true;
     });
     await ctx.sync();
-    setStatus(`Style → ${style}`);
+    if (ver === _applyVer) setStatus(`Style → ${style}`);
   });
 }
 
 async function applyTextColor(color) {
+  const ver = ++_applyVer;
+  if (!_cachedShapeCount) return setStatus('No shape selected.');
   await PowerPoint.run(async ctx => {
-    const shapes = await getSelected(ctx);
-    if (!shapes.length) return setStatus('No shape selected.');
-    shapes.forEach(s => { try { s.textFrame.textRange.font.color = color; } catch (_) {} });
+    if (ver !== _applyVer) return;
+    getSelectedFast(ctx).forEach(s => {
+      try { s.textFrame.textRange.font.color = color; } catch (_) {}
+    });
     await ctx.sync();
-    setStatus(`Text → ${color}`);
+    if (ver === _applyVer) setStatus(`Text → ${color}`);
   });
 }
 
@@ -859,17 +879,17 @@ async function applyLineEnds() {
   };
   const sv = el('line-start').value;
   const ev = el('line-end').value;
+  const ver = ++_applyVer;
+  if (!_cachedShapeCount) return setStatus('No shape selected.');
   await PowerPoint.run(async ctx => {
-    const shapes = await getSelected(ctx);
-    if (!shapes.length) return setStatus('No shape selected.');
-    shapes.forEach(s => {
-      if (toKey(s.type) !== 'line') return;
+    if (ver !== _applyVer) return;
+    getSelectedFast(ctx).forEach(s => {
       try {
         s.lineFormat.beginArrowheadStyle = aMap[sv] ?? PowerPoint.ArrowheadStyle.none;
         s.lineFormat.endArrowheadStyle   = aMap[ev] ?? PowerPoint.ArrowheadStyle.none;
       } catch (_) {}
     });
     await ctx.sync();
-    setStatus(`Ends → ${sv} / ${ev}`);
+    if (ver === _applyVer) setStatus(`Ends → ${sv} / ${ev}`);
   });
 }
