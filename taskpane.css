@@ -126,7 +126,7 @@ h3 {
   background: var(--bg-subtle) !important; filter: none;
   border-color: var(--api-blue) !important; box-shadow: var(--shadow-sm);
 }
-.legend-line-sample { display: block; width: 48px; height: 3px; border-radius: 2px; flex-shrink: 0; }
+.legend-line-sample { display: block; width: 56px; height: 8px; border-radius: 4px; flex-shrink: 0; }
 .legend-line-name {
   font-size: 11px; font-weight: 600; color: var(--text-primary);
   text-align: left; line-height: 1.3; pointer-events: none;

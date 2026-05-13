@@ -339,10 +339,15 @@ function buildPptPicker(pickerType, sufx, startHex, dataAttr, recentKey) {
 // Build color form — flat PowerPoint-style pickers
 // ─────────────────────────────────────────────────────────────────
 function buildColorForm(type, idx, startHex, startName, startTextHex) {
-  const norm = normalizeHex(startHex) || '#2A3E6D';
-  const sufx = type==='edit' ? `edit-${idx}` : 'add';
+  const norm    = normalizeHex(startHex) || '#2A3E6D';
+  const txNorm  = normalizeHex(startTextHex) || autoTextHex(norm);
+  const sufx    = type==='edit' ? `edit-${idx}` : 'add';
+  const isFill  = _editKey === 'fill';
 
   const fillPicker = buildPptPicker('fill', sufx, norm, 'data-setfill', _editKey);
+  const fontPicker = isFill
+    ? buildPptPicker('textcolor', sufx, txNorm, 'data-settextcolor', 'text')
+    : '';
 
   return `
     <div class="color-form" id="cform-${sufx}" data-type="${type}" data-idx="${idx??''}">
@@ -351,6 +356,7 @@ function buildColorForm(type, idx, startHex, startName, startTextHex) {
              placeholder="Color name (optional)" maxlength="36"
              value="${esc(startName)}" />
 
+      <!-- Shape Fill header -->
       <div class="ppt-sect-hdr">
         <svg class="ppt-fill-svg" id="fill-svg-${sufx}" width="16" height="16" viewBox="0 0 16 16" fill="none">
           <path d="M3 12.5c0-.9.8-1.7 1.7-1.7s1.7.8 1.7 1.7S4.7 15 4.7 15 3 13.4 3 12.5z"
@@ -363,6 +369,22 @@ function buildColorForm(type, idx, startHex, startName, startTextHex) {
              id="fill-swatch-${sufx}" style="background:${norm};"></div>
       </div>
       ${fillPicker}
+
+      ${isFill ? `
+      <!-- Font Color header -->
+      <div class="ppt-sect-hdr" style="margin-top:10px;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <text x="2" y="13" font-family="Segoe UI,sans-serif" font-size="12" font-weight="700"
+                fill="${txNorm}" id="font-svg-${sufx}">A</text>
+          <rect x="2" y="13.5" width="12" height="2.5" rx="1"
+                fill="${txNorm}" id="font-bar-${sufx}"/>
+        </svg>
+        <span class="ppt-sect-label">Font Color</span>
+        <div class="ppt-curr-swatch${isLight(txNorm)?' light':''}"
+             id="font-swatch-${sufx}" style="background:${txNorm};"></div>
+      </div>
+      ${fontPicker}
+      ` : ''}
 
       <div class="cform-btns">
         <button class="cform-save" type="button" data-type="${type}" data-idx="${idx??''}">
@@ -490,14 +512,17 @@ function wirePicker(form, pickerType, sufx, onColorChange) {
 // Wire the whole color form
 // ─────────────────────────────────────────────────────────────────
 function wireColorForm(form, key) {
-  const type = form.dataset.type;
-  const idx  = form.dataset.idx !== '' ? parseInt(form.dataset.idx, 10) : null;
-  const sufx = type==='edit' ? `edit-${idx}` : 'add';
+  const type   = form.dataset.type;
+  const idx    = form.dataset.idx !== '' ? parseInt(form.dataset.idx, 10) : null;
+  const sufx   = type==='edit' ? `edit-${idx}` : 'add';
+  const isFill = key === 'fill';
 
   // Track current fill selection
   let currentFill = normalizeHex('#'+(document.getElementById(`hex-fill-${sufx}`)?.value||'')) || '#2A3E6D';
+  // Track current font color (DOI only)
+  let currentText = normalizeHex('#'+(document.getElementById(`hex-textcolor-${sufx}`)?.value||'')) || autoTextHex(currentFill);
 
-  // Fill color change callback — update header swatch + icon
+  // Fill color change — update fill header swatch + paint-bucket icon
   function onFillChange(hex) {
     currentFill = hex;
     const sw = document.getElementById(`fill-swatch-${sufx}`);
@@ -509,8 +534,21 @@ function wireColorForm(form, key) {
     }
   }
 
+  // Font color change — update font header swatch + A icon
+  function onFontChange(hex) {
+    currentText = hex;
+    const sw = document.getElementById(`font-swatch-${sufx}`);
+    if (sw) { sw.style.background = hex; sw.classList.toggle('light', isLight(hex)); }
+    const txt = document.getElementById(`font-svg-${sufx}`);
+    if (txt) txt.setAttribute('fill', hex);
+    const bar = document.getElementById(`font-bar-${sufx}`);
+    if (bar) bar.setAttribute('fill', hex);
+  }
+
   // Wire fill picker
   const cleanFill = wirePicker(form, 'fill', sufx, onFillChange);
+  // Wire font picker (DOI only)
+  const cleanFont = isFill ? wirePicker(form, 'textcolor', sufx, onFontChange) : null;
 
   const nameInp = document.getElementById(`cfn-${sufx}`);
 
@@ -519,11 +557,12 @@ function wireColorForm(form, key) {
     const norm = normalizeHex(currentFill);
     if (!norm) return;
     const name    = nameInp?.value.trim() || '';
-    const txtNorm = key==='fill' ? autoTextHex(norm) : null;
+    const txtNorm = isFill ? (normalizeHex(currentText) || autoTextHex(norm)) : null;
     if (type==='edit' && idx !== null) updateColor(key, idx, norm, name||norm, txtNorm);
     else addColor(key, norm, name, txtNorm);
     _openForm = null;
     cleanFill?.();
+    cleanFont?.();
     renderEditPanel();
   });
 
@@ -531,6 +570,7 @@ function wireColorForm(form, key) {
   form.querySelector('.cform-cancel')?.addEventListener('click', () => {
     _openForm = null;
     cleanFill?.();
+    cleanFont?.();
     renderEditPanel();
   });
 
@@ -620,7 +660,7 @@ function closeEditPanel() {
 // ─────────────────────────────────────────────────────────────────
 function renderEditPanel() {
   const key      = _editKey;
-  const titleMap = { fill: 'Degree of Integration', border: 'Border Color', text: 'Text Color' };
+  const titleMap = { fill: 'Degree of Integration', border: 'Post Int Process Owner', text: 'Text Color' };
   document.getElementById('edit-panel-title').textContent = titleMap[key] || 'Edit Colors';
 
   const palette = getPalette(key);
@@ -856,7 +896,6 @@ async function applyLineEnds() {
 Office.onReady(() => {
   renderMainSwatches('fill');
   renderMainSwatches('border');
-  renderMainSwatches('text');
 
   document.querySelectorAll('[data-weight]').forEach(btn =>
     btn.addEventListener('click', () => applyBorderWeight(parseFloat(btn.dataset.weight))));
@@ -920,15 +959,14 @@ function renderUI({merged,meta,firstName,count,anySupported,isLine}) {
   tog('section-fill',      merged.fill);
   tog('section-border',    merged.border);
   tog('section-line-ends', merged.lineEnds);
-  tog('section-text',      merged.text);
-  el('border-heading').textContent = isLine ? 'Line Style' : 'Border';
+  el('border-heading').textContent = isLine ? 'Line Style' : 'Post Int Process Owner';
   if (!anySupported) show('unsupported-state');
 }
 
 function renderEmpty() {
   _cachedShapeCount=0;
   show('empty-state'); hide('shape-banner'); hide('unsupported-state');
-  ['section-fill','section-border','section-line-ends','section-text'].forEach(hide);
+  ['section-fill','section-border','section-line-ends'].forEach(hide);
   setStatus('');
 }
 
