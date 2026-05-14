@@ -4,13 +4,13 @@
 // Brand / static color data
 // ─────────────────────────────────────────────────────────────────
 const BRAND_COLORS = [
-  { hex: '#D50032', name: 'APi Corp Red' },
-  { hex: '#2A3E6D', name: 'Dark Navy'    },
-  { hex: '#008579', name: 'Teal'         },
-  { hex: '#D4D800', name: 'TBD Yellow'   },
-  { hex: '#7030A0', name: 'APi Segment'  },
-  { hex: '#00B0F0', name: 'Target HQ'    },
-  { hex: '#92D050', name: 'Target OpCo'  },
+  { hex: '#D50032', name: 'APi Corp Red'  },
+  { hex: '#2A3E6D', name: 'Dark Navy'     },
+  { hex: '#008579', name: 'Teal'          },
+  { hex: '#D4D800', name: 'TBD Yellow'    },
+  { hex: '#7030A0', name: 'APi Segment'   },
+  { hex: '#00B0F0', name: 'Target HQ'     },
+  { hex: '#92D050', name: 'Target OpCo'   },
 ];
 
 const STANDARD_COLORS = [
@@ -172,6 +172,34 @@ function pushRecent(key,hex) {
 }
 
 // ─────────────────────────────────────────────────────────────────
+// ══ MODE STATE ══
+// _currentMode: 'style' | 'paint'
+// STAGED: what the paint mode will apply
+// ─────────────────────────────────────────────────────────────────
+let _currentMode = 'style';
+
+const STAGED = {
+  fill:   { dirty: false, hex: null, textHex: null, name: '' },
+  border: { dirty: false, hex: null, name: '' },
+  text:   { dirty: false, hex: null },
+  locked: false,
+};
+
+// Persist staged state across mode switches (sessionStorage so it
+// survives Style→Paint→Style→Paint round-trips but not page reloads)
+function saveStagedState() {
+  try { sessionStorage.setItem('sct_staged', JSON.stringify(STAGED)); } catch(_) {}
+}
+function loadStagedState() {
+  try {
+    const s = sessionStorage.getItem('sct_staged');
+    if (!s) return;
+    const parsed = JSON.parse(s);
+    Object.assign(STAGED, parsed);
+  } catch(_) {}
+}
+
+// ─────────────────────────────────────────────────────────────────
 // Edit panel state
 // ─────────────────────────────────────────────────────────────────
 let _editKey  = null;
@@ -185,8 +213,7 @@ let _cachedShapeCount = 0;
 let _applyVer         = 0;
 
 // ─────────────────────────────────────────────────────────────────
-// Theme colors — loaded from the document on startup
-// Falls back to BRAND_COLORS if API unavailable
+// Theme colors from document
 // ─────────────────────────────────────────────────────────────────
 let _themeColors = null;
 
@@ -200,7 +227,6 @@ async function loadThemeColors() {
       theme.load('themeColorScheme');
       await ctx.sync();
       const cs = theme.themeColorScheme;
-      // Match PowerPoint ribbon column order: Dark1, Light1, Dark2, Light2, Accent1-6
       const raw = [
         { raw: cs.dark1,   name: 'Text / Dark 1'  },
         { raw: cs.light1,  name: 'Background 1'   },
@@ -220,12 +246,12 @@ async function loadThemeColors() {
       }
     });
   } catch(e) {
-    console.log('Theme colors unavailable, using brand colors:', e.message);
+    console.log('Theme colors unavailable:', e.message);
   }
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Build the PowerPoint-style theme grid (uses live doc colors)
+// Theme grid builder
 // ─────────────────────────────────────────────────────────────────
 function buildThemeGrid(dataAttr) {
   const baseColors = _themeColors || BRAND_COLORS;
@@ -251,7 +277,7 @@ function buildThemeGrid(dataAttr) {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Build a single PowerPoint-style picker panel (collapsible)
+// Build PPT-style picker
 // ─────────────────────────────────────────────────────────────────
 function buildPptPicker(pickerType,sufx,startHex,dataAttr,recentKey) {
   const norm=normalizeHex(startHex)||'#2A3E6D';
@@ -310,7 +336,7 @@ function buildPptPicker(pickerType,sufx,startHex,dataAttr,recentKey) {
       </div>
       ${recentHtml}
       <div class="acc-section">
-        <button class="acc-hdr" data-acc="${moreId}" type="button" id="more-btn-${pickerType}-${sufx}">
+        <button class="acc-hdr" data-acc="${moreId}" type="button">
           <span>Custom Color</span>
           <svg class="acc-chevron" width="10" height="10" viewBox="0 0 10 10" fill="none">
             <path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
@@ -379,7 +405,7 @@ function buildColorForm(type,idx,startHex,startName,startTextHex) {
         ${fillPicker}
       </div>
       ${isFill?`
-      <!-- Font Color — collapsible (starts collapsed) -->
+      <!-- Font Color — collapsible -->
       <div class="ppt-sect-hdr ppt-sect-toggle" data-target="font-picker-${sufx}"
            id="font-hdr-${sufx}" style="margin-top:8px;cursor:pointer;">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -521,7 +547,6 @@ function wireColorForm(form,key) {
   const cleanFont=isFill?wirePicker(form,'textcolor',sufx,onFontChange):null;
   const nameInp=document.getElementById(`cfn-${sufx}`);
 
-  // Wire Shape Fill / Font Color section header toggles
   form.querySelectorAll('.ppt-sect-toggle').forEach(hdr=>{
     hdr.addEventListener('click',()=>{
       const targetId=hdr.dataset.target;
@@ -602,7 +627,7 @@ function renderMainSwatches(key) {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Trash can SVG helper
+// Trash icon
 // ─────────────────────────────────────────────────────────────────
 function trashIcon() {
   return `<svg width="11" height="12" viewBox="0 0 11 12" fill="none">
@@ -612,24 +637,26 @@ function trashIcon() {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Edit panel — open / close
+// Edit panel
 // ─────────────────────────────────────────────────────────────────
 function openEditPanel(key,fn) {
   _editKey=key;_applyFn=fn;_openForm=null;
   renderEditPanel();
   document.getElementById('main-content').classList.add('hidden');
+  document.getElementById('paint-panel').classList.add('hidden');
   document.getElementById('edit-panel').classList.remove('hidden');
 }
 function closeEditPanel() {
   document.getElementById('edit-panel').classList.add('hidden');
-  document.getElementById('main-content').classList.remove('hidden');
+  if(_currentMode==='paint'){
+    document.getElementById('paint-panel').classList.remove('hidden');
+  } else {
+    document.getElementById('main-content').classList.remove('hidden');
+  }
   renderMainSwatches(_editKey);
   _editKey=null;_applyFn=null;_openForm=null;
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Edit panel — render
-// ─────────────────────────────────────────────────────────────────
 function renderEditPanel() {
   const key=_editKey;
   const titleMap={fill:'Degree of Integration',border:'Post Int Process Owner',text:'Text Color'};
@@ -703,13 +730,9 @@ function renderEditPanel() {
   bindEditEvents(key);
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Bind edit panel events (including drag-and-drop)
-// ─────────────────────────────────────────────────────────────────
 function bindEditEvents(key) {
   const body=document.getElementById('edit-panel-body');
 
-  // Apply swatch
   body.querySelectorAll('.my-swatch').forEach(s=>{
     const go=()=>{
       const color=s.dataset.color,tc=s.dataset.textcolor;
@@ -721,7 +744,6 @@ function bindEditEvents(key) {
     s.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}});
   });
 
-  // Pencil edit
   body.querySelectorAll('.my-edit-btn').forEach(btn=>{
     btn.addEventListener('click',()=>{
       const idx=parseInt(btn.dataset.idx,10);
@@ -730,7 +752,6 @@ function bindEditEvents(key) {
     });
   });
 
-  // Trash delete
   body.querySelectorAll('.my-del-btn').forEach(btn=>{
     btn.addEventListener('click',()=>{
       deleteColor(key,parseInt(btn.dataset.idx,10));
@@ -738,32 +759,27 @@ function bindEditEvents(key) {
     });
   });
 
-  // Add New Color toggle
   document.getElementById('ep-add-toggle').addEventListener('click',()=>{
     _openForm=(_openForm&&_openForm.type==='add')?null:{type:'add',idx:null};
     renderEditPanel();
   });
 
-  // No Color
   document.getElementById('ep-no-color').addEventListener('click',()=>{
     if(key==='fill')applyDOITile('none',null);else _applyFn?.('none');
     closeEditPanel();
   });
 
-  // Reset
   document.getElementById('ep-reset').addEventListener('click',()=>{
     if(!confirm(`Reset ${key} palette to defaults? Your custom colors will be lost.`))return;
     localStorage.removeItem(`sct_${key}`);
     _openForm=null;renderEditPanel();renderMainSwatches(key);
   });
 
-  // Wire color forms
   body.querySelectorAll('.color-form').forEach(form=>wireColorForm(form,key));
 
-  // ── Drag-and-drop reordering ──────────────────────────────────
+  // Drag-and-drop
   const list=document.getElementById('my-colors-list');
   let dragSrcIdx=null;
-
   list.querySelectorAll('.my-color-item[draggable]').forEach(item=>{
     item.addEventListener('dragstart',e=>{
       dragSrcIdx=parseInt(item.dataset.idx,10);
@@ -788,14 +804,281 @@ function bindEditEvents(key) {
       const [moved]=arr.splice(dragSrcIdx,1);
       arr.splice(destIdx,0,moved);
       savePalette(key,arr);
-      _openForm=null;
-      renderEditPanel();
+      _openForm=null;renderEditPanel();
     });
   });
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Apply functions
+// ══ MODE SWITCHING ══
+// ─────────────────────────────────────────────────────────────────
+function switchMode(mode) {
+  if(_currentMode === mode) return;
+  _currentMode = mode;
+
+  // Save/restore staged state on every switch
+  saveStagedState();
+
+  const header = document.getElementById('app-header');
+  const stylBtn = document.getElementById('btn-mode-style');
+  const paintBtn = document.getElementById('btn-mode-paint');
+  const mainContent = document.getElementById('main-content');
+  const paintPanel = document.getElementById('paint-panel');
+  const emptyState = document.getElementById('empty-state');
+  const shapeBanner = document.getElementById('shape-banner');
+
+  if(mode === 'paint') {
+    // Update toggle
+    stylBtn.classList.remove('mode-active');
+    paintBtn.classList.add('mode-active');
+    // Header tint
+    header.classList.add('paint-mode-header');
+    // Show/hide panels
+    mainContent.classList.add('hidden');
+    emptyState.classList.add('hidden');
+    shapeBanner.classList.add('hidden');
+    paintPanel.classList.remove('hidden');
+    // Render paint panel
+    renderPaintPanel();
+    setStatus('Paint mode — capture a shape or select attributes');
+  } else {
+    // Update toggle
+    paintBtn.classList.remove('mode-active');
+    stylBtn.classList.add('mode-active');
+    // Remove header tint
+    header.classList.remove('paint-mode-header');
+    // Show/hide panels
+    paintPanel.classList.add('hidden');
+    mainContent.classList.remove('hidden');
+    // Re-inspect selection
+    inspectSelection();
+    setStatus('');
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// ══ PAINT PANEL RENDER ══
+// ─────────────────────────────────────────────────────────────────
+function renderPaintPanel() {
+  // Fill / DOI preview
+  updateStagedPreview('fill');
+  updateStagedPreview('border');
+  updateStagedPreview('text');
+
+  // Checkboxes — only enabled when dirty
+  const fillChk  = document.getElementById('staged-fill-chk');
+  const borderChk = document.getElementById('staged-border-chk');
+  const textChk  = document.getElementById('staged-text-chk');
+
+  if(fillChk) {
+    fillChk.disabled = !STAGED.fill.dirty;
+    fillChk.checked  = STAGED.fill.dirty;
+  }
+  if(borderChk) {
+    borderChk.disabled = !STAGED.border.dirty;
+    borderChk.checked  = STAGED.border.dirty;
+  }
+  if(textChk) {
+    textChk.disabled = !STAGED.text.dirty;
+    textChk.checked  = STAGED.text.dirty;
+  }
+
+  // Lock toggle
+  updateLockToggle();
+
+  // Capture hint — update based on state
+  const anyDirty = STAGED.fill.dirty || STAGED.border.dirty || STAGED.text.dirty;
+  const hint = document.getElementById('capture-hint');
+  if(hint) {
+    hint.textContent = anyDirty
+      ? 'Format captured. Select shapes and click "Apply to Selection" or enable auto-paint.'
+      : 'Select a shape, then click Capture to read its formatting.';
+  }
+}
+
+function updateStagedPreview(attr) {
+  if(attr === 'fill') {
+    const prev = document.getElementById('staged-fill-preview');
+    if(!prev) return;
+    if(STAGED.fill.dirty && STAGED.fill.hex) {
+      const txHex = STAGED.fill.textHex || autoTextHex(STAGED.fill.hex);
+      prev.innerHTML = `<span class="staged-fill-tile"
+        style="background:${STAGED.fill.hex};color:${txHex};">
+        ${esc(STAGED.fill.name || STAGED.fill.hex)}
+      </span>`;
+    } else {
+      prev.innerHTML = '<span class="staged-not-set">Not captured</span>';
+    }
+  } else if(attr === 'border') {
+    const prev = document.getElementById('staged-border-preview');
+    if(!prev) return;
+    if(STAGED.border.dirty && STAGED.border.hex) {
+      prev.innerHTML = `<span class="staged-line-preview"
+        style="background:${STAGED.border.hex};"></span>
+        <span class="staged-border-name">${esc(STAGED.border.name || STAGED.border.hex)}</span>`;
+    } else {
+      prev.innerHTML = '<span class="staged-not-set">Not captured</span>';
+    }
+  } else if(attr === 'text') {
+    const prev = document.getElementById('staged-text-preview');
+    if(!prev) return;
+    if(STAGED.text.dirty && STAGED.text.hex) {
+      prev.innerHTML = `<span class="staged-color-dot${isLight(STAGED.text.hex)?' light':''}"
+        style="background:${STAGED.text.hex};"></span>
+        <span class="staged-hex-label">${STAGED.text.hex}</span>`;
+    } else {
+      prev.innerHTML = '<span class="staged-not-set">Not captured</span>';
+    }
+  }
+}
+
+function updateLockToggle() {
+  const btn = document.getElementById('btn-lock');
+  const lbl = document.getElementById('lock-state-label');
+  if(!btn) return;
+  btn.setAttribute('aria-checked', STAGED.locked ? 'true' : 'false');
+  btn.classList.toggle('lock-on', STAGED.locked);
+  if(lbl) lbl.textContent = STAGED.locked ? 'On' : 'Off';
+}
+
+// ─────────────────────────────────────────────────────────────────
+// ══ CAPTURE FROM SHAPE ══
+// ─────────────────────────────────────────────────────────────────
+async function captureFromShape() {
+  try {
+    await PowerPoint.run(async ctx => {
+      const sel = ctx.presentation.getSelectedShapes();
+      sel.load('items/type,items/name,items/fill,items/lineFormat,items/textFrame');
+      await ctx.sync();
+
+      if(!sel.items.length) {
+        setStatus('No shape selected — select a shape first.');
+        return;
+      }
+
+      const s = sel.items[0];
+      // Load the properties we need
+      s.fill.load('type,foreColor');
+      s.lineFormat.load('color,weight,visible');
+      try { s.textFrame.textRange.font.load('color'); } catch(_) {}
+      await ctx.sync();
+
+      // ── Capture fill ──
+      try {
+        const fillType = s.fill.type;
+        if(fillType === PowerPoint.ShapeFillType.solid || fillType === 'Solid') {
+          const rawFill = s.fill.foreColor;
+          const normFill = normalizeHex(rawFill.startsWith('#') ? rawFill : '#'+rawFill);
+          if(normFill) {
+            STAGED.fill.dirty   = true;
+            STAGED.fill.hex     = normFill;
+            STAGED.fill.textHex = autoTextHex(normFill);
+            // Try to match a palette name
+            const match = getPalette('fill').find(c=>c.hex.toUpperCase()===normFill.toUpperCase());
+            STAGED.fill.name = match ? match.name : normFill;
+            if(match && match.textHex) STAGED.fill.textHex = match.textHex;
+          }
+        }
+      } catch(_) {}
+
+      // ── Capture border ──
+      try {
+        if(s.lineFormat.visible !== false) {
+          const rawBorder = s.lineFormat.color;
+          const normBorder = normalizeHex(rawBorder.startsWith('#') ? rawBorder : '#'+rawBorder);
+          if(normBorder) {
+            STAGED.border.dirty = true;
+            STAGED.border.hex   = normBorder;
+            const match = getPalette('border').find(c=>c.hex.toUpperCase()===normBorder.toUpperCase());
+            STAGED.border.name = match ? match.name : normBorder;
+          }
+        }
+      } catch(_) {}
+
+      // ── Capture text color ──
+      try {
+        const rawText = s.textFrame.textRange.font.color;
+        const normText = normalizeHex(rawText.startsWith('#') ? rawText : '#'+rawText);
+        if(normText) {
+          STAGED.text.dirty = true;
+          STAGED.text.hex   = normText;
+        }
+      } catch(_) {}
+
+      _cachedShapeCount = sel.items.length;
+      saveStagedState();
+      renderPaintPanel();
+      setStatus(`Captured from "${s.name || 'shape'}"`);
+    });
+  } catch(e) {
+    setStatus('Capture failed — make sure a shape is selected.');
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// ══ APPLY STAGED FORMAT ══
+// ─────────────────────────────────────────────────────────────────
+async function applyStagedFormat() {
+  const anyChecked =
+    (STAGED.fill.dirty   && document.getElementById('staged-fill-chk')?.checked)   ||
+    (STAGED.border.dirty && document.getElementById('staged-border-chk')?.checked) ||
+    (STAGED.text.dirty   && document.getElementById('staged-text-chk')?.checked);
+
+  if(!anyChecked) { setStatus('Nothing staged — capture a shape first.'); return; }
+  if(!_cachedShapeCount) { setStatus('No shape selected.'); return; }
+
+  const ver = ++_applyVer;
+  await PowerPoint.run(async ctx => {
+    if(ver !== _applyVer) return;
+    const shapes = getSelectedFast(ctx);
+    const applyFill   = STAGED.fill.dirty   && document.getElementById('staged-fill-chk')?.checked;
+    const applyBorder = STAGED.border.dirty && document.getElementById('staged-border-chk')?.checked;
+    const applyText   = STAGED.text.dirty   && document.getElementById('staged-text-chk')?.checked;
+
+    shapes.forEach(s => {
+      if(applyFill) {
+        if(STAGED.fill.hex === 'none') s.fill.clear();
+        else s.fill.setSolidColor(STAGED.fill.hex);
+        if(STAGED.fill.textHex && !applyText) {
+          try { s.textFrame.textRange.font.color = STAGED.fill.textHex; } catch(_) {}
+        }
+      }
+      if(applyBorder) {
+        if(STAGED.border.hex === 'none') s.lineFormat.visible = false;
+        else { s.lineFormat.visible = true; s.lineFormat.color = STAGED.border.hex; }
+      }
+      if(applyText) {
+        try { s.textFrame.textRange.font.color = STAGED.text.hex; } catch(_) {}
+      }
+    });
+
+    await ctx.sync();
+    if(ver === _applyVer) {
+      const parts = [];
+      if(applyFill)   parts.push('fill');
+      if(applyBorder) parts.push('border');
+      if(applyText)   parts.push('text');
+      setStatus(`Painted: ${parts.join(' + ')}`);
+    }
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Update shape count for paint mode (no UI update)
+// ─────────────────────────────────────────────────────────────────
+async function updateShapeCount() {
+  try {
+    await PowerPoint.run(async ctx => {
+      const sel = ctx.presentation.getSelectedShapes();
+      sel.load('items');
+      await ctx.sync();
+      _cachedShapeCount = sel.items.length;
+    });
+  } catch(_) { _cachedShapeCount = 0; }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Apply functions (Style mode)
 // ─────────────────────────────────────────────────────────────────
 function getSelectedFast(ctx) {
   const col=ctx.presentation.getSelectedShapes();
@@ -889,21 +1172,20 @@ async function applyLineEnds() {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Insert New Capability shape
+// Insert New Capability
 // ─────────────────────────────────────────────────────────────────
 async function insertCapabilityShape() {
   await PowerPoint.run(async (context) => {
     const CM_TO_PT = 28.3465;
-    const widthPt  = 5.6  * CM_TO_PT;   // 158.74 pt
-    const heightPt = 1.46 * CM_TO_PT;   //  41.39 pt
+    const widthPt  = 5.6  * CM_TO_PT;
+    const heightPt = 1.46 * CM_TO_PT;
     const leftPt   = (720 - widthPt)  / 2;
     const topPt    = (540 - heightPt) / 2;
 
-    // Get the currently visible slide; fall back to first slide
     let slide;
     try {
       const sel = context.presentation.getSelectedSlides();
-      sel.load("items");
+      sel.load('items');
       await context.sync();
       slide = sel.items.length
         ? context.presentation.getSelectedSlides().getItemAt(0)
@@ -917,11 +1199,10 @@ async function insertCapabilityShape() {
       { left: leftPt, top: topPt, width: widthPt, height: heightPt }
     );
 
-    shape.name = "Capability";
-
+    shape.name = 'Capability';
     const tf = shape.textFrame;
-    tf.textRange.text      = "New Capability\n(xx)";
-    tf.textRange.font.name = "Aptos";
+    tf.textRange.text = 'New Capability\n(xx)';
+    tf.textRange.font.name = 'Aptos';
     tf.textRange.font.size = 12;
     try {
       tf.verticalAlignment = PowerPoint.TextVerticalAlignment.middle;
@@ -930,18 +1211,22 @@ async function insertCapabilityShape() {
     } catch (_) {}
 
     await context.sync();
-    setStatus("Inserted New Capability shape");
-  }).catch(err => setStatus("Insert failed: " + err.message));
+    setStatus('Inserted New Capability shape');
+  }).catch(err => setStatus('Insert failed: ' + err.message));
 }
-
 
 // ─────────────────────────────────────────────────────────────────
 // Office ready
 // ─────────────────────────────────────────────────────────────────
 Office.onReady(async () => {
+  // Load persisted staged state
+  loadStagedState();
+
+  // Render main swatches
   renderMainSwatches('fill');
   renderMainSwatches('border');
 
+  // Style mode controls
   document.querySelectorAll('[data-weight]').forEach(btn=>
     btn.addEventListener('click',()=>applyBorderWeight(parseFloat(btn.dataset.weight))));
   document.querySelectorAll('[data-dash]').forEach(btn=>
@@ -950,18 +1235,49 @@ Office.onReady(async () => {
   document.getElementById('btn-insert-capability')?.addEventListener('click',insertCapabilityShape);
   document.getElementById('edit-back-btn').addEventListener('click',closeEditPanel);
 
+  // ── Mode toggle ──
+  document.getElementById('btn-mode-style').addEventListener('click',()=>switchMode('style'));
+  document.getElementById('btn-mode-paint').addEventListener('click',()=>switchMode('paint'));
+
+  // ── Paint panel controls ──
+  document.getElementById('btn-capture').addEventListener('click',captureFromShape);
+
+  document.getElementById('btn-apply-staged').addEventListener('click',applyStagedFormat);
+
+  document.getElementById('btn-lock').addEventListener('click',()=>{
+    STAGED.locked = !STAGED.locked;
+    saveStagedState();
+    updateLockToggle();
+    setStatus(STAGED.locked
+      ? 'Lock ON — format will auto-apply on every shape click'
+      : 'Lock OFF — click "Apply to Selection" manually');
+  });
+
+  // Staged checkboxes — re-save when toggled
+  ['fill','border','text'].forEach(attr=>{
+    document.getElementById(`staged-${attr}-chk`)?.addEventListener('change',()=>saveStagedState());
+  });
+
+  // ── Selection changed — bifurcated by mode ──
   Office.context.document.addHandlerAsync(
     Office.EventType.DocumentSelectionChanged,
-    ()=>{if(!_editKey)inspectSelection();}
+    async () => {
+      if(_editKey) return; // Edit panel is open — don't interrupt
+      if(_currentMode === 'paint') {
+        await updateShapeCount();
+        if(STAGED.locked) await applyStagedFormat();
+      } else {
+        inspectSelection();
+      }
+    }
   );
-  inspectSelection();
 
-  // Load real theme colors from the document (non-blocking)
+  inspectSelection();
   loadThemeColors();
 });
 
 // ─────────────────────────────────────────────────────────────────
-// Shape inspection
+// Shape inspection (Style mode)
 // ─────────────────────────────────────────────────────────────────
 async function inspectSelection() {
   try {

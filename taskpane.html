@@ -16,7 +16,10 @@
       <span class="header-logo-dot"></span>
       <span class="header-title">Scoping Tool</span>
     </div>
-    <span class="header-sub">APi Group</span>
+    <div class="mode-toggle">
+      <button class="mode-btn mode-active" id="btn-mode-style">Style</button>
+      <button class="mode-btn" id="btn-mode-paint">Paint</button>
+    </div>
   </header>
 
   <!-- ── Empty state ── -->
@@ -153,6 +156,67 @@
       </div>
       <div id="edit-panel-body"></div>
     </div>
+
+  <!-- ══════════════════════════════════════════════
+       PAINT PANEL
+  ═══════════════════════════════════════════════ -->
+  <div id="paint-panel" class="hidden">
+
+    <div class="paint-section">
+      <button class="capture-btn" id="btn-capture">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
+        </svg>
+        Capture from Selected Shape
+      </button>
+      <p class="capture-hint">Select a shape, click Capture, then click shapes to paint them.</p>
+    </div>
+
+    <div class="paint-section" id="staged-attrs-section" style="display:none;">
+      <div class="paint-sect-label">Staged Attributes <span class="paint-sect-hint">check to include</span></div>
+
+      <div class="staged-row">
+        <label class="staged-check-wrap" for="staged-fill-chk">
+          <input type="checkbox" class="staged-chk" id="staged-fill-chk" checked/>
+          <span class="staged-attr-name">Degree of Integration</span>
+        </label>
+        <div class="staged-color-preview" id="staged-fill-preview"><span class="staged-not-set">—</span></div>
+      </div>
+
+      <div class="staged-row">
+        <label class="staged-check-wrap" for="staged-border-chk">
+          <input type="checkbox" class="staged-chk" id="staged-border-chk" checked/>
+          <span class="staged-attr-name">Post Int Process Owner</span>
+        </label>
+        <div class="staged-border-preview" id="staged-border-preview"><span class="staged-not-set">—</span></div>
+      </div>
+
+      <div class="staged-row">
+        <label class="staged-check-wrap" for="staged-text-chk">
+          <input type="checkbox" class="staged-chk" id="staged-text-chk" checked/>
+          <span class="staged-attr-name">Text Color</span>
+        </label>
+        <div class="staged-color-preview" id="staged-text-preview"><span class="staged-not-set">—</span></div>
+      </div>
+    </div>
+
+    <div class="paint-section paint-controls-section">
+      <div class="lock-row">
+        <span class="lock-label">Lock (auto-paint on click)</span>
+        <button class="lock-toggle" id="btn-lock" title="Toggle lock" aria-pressed="false">
+          <span class="lock-track"><span class="lock-thumb"></span></span>
+          <span class="lock-state-label" id="lock-state-lbl">Off</span>
+        </button>
+      </div>
+      <button class="apply-staged-btn" id="btn-apply-staged" disabled>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        Apply to Selection
+      </button>
+    </div>
+
+  </div><!-- /paint-panel -->
 
   </div><!-- /content-area -->
 
