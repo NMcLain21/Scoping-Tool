@@ -767,3 +767,96 @@ h3 {
 }
 .apply-staged-btn:hover { background: #006B63; }
 .apply-staged-btn:focus-visible { box-shadow: 0 0 0 2px var(--api-navy); }
+
+/* ── Paint mode header ──────────────────────────────────────────── */
+#app-header.paint-mode-header { background: #008579; }
+#app-header.paint-mode-header .header-logo-dot { background: #fff; }
+
+/* ── Paint panel sections ───────────────────────────────────────── */
+#paint-panel { display: flex; flex-direction: column; gap: 0; }
+
+.paint-instruction {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 12px; background: #f0f7f6;
+  border-bottom: 1px solid #d0e8e5;
+  font-size: 11px; color: #008579;
+}
+
+.paint-section-block {
+  padding: 10px 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.paint-section-hdr {
+  display: flex; align-items: center; gap: 6px;
+  margin-bottom: 8px;
+}
+.paint-section-title {
+  font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.6px;
+  color: #888; flex: 1;
+}
+.paint-section-badge {
+  font-size: 10px; border-radius: 4px;
+  padding: 2px 6px; max-width: 140px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.paint-section-badge.has-value {
+  background: #f0f4fa; color: #333;
+}
+
+.paint-clear-btn {
+  font-size: 10px; color: #bbb;
+  background: none; border: none;
+  cursor: pointer; padding: 2px 4px;
+  border-radius: 3px; line-height: 1;
+}
+.paint-clear-btn:hover { color: #D50032; background: #fff0f3; }
+
+/* Paint swatches — same as main but with staged state */
+.paint-swatch-row { gap: 5px; }
+
+.main-swatch.paint-staged,
+.legend-tile.paint-staged {
+  outline: 2.5px solid #008579;
+  outline-offset: 2px;
+  position: relative;
+}
+
+.staged-check {
+  position: absolute; top: 3px; right: 5px;
+  font-size: 11px; font-weight: 700;
+  color: inherit; opacity: 0.9;
+}
+.staged-check-line {
+  font-size: 11px; font-weight: 700;
+  color: #008579; margin-left: auto; margin-right: 4px;
+}
+
+/* Capture button */
+.paint-capture-block { background: #fafafa; }
+.capture-btn {
+  display: flex; align-items: center; gap: 7px;
+  width: 100%; padding: 8px 12px;
+  background: #fff; border: 1.5px dashed #c0cce0;
+  border-radius: 7px; cursor: pointer;
+  font-size: 12px; color: #2A3E6D;
+  font-weight: 500; transition: all 0.15s;
+}
+.capture-btn:hover { background: #f0f4fa; border-color: #2A3E6D; }
+
+/* Lock + Apply */
+.paint-controls-block { display: flex; flex-direction: column; gap: 8px; }
+
+.apply-staged-btn {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  width: 100%; padding: 9px;
+  background: #e8e8e8; color: #aaa;
+  border: none; border-radius: 7px;
+  font-size: 12px; font-weight: 600;
+  cursor: not-allowed; transition: all 0.15s;
+}
+.apply-staged-btn.apply-ready {
+  background: #008579; color: #fff; cursor: pointer;
+}
+.apply-staged-btn.apply-ready:hover { background: #006f64; }

@@ -22,7 +22,7 @@
     </div>
   </header>
 
-  <!-- ── Empty state ── -->
+  <!-- ── Empty state (Style mode only) ── -->
   <div id="empty-state">
     <div class="empty-illustration">
       <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
@@ -47,10 +47,10 @@
   <!-- ── Content area ── -->
   <div id="content-area">
 
-    <!-- Main panel -->
+    <!-- ══ STYLE PANEL ══ -->
     <div id="main-content">
 
-      <!-- Fill Color -->
+      <!-- Fill / DOI -->
       <section id="section-fill" class="hidden">
         <h3>Degree of Integration</h3>
         <div class="swatch-row" id="swatches-fill"></div>
@@ -73,16 +73,13 @@
           <span class="sub-label">Style</span>
           <div class="chip-row">
             <button class="chip" data-dash="solid">
-              <svg width="20" height="6" viewBox="0 0 20 6"><line x1="0" y1="3" x2="20" y2="3" stroke="currentColor" stroke-width="2"/></svg>
-              Solid
+              <svg width="20" height="6" viewBox="0 0 20 6"><line x1="0" y1="3" x2="20" y2="3" stroke="currentColor" stroke-width="2"/></svg>Solid
             </button>
             <button class="chip" data-dash="dash">
-              <svg width="20" height="6" viewBox="0 0 20 6"><line x1="0" y1="3" x2="20" y2="3" stroke="currentColor" stroke-width="2" stroke-dasharray="5 3"/></svg>
-              Dash
+              <svg width="20" height="6" viewBox="0 0 20 6"><line x1="0" y1="3" x2="20" y2="3" stroke="currentColor" stroke-width="2" stroke-dasharray="5 3"/></svg>Dash
             </button>
             <button class="chip" data-dash="roundDot">
-              <svg width="20" height="6" viewBox="0 0 20 6"><line x1="0" y1="3" x2="20" y2="3" stroke="currentColor" stroke-width="2" stroke-dasharray="2 3"/></svg>
-              Dot
+              <svg width="20" height="6" viewBox="0 0 20 6"><line x1="0" y1="3" x2="20" y2="3" stroke="currentColor" stroke-width="2" stroke-dasharray="2 3"/></svg>Dot
             </button>
           </div>
         </div>
@@ -116,11 +113,8 @@
         <button class="primary-action-btn" id="btn-apply-ends">Apply Line Ends</button>
       </section>
 
-      <!-- Text Color -->
-      <section id="section-text" class="hidden" style="display:none!important">
-        <h3>Text Color</h3>
-        <div class="swatch-row" id="swatches-text"></div>
-      </section>
+      <!-- Text Color (hidden — handled via DOI) -->
+      <section id="section-text" class="hidden" style="display:none!important"></section>
 
       <!-- Insert -->
       <section id="section-insert">
@@ -135,17 +129,16 @@
         </button>
       </section>
 
-      <!-- Unsupported -->
       <div id="unsupported-state" class="hidden">
         <p class="unsupported-msg">This shape type doesn't support styling via this panel.</p>
       </div>
 
     </div><!-- /main-content -->
 
-    <!-- Edit panel overlay -->
+    <!-- ══ EDIT PANEL ══ -->
     <div id="edit-panel" class="hidden">
       <div id="edit-panel-header">
-        <button id="edit-back-btn" aria-label="Back to styling">
+        <button id="edit-back-btn" aria-label="Back">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.8"
                   stroke-linecap="round" stroke-linejoin="round"/>
@@ -157,66 +150,65 @@
       <div id="edit-panel-body"></div>
     </div>
 
-  <!-- ══════════════════════════════════════════════
-       PAINT PANEL
-  ═══════════════════════════════════════════════ -->
-  <div id="paint-panel" class="hidden">
+    <!-- ══ PAINT PANEL ══ -->
+    <div id="paint-panel" class="hidden">
 
-    <div class="paint-section">
-      <button class="capture-btn" id="btn-capture">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
+      <!-- Instruction bar -->
+      <div class="paint-instruction" id="paint-instruction">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
         </svg>
-        Capture from Selected Shape
-      </button>
-      <p class="capture-hint">Select a shape, click Capture, then click shapes to paint them.</p>
-    </div>
-
-    <div class="paint-section" id="staged-attrs-section" style="display:none;">
-      <div class="paint-sect-label">Staged Attributes <span class="paint-sect-hint">check to include</span></div>
-
-      <div class="staged-row">
-        <label class="staged-check-wrap" for="staged-fill-chk">
-          <input type="checkbox" class="staged-chk" id="staged-fill-chk" checked/>
-          <span class="staged-attr-name">Degree of Integration</span>
-        </label>
-        <div class="staged-color-preview" id="staged-fill-preview"><span class="staged-not-set">—</span></div>
+        <span id="paint-instruction-text">Select options below, then click shapes to apply.</span>
       </div>
 
-      <div class="staged-row">
-        <label class="staged-check-wrap" for="staged-border-chk">
-          <input type="checkbox" class="staged-chk" id="staged-border-chk" checked/>
-          <span class="staged-attr-name">Post Int Process Owner</span>
-        </label>
-        <div class="staged-border-preview" id="staged-border-preview"><span class="staged-not-set">—</span></div>
-      </div>
+      <!-- DOI palette (paint staging) -->
+      <section class="paint-section-block">
+        <div class="paint-section-hdr">
+          <span class="paint-section-title">Degree of Integration</span>
+          <div class="paint-section-badge" id="paint-fill-badge"></div>
+          <button class="paint-clear-btn" id="paint-fill-clear" title="Clear staged fill">✕</button>
+        </div>
+        <div class="swatch-row paint-swatch-row" id="paint-swatches-fill"></div>
+      </section>
 
-      <div class="staged-row">
-        <label class="staged-check-wrap" for="staged-text-chk">
-          <input type="checkbox" class="staged-chk" id="staged-text-chk" checked/>
-          <span class="staged-attr-name">Text Color</span>
-        </label>
-        <div class="staged-color-preview" id="staged-text-preview"><span class="staged-not-set">—</span></div>
-      </div>
-    </div>
+      <!-- Border palette (paint staging) -->
+      <section class="paint-section-block">
+        <div class="paint-section-hdr">
+          <span class="paint-section-title">Post Int Process Owner</span>
+          <div class="paint-section-badge" id="paint-border-badge"></div>
+          <button class="paint-clear-btn" id="paint-border-clear" title="Clear staged border">✕</button>
+        </div>
+        <div class="swatch-row swatch-two-col paint-swatch-row" id="paint-swatches-border"></div>
+      </section>
 
-    <div class="paint-section paint-controls-section">
-      <div class="lock-row">
-        <span class="lock-label">Lock (auto-paint on click)</span>
-        <button class="lock-toggle" id="btn-lock" title="Toggle lock" aria-pressed="false">
-          <span class="lock-track"><span class="lock-thumb"></span></span>
-          <span class="lock-state-label" id="lock-state-lbl">Off</span>
+      <!-- Capture from shape -->
+      <section class="paint-section-block paint-capture-block">
+        <button class="capture-btn" id="btn-capture">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
+          </svg>
+          Capture from Selected Shape
         </button>
-      </div>
-      <button class="apply-staged-btn" id="btn-apply-staged" disabled>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
-        Apply to Selection
-      </button>
-    </div>
+      </section>
 
-  </div><!-- /paint-panel -->
+      <!-- Lock + Apply -->
+      <section class="paint-section-block paint-controls-block">
+        <div class="lock-row">
+          <span class="lock-label">Auto-paint on click</span>
+          <button class="lock-toggle" id="btn-lock" aria-checked="false">
+            <span class="lock-track"><span class="lock-thumb"></span></span>
+            <span class="lock-state-label" id="lock-state-lbl">Off</span>
+          </button>
+        </div>
+        <button class="apply-staged-btn" id="btn-apply-staged">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Apply to Selected Shape(s)
+        </button>
+      </section>
+
+    </div><!-- /paint-panel -->
 
   </div><!-- /content-area -->
 

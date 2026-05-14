@@ -1,633 +1,388 @@
-'use strict';
-
 // ─────────────────────────────────────────────────────────────────
-// Brand / static color data
+// CAPABILITY MAP
 // ─────────────────────────────────────────────────────────────────
-const BRAND_COLORS = [
-  { hex: '#D50032', name: 'APi Corp Red'  },
-  { hex: '#2A3E6D', name: 'Dark Navy'     },
-  { hex: '#008579', name: 'Teal'          },
-  { hex: '#D4D800', name: 'TBD Yellow'    },
-  { hex: '#7030A0', name: 'APi Segment'   },
-  { hex: '#00B0F0', name: 'Target HQ'     },
-  { hex: '#92D050', name: 'Target OpCo'   },
-];
-
-const STANDARD_COLORS = [
-  { hex: '#C00000', name: 'Dark Red'    },
-  { hex: '#FF0000', name: 'Red'         },
-  { hex: '#FFC000', name: 'Orange'      },
-  { hex: '#FFFF00', name: 'Yellow'      },
-  { hex: '#92D050', name: 'Light Green' },
-  { hex: '#00B050', name: 'Green'       },
-  { hex: '#00B0F0', name: 'Light Blue'  },
-  { hex: '#0070C0', name: 'Blue'        },
-  { hex: '#002060', name: 'Dark Blue'   },
-  { hex: '#7030A0', name: 'Purple'      },
-];
-
-const autoTextHex = hex => isLight(hex) ? '#000000' : '#FFFFFF';
-
-const DEFAULT_PALETTES = {
-  fill: [
-    { hex: '#D50032', name: 'Target Converts to Acquiring', textHex: '#FFFFFF' },
-    { hex: '#2A3E6D', name: 'APi Corp Entity',               textHex: '#FFFFFF' },
-    { hex: '#008579', name: 'Shared Services',               textHex: '#FFFFFF' },
-    { hex: '#595959', name: 'Leave As Is',                   textHex: '#FFFFFF' },
-    { hex: '#BFBFBF', name: 'To Be Determined',              textHex: '#000000' },
-    { hex: '#FFFFFF', name: 'No Fill',                       textHex: '#000000' },
-    { hex: '#000000', name: 'Divest / Sunset',               textHex: '#FFFFFF' },
-  ],
-  border: [
-    { hex: '#D4D800', name: 'TBD'                    },
-    { hex: '#D50032', name: 'APi Corp'               },
-    { hex: '#7030A0', name: 'APi Segment'            },
-    { hex: '#00B0F0', name: 'Target HQ'              },
-    { hex: '#92D050', name: 'Target OpCo'            },
-    { hex: '#808080', name: 'No Reporting Structure' },
-    { hex: '#151F37', name: 'Acquiring Entity'       },
-  ],
-  text: [
-    { hex: '#FFFFFF', name: 'White'        },
-    { hex: '#000000', name: 'Black'        },
-    { hex: '#D50032', name: 'APi Corp Red' },
-    { hex: '#2A3E6D', name: 'Dark Navy'    },
-    { hex: '#008579', name: 'Teal'         },
-    { hex: '#595959', name: 'Dark Gray'    },
-    { hex: '#BFBFBF', name: 'Light Gray'  },
-  ],
-};
-
-const NO_LABEL = { fill: 'No Fill', border: 'No Border', text: 'No Color' };
-
 const CAPABILITIES = {
-  geometricShape: { fill: true,  border: true,  text: true,  lineEnds: false },
-  textBox:        { fill: true,  border: true,  text: true,  lineEnds: false },
-  placeholder:    { fill: true,  border: true,  text: true,  lineEnds: false },
-  callout:        { fill: true,  border: true,  text: true,  lineEnds: false },
-  freeform:       { fill: true,  border: true,  text: true,  lineEnds: false },
-  group:          { fill: true,  border: true,  text: true,  lineEnds: false },
-  line:           { fill: false, border: true,  text: false, lineEnds: true  },
-  image:          { fill: false, border: true,  text: false, lineEnds: false },
-  table:          { fill: false, border: true,  text: true,  lineEnds: false },
+  geometricShape:{fill:true,border:true,text:true,lineEnds:false},
+  textBox:       {fill:true,border:true,text:true,lineEnds:false},
+  placeholder:   {fill:true,border:true,text:true,lineEnds:false},
+  callout:       {fill:true,border:true,text:true,lineEnds:false},
+  freeform:      {fill:true,border:true,text:true,lineEnds:false},
+  group:         {fill:true,border:true,text:true,lineEnds:false},
+  line:          {fill:false,border:true,text:false,lineEnds:true},
+  image:         {fill:false,border:true,text:false,lineEnds:false},
+  table:         {fill:false,border:true,text:true,lineEnds:false},
 };
-
 const TYPE_META = {
-  geometricShape: { icon: '◻', label: 'Geometric Shape' },
-  textBox:        { icon: 'T',  label: 'Text Box'        },
-  placeholder:    { icon: '⊞', label: 'Placeholder'     },
-  callout:        { icon: '💬', label: 'Callout'         },
-  freeform:       { icon: '✏', label: 'Freeform'        },
-  group:          { icon: '⊡', label: 'Group'            },
-  line:           { icon: '╱', label: 'Line'             },
-  image:          { icon: '🖼', label: 'Image'            },
-  table:          { icon: '⊟', label: 'Table'            },
+  geometricShape:{icon:'◻',label:'Geometric Shape'},
+  textBox:       {icon:'T', label:'Text Box'},
+  placeholder:   {icon:'⊞',label:'Placeholder'},
+  callout:       {icon:'💬',label:'Callout'},
+  freeform:      {icon:'✏',label:'Freeform'},
+  group:         {icon:'⊡',label:'Group'},
+  line:          {icon:'╱',label:'Line'},
+  image:         {icon:'⬜',label:'Image'},
+  table:         {icon:'⊟',label:'Table'},
+};
+const NO_LABEL = {fill:'No Fill',border:'No Border',text:'No Color'};
+
+// ─────────────────────────────────────────────────────────────────
+// DEFAULT PALETTES
+// ─────────────────────────────────────────────────────────────────
+const DEFAULTS = {
+  fill:[
+    {hex:'#D50032',name:'Target Converts to Acquiring',textHex:'#FFFFFF'},
+    {hex:'#2A3E6D',name:'APi Corp Entity',            textHex:'#FFFFFF'},
+    {hex:'#008579',name:'Shared Services',             textHex:'#FFFFFF'},
+    {hex:'#595959',name:'Leave As Is',                 textHex:'#FFFFFF'},
+    {hex:'#BFBFBF',name:'To Be Determined',            textHex:'#000000'},
+    {hex:'#FFFFFF',name:'No Fill',                     textHex:'#000000'},
+    {hex:'#000000',name:'Divest / Sunset',             textHex:'#FFFFFF'},
+  ],
+  border:[
+    {hex:'#D4D800',name:'TBD'},
+    {hex:'#D50032',name:'APi Corp'},
+    {hex:'#7030A0',name:'APi Segment'},
+    {hex:'#00B0F0',name:'Target HQ'},
+    {hex:'#92D050',name:'Target OpCo'},
+    {hex:'#808080',name:'No Reporting Structure'},
+    {hex:'#2A3E6D',name:'Acquiring Entity'},
+  ],
+  text:[
+    {hex:'#FFFFFF',name:'White'},
+    {hex:'#000000',name:'Black'},
+    {hex:'#2A3E6D',name:'Dark Navy'},
+    {hex:'#D50032',name:'APi Red'},
+    {hex:'#008579',name:'Teal'},
+    {hex:'#595959',name:'Dark Gray'},
+    {hex:'#BFBFBF',name:'Light Gray'},
+  ],
 };
 
-// ─────────────────────────────────────────────────────────────────
-// Color utilities
-// ─────────────────────────────────────────────────────────────────
-function hexToRgb(hex) {
-  const h = hex.replace('#', '');
-  return { r: parseInt(h.slice(0,2),16), g: parseInt(h.slice(2,4),16), b: parseInt(h.slice(4,6),16) };
-}
-function rgbToHex(r, g, b) {
-  return '#' + [r,g,b].map(x => Math.round(Math.min(255,Math.max(0,x))).toString(16).padStart(2,'0')).join('').toUpperCase();
-}
-function isLight(hex) {
-  const { r, g, b } = hexToRgb(hex);
-  return (r * 299 + g * 587 + b * 114) / 1000 > 155;
-}
-function normalizeHex(raw) {
-  const h = (raw || '').replace('#','').trim();
-  return /^[0-9A-Fa-f]{6}$/.test(h) ? '#' + h.toUpperCase() : null;
-}
-function esc(s) {
-  return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
-function tintHex(hex, factor) {
-  const { r, g, b } = hexToRgb(hex);
-  return rgbToHex(Math.round(r+(255-r)*factor),Math.round(g+(255-g)*factor),Math.round(b+(255-b)*factor));
-}
-function shadeHex(hex, factor) {
-  const { r, g, b } = hexToRgb(hex);
-  return rgbToHex(Math.round(r*(1-factor)),Math.round(g*(1-factor)),Math.round(b*(1-factor)));
-}
+const BRAND_COLORS = ['#151F37','#D50032','#2A3E6D','#008579','#595959','#BFBFBF','#FFFFFF'];
+const STANDARD_COLORS = [
+  '#C00000','#FF0000','#FFC000','#FFFF00','#92D050',
+  '#00B050','#00B0F0','#0070C0','#002060','#7030A0'
+];
 
 // ─────────────────────────────────────────────────────────────────
-// HSV utilities
+// STATE
 // ─────────────────────────────────────────────────────────────────
-function hsvToRgb(h,s,v) {
-  const c=v*s, x=c*(1-Math.abs((h/60)%2-1)), m=v-c;
-  let r=0,g=0,b=0;
-  if(h<60){r=c;g=x;b=0;}else if(h<120){r=x;g=c;b=0;}
-  else if(h<180){r=0;g=c;b=x;}else if(h<240){r=0;g=x;b=c;}
-  else if(h<300){r=x;g=0;b=c;}else{r=c;g=0;b=x;}
-  return{r:Math.round((r+m)*255),g:Math.round((g+m)*255),b:Math.round((b+m)*255)};
-}
-function rgbToHsv(r,g,b) {
-  r/=255;g/=255;b/=255;
-  const max=Math.max(r,g,b),min=Math.min(r,g,b),d=max-min;
-  let h=0;const s=max===0?0:d/max,v=max;
-  if(d!==0){if(max===r)h=((g-b)/d+(g<b?6:0))*60;else if(max===g)h=((b-r)/d+2)*60;else h=((r-g)/d+4)*60;}
-  return{h:h<0?h+360:h,s,v};
-}
-function hexToHsv(hex){const{r,g,b}=hexToRgb(hex);return rgbToHsv(r,g,b);}
-function hsvToHex(h,s,v){const{r,g,b}=hsvToRgb(h,s,v);return rgbToHex(r,g,b);}
+let _currentMode      = 'style';
+let _cachedShapeCount = 0;
+let _applyVer         = 0;
+let _editKey          = null;
+let _applyFn          = null;
+let _openForm         = null;
+let _themeColors      = null;
 
-// ─────────────────────────────────────────────────────────────────
-// Storage
-// ─────────────────────────────────────────────────────────────────
-function getPalette(key) {
-  try {
-    const s=localStorage.getItem(`sct_${key}`);
-    const arr=s?JSON.parse(s):JSON.parse(JSON.stringify(DEFAULT_PALETTES[key]));
-    if(key==='fill') arr.forEach(c=>{if(!c.textHex)c.textHex=autoTextHex(c.hex);});
-    return arr;
-  } catch { return JSON.parse(JSON.stringify(DEFAULT_PALETTES[key])); }
-}
-function savePalette(key,arr){localStorage.setItem(`sct_${key}`,JSON.stringify(arr));}
-function updateColor(key,idx,hex,name,textHex) {
-  const arr=getPalette(key);
-  if(!arr[idx])return;
-  arr[idx]={hex,name:name||hex};
-  if(key==='fill')arr[idx].textHex=textHex||autoTextHex(hex);
-  savePalette(key,arr);
-}
-function addColor(key,hex,name,textHex) {
-  const norm=normalizeHex(hex);if(!norm)return;
-  const arr=getPalette(key);
-  const entry={hex:norm,name:name||norm};
-  if(key==='fill')entry.textHex=textHex||autoTextHex(norm);
-  arr.push(entry);savePalette(key,arr);
-}
-function deleteColor(key,idx){const arr=getPalette(key);arr.splice(idx,1);savePalette(key,arr);}
-function getRecent(key){try{return JSON.parse(localStorage.getItem(`sct_recent_${key}`))||[];}catch{return[];}}
-function pushRecent(key,hex) {
-  if(!hex||hex==='none')return;
-  const norm=normalizeHex(hex)||hex.toUpperCase();
-  let arr=getRecent(key).filter(h=>h!==norm);
-  arr.unshift(norm);
-  localStorage.setItem(`sct_recent_${key}`,JSON.stringify(arr.slice(0,10)));
-}
-
-// ─────────────────────────────────────────────────────────────────
-// ══ MODE STATE ══
-// _currentMode: 'style' | 'paint'
-// STAGED: what the paint mode will apply
-// ─────────────────────────────────────────────────────────────────
-let _currentMode = 'style';
-
+// STAGED — persisted across mode switches
 const STAGED = {
-  fill:   { dirty: false, hex: null, textHex: null, name: '' },
-  border: { dirty: false, hex: null, name: '' },
-  text:   { dirty: false, hex: null },
+  fill:   {dirty:false, hex:null, textHex:null, name:null},
+  border: {dirty:false, hex:null, name:null},
   locked: false,
 };
 
-// Persist staged state across mode switches (sessionStorage so it
-// survives Style→Paint→Style→Paint round-trips but not page reloads)
 function saveStagedState() {
-  try { sessionStorage.setItem('sct_staged', JSON.stringify(STAGED)); } catch(_) {}
+  try { localStorage.setItem('sct_staged', JSON.stringify(STAGED)); } catch(_) {}
 }
 function loadStagedState() {
   try {
-    const s = sessionStorage.getItem('sct_staged');
-    if (!s) return;
-    const parsed = JSON.parse(s);
-    Object.assign(STAGED, parsed);
+    const s = JSON.parse(localStorage.getItem('sct_staged')||'{}');
+    if(s.fill)   Object.assign(STAGED.fill,   s.fill);
+    if(s.border) Object.assign(STAGED.border, s.border);
+    if(typeof s.locked === 'boolean') STAGED.locked = s.locked;
   } catch(_) {}
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Edit panel state
+// PALETTE STORAGE
 // ─────────────────────────────────────────────────────────────────
-let _editKey  = null;
-let _applyFn  = null;
-let _openForm = null;
+function getPalette(key)         { try{const s=localStorage.getItem(`sct_${key}`);return s?JSON.parse(s):DEFAULTS[key]||[];}catch(_){return DEFAULTS[key]||[];} }
+function savePalette(key,arr)    { try{localStorage.setItem(`sct_${key}`,JSON.stringify(arr));}catch(_){} }
+function deleteColor(key,idx)    { const a=getPalette(key);a.splice(idx,1);savePalette(key,a); }
+function pushRecent(key,hex)     {
+  if(!hex||hex==='none')return;
+  const k=`sct_recent_${key}`;
+  try{
+    let a=JSON.parse(localStorage.getItem(k)||'[]');
+    a=a.filter(x=>x.toUpperCase()!==hex.toUpperCase());
+    a.unshift(hex);if(a.length>10)a.length=10;
+    localStorage.setItem(k,JSON.stringify(a));
+  }catch(_){}
+}
+function getRecents(key)         { try{return JSON.parse(localStorage.getItem(`sct_recent_${key}`)||'[]');}catch(_){return[];} }
 
 // ─────────────────────────────────────────────────────────────────
-// Performance state
+// COLOR UTILITIES
 // ─────────────────────────────────────────────────────────────────
-let _cachedShapeCount = 0;
-let _applyVer         = 0;
+function isLight(hex) {
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return (r*299+g*587+b*114)/1000>155;
+}
+function autoTextHex(hex){ return isLight(hex)?'#000000':'#FFFFFF'; }
+function normalizeHex(h) {
+  if(!h)return null;
+  const c=h.replace('#','').toUpperCase();
+  if(c.length===6&&/^[0-9A-F]+$/.test(c))return '#'+c;
+  if(c.length===3&&/^[0-9A-F]+$/.test(c))return '#'+c[0]+c[0]+c[1]+c[1]+c[2]+c[2];
+  return null;
+}
+function hexToHsv(hex) {
+  let r=parseInt(hex.slice(1,3),16)/255, g=parseInt(hex.slice(3,5),16)/255, b=parseInt(hex.slice(5,7),16)/255;
+  const max=Math.max(r,g,b),min=Math.min(r,g,b),d=max-min;
+  let h=0,s=max?d/max:0,v=max;
+  if(d){if(max===r)h=((g-b)/d)%6;else if(max===g)h=(b-r)/d+2;else h=(r-g)/d+4;h=Math.round(h*60);if(h<0)h+=360;}
+  return{h,s:Math.round(s*100),v:Math.round(v*100)};
+}
+function hsvToHex(h,s,v) {
+  s/=100;v/=100;
+  const f=(n,k=(n+h/60)%6)=>v-v*s*Math.max(Math.min(k,4-k,1),0);
+  const toB=x=>Math.round(x*255).toString(16).padStart(2,'0');
+  return '#'+toB(f(5))+toB(f(3))+toB(f(1));
+}
+function tint(hex,pct){ // pct 0-1: blend toward white
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  const t=x=>Math.round(x+(255-x)*pct).toString(16).padStart(2,'0');
+  return '#'+t(r)+t(g)+t(b);
+}
+function shade(hex,pct){ // pct 0-1: blend toward black
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  const s=x=>Math.round(x*(1-pct)).toString(16).padStart(2,'0');
+  return '#'+s(r)+s(g)+s(b);
+}
+function esc(s){ const d=document.createElement('div');d.textContent=s||'';return d.innerHTML; }
 
 // ─────────────────────────────────────────────────────────────────
-// Theme colors from document
+// THEME COLORS
 // ─────────────────────────────────────────────────────────────────
-let _themeColors = null;
-
 async function loadThemeColors() {
   try {
     await PowerPoint.run(async ctx => {
-      ctx.presentation.slideMasters.load('items');
-      await ctx.sync();
       const master = ctx.presentation.slideMasters.getItemAt(0);
       const theme  = master.getTheme();
       theme.load('themeColorScheme');
       await ctx.sync();
       const cs = theme.themeColorScheme;
-      const raw = [
-        { raw: cs.dark1,   name: 'Text / Dark 1'  },
-        { raw: cs.light1,  name: 'Background 1'   },
-        { raw: cs.dark2,   name: 'Text / Dark 2'  },
-        { raw: cs.light2,  name: 'Background 2'   },
-        { raw: cs.accent1, name: 'Accent 1'        },
-        { raw: cs.accent2, name: 'Accent 2'        },
-        { raw: cs.accent3, name: 'Accent 3'        },
-        { raw: cs.accent4, name: 'Accent 4'        },
-        { raw: cs.accent5, name: 'Accent 5'        },
-        { raw: cs.accent6, name: 'Accent 6'        },
-      ];
-      const parsed = raw.map(c=>({hex:normalizeHex(c.raw),name:c.name})).filter(c=>c.hex);
-      if (parsed.length >= 4) {
-        _themeColors = parsed;
-        if (_editKey) renderEditPanel();
-      }
+      _themeColors = [
+        cs.dark1, cs.light1, cs.dark2, cs.light2,
+        cs.accent1, cs.accent2, cs.accent3, cs.accent4, cs.accent5, cs.accent6
+      ].map(c => normalizeHex('#'+c.replace('#','')) || '#CCCCCC');
     });
-  } catch(e) {
-    console.log('Theme colors unavailable:', e.message);
-  }
+  } catch(_) { _themeColors = null; }
 }
+function getThemeCols() { return _themeColors || BRAND_COLORS; }
 
 // ─────────────────────────────────────────────────────────────────
-// Theme grid builder
-// ─────────────────────────────────────────────────────────────────
-function buildThemeGrid(dataAttr) {
-  const baseColors = _themeColors || BRAND_COLORS;
-  const rows = [
-    baseColors.map(c=>c.hex),
-    baseColors.map(c=>tintHex(c.hex,0.8)),
-    baseColors.map(c=>tintHex(c.hex,0.6)),
-    baseColors.map(c=>tintHex(c.hex,0.4)),
-    baseColors.map(c=>shadeHex(c.hex,0.25)),
-    baseColors.map(c=>shadeHex(c.hex,0.5)),
-  ];
-  return `<div class="ppt-theme-grid">${
-    rows.map((row,ri)=>
-      `<div class="ppt-theme-row${ri===0?' ppt-base-row':''}">${
-        row.map(hex=>
-          `<button class="ppt-theme-swatch${isLight(hex)?' light':''}"
-                   style="background:${hex}" ${dataAttr}="${hex}"
-                   title="${hex}" type="button"></button>`
-        ).join('')
-      }</div>`
-    ).join('')
-  }</div>`;
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Build PPT-style picker
-// ─────────────────────────────────────────────────────────────────
-function buildPptPicker(pickerType,sufx,startHex,dataAttr,recentKey) {
-  const norm=normalizeHex(startHex)||'#2A3E6D';
-  const hexVal=norm.replace('#','');
-  const recent=getRecent(recentKey);
-  const moreId=`mc-${pickerType}-${sufx}`;
-
-  const stdRow=STANDARD_COLORS.map(c=>
-    `<button class="ppt-theme-swatch${isLight(c.hex)?' light':''}"
-             style="background:${c.hex}" ${dataAttr}="${c.hex}"
-             title="${esc(c.name)}" type="button"></button>`
-  ).join('');
-
-  const recentHtml=recent.length?`
-    <div class="acc-section">
-      <button class="acc-hdr" data-acc="acc-recent-${pickerType}-${sufx}" type="button">
-        <span>Recent Colors</span>
-        <svg class="acc-chevron" width="10" height="10" viewBox="0 0 10 10" fill="none">
-          <path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
-      <div class="acc-body hidden" id="acc-recent-${pickerType}-${sufx}">
-        <div class="ppt-std-row" style="padding:4px 0 2px;">${
-          recent.slice(0,10).map(hex=>
-            `<button class="ppt-theme-swatch${isLight(hex)?' light':''}"
-                     style="background:${hex}" ${dataAttr}="${hex}"
-                     title="${hex}" type="button"></button>`
-          ).join('')
-        }</div>
-      </div>
-    </div>`:'';
-
-  return `
-    <div class="ppt-picker" data-picker="${pickerType}">
-      <div class="acc-section">
-        <button class="acc-hdr acc-open" data-acc="acc-theme-${pickerType}-${sufx}" type="button">
-          <span>Theme Colors</span>
-          <svg class="acc-chevron acc-chevron-open" width="10" height="10" viewBox="0 0 10 10" fill="none">
-            <path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-        <div class="acc-body" id="acc-theme-${pickerType}-${sufx}">
-          <div style="padding:4px 0 2px;">${buildThemeGrid(dataAttr)}</div>
-        </div>
-      </div>
-      <div class="acc-section">
-        <button class="acc-hdr" data-acc="acc-std-${pickerType}-${sufx}" type="button">
-          <span>Standard Colors</span>
-          <svg class="acc-chevron" width="10" height="10" viewBox="0 0 10 10" fill="none">
-            <path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-        <div class="acc-body hidden" id="acc-std-${pickerType}-${sufx}">
-          <div class="ppt-std-row" style="padding:4px 0 2px;">${stdRow}</div>
-        </div>
-      </div>
-      ${recentHtml}
-      <div class="acc-section">
-        <button class="acc-hdr" data-acc="${moreId}" type="button">
-          <span>Custom Color</span>
-          <svg class="acc-chevron" width="10" height="10" viewBox="0 0 10 10" fill="none">
-            <path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-        <div class="acc-body hidden" id="${moreId}">
-          <div style="padding:4px 0 2px;">
-            <div class="hsv-square" id="hsv-sq-${pickerType}-${sufx}">
-              <div class="hsv-layer hsv-sat"></div>
-              <div class="hsv-layer hsv-val"></div>
-              <div class="hsv-dot" id="hsv-dot-${pickerType}-${sufx}"></div>
-            </div>
-            <div class="hue-wrap">
-              <input type="range" class="hue-slider" id="hue-${pickerType}-${sufx}"
-                     min="0" max="359" step="1" value="0"/>
-            </div>
-            <div class="cform-row">
-              <div class="hex-field">
-                <span class="hex-hash">#</span>
-                <input type="text" class="ep-hex-input" id="hex-${pickerType}-${sufx}"
-                       value="${hexVal}" maxlength="6"
-                       placeholder="RRGGBB" spellcheck="false" autocomplete="off"/>
-              </div>
-              <div class="cform-preview${isLight(norm)?' light':''}"
-                   id="prev-${pickerType}-${sufx}" style="background:${norm};"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>`;
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Build color form
-// ─────────────────────────────────────────────────────────────────
-function buildColorForm(type,idx,startHex,startName,startTextHex) {
-  const norm=normalizeHex(startHex)||'#2A3E6D';
-  const txNorm=normalizeHex(startTextHex)||autoTextHex(norm);
-  const sufx=type==='edit'?`edit-${idx}`:'add';
-  const isFill=_editKey==='fill';
-  const fillPicker=buildPptPicker('fill',sufx,norm,'data-setfill',_editKey);
-  const fontPicker=isFill?buildPptPicker('textcolor',sufx,txNorm,'data-settextcolor','text'):'';
-
-  return `
-    <div class="color-form" id="cform-${sufx}" data-type="${type}" data-idx="${idx??''}">
-      <input type="text" class="ep-name-input" id="cfn-${sufx}"
-             placeholder="Color name (optional)" maxlength="36"
-             value="${esc(startName)}" />
-      <!-- Shape Fill — collapsible -->
-      <div class="ppt-sect-hdr ppt-sect-toggle acc-open" data-target="fill-picker-${sufx}"
-           id="fill-hdr-${sufx}" style="cursor:pointer;">
-        <svg class="ppt-fill-svg" id="fill-svg-${sufx}" width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M3 12.5c0-.9.8-1.7 1.7-1.7s1.7.8 1.7 1.7S4.7 15 4.7 15 3 13.4 3 12.5z"
-                fill="${norm}" stroke="${isLight(norm)?'#aaa':norm}" stroke-width="0.8"/>
-          <path d="M5.5 10.7l5.8-5.8a1.1 1.1 0 011.6 0l.5.5a1.1 1.1 0 010 1.6L7.5 12"
-                stroke="#666" stroke-width="1.2" stroke-linecap="round" fill="none"/>
-        </svg>
-        <span class="ppt-sect-label">Shape Fill</span>
-        <div class="ppt-curr-swatch${isLight(norm)?' light':''}"
-             id="fill-swatch-${sufx}" style="background:${norm};"></div>
-        <svg class="acc-chevron acc-chevron-open" width="10" height="10" viewBox="0 0 10 10" fill="none">
-          <path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <div id="fill-picker-${sufx}" class="ppt-sect-body">
-        ${fillPicker}
-      </div>
-      ${isFill?`
-      <!-- Font Color — collapsible -->
-      <div class="ppt-sect-hdr ppt-sect-toggle" data-target="font-picker-${sufx}"
-           id="font-hdr-${sufx}" style="margin-top:8px;cursor:pointer;">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <text x="2" y="13" font-family="Segoe UI,sans-serif" font-size="12" font-weight="700"
-                fill="${txNorm}" id="font-svg-${sufx}">A</text>
-          <rect x="2" y="13.5" width="12" height="2.5" rx="1"
-                fill="${txNorm}" id="font-bar-${sufx}"/>
-        </svg>
-        <span class="ppt-sect-label">Font Color</span>
-        <div class="ppt-curr-swatch${isLight(txNorm)?' light':''}"
-             id="font-swatch-${sufx}" style="background:${txNorm};"></div>
-        <svg class="acc-chevron" width="10" height="10" viewBox="0 0 10 10" fill="none">
-          <path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <div id="font-picker-${sufx}" class="ppt-sect-body hidden">
-        ${fontPicker}
-      </div>`:''}
-      <div class="cform-btns">
-        <button class="cform-save" type="button" data-type="${type}" data-idx="${idx??''}">
-          ${type==='edit'?'Save Changes':'+ Add to My Colors'}
-        </button>
-        <button class="cform-cancel" type="button">Cancel</button>
-      </div>
-    </div>`;
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Wire a single picker
-// ─────────────────────────────────────────────────────────────────
-function wirePicker(form,pickerType,sufx,onColorChange) {
-  const moreId=`mc-${pickerType}-${sufx}`;
-  const hexInp=document.getElementById(`hex-${pickerType}-${sufx}`);
-  const preview=document.getElementById(`prev-${pickerType}-${sufx}`);
-  const sq=document.getElementById(`hsv-sq-${pickerType}-${sufx}`);
-  const dot=document.getElementById(`hsv-dot-${pickerType}-${sufx}`);
-  const hueSlider=document.getElementById(`hue-${pickerType}-${sufx}`);
-  const dataAttr=pickerType==='fill'?'data-setfill':'data-settextcolor';
-
-  const startNorm=normalizeHex('#'+(hexInp?.value||''))||'#2A3E6D';
-  const startHsv=hexToHsv(startNorm);
-  let H=startHsv.h,S=startHsv.s,V=startHsv.v;
-
-  function syncFromHsv() {
-    const hex=hsvToHex(H,S,V);
-    if(hexInp)hexInp.value=hex.replace('#','').toUpperCase();
-    if(preview){preview.style.background=hex;preview.classList.toggle('light',isLight(hex));}
-    if(sq){sq.style.background=`hsl(${Math.round(H)},100%,50%)`;if(dot){dot.style.left=`${S*100}%`;dot.style.top=`${(1-V)*100}%`;}}
-    if(hueSlider)hueSlider.value=Math.round(H);
-    onColorChange(hex);
-  }
-  function setFromHex(rawHex) {
-    const c=rawHex.startsWith('#')?rawHex:'#'+rawHex;
-    const n=normalizeHex(c);if(!n)return;
-    const hsv=hexToHsv(n);H=hsv.h;S=hsv.s;V=hsv.v;
-    if(hexInp)hexInp.value=n.replace('#','').toUpperCase();
-    if(preview){preview.style.background=n;preview.classList.toggle('light',isLight(n));}
-    if(sq){sq.style.background=`hsl(${Math.round(H)},100%,50%)`;if(dot){dot.style.left=`${S*100}%`;dot.style.top=`${(1-V)*100}%`;}}
-    if(hueSlider)hueSlider.value=Math.round(H);
-    onColorChange(n);
-  }
-
-  const pickerEl=form.querySelector(`.ppt-picker[data-picker="${pickerType}"]`);
-  pickerEl?.querySelectorAll(`[${dataAttr}]`).forEach(btn=>{
-    btn.addEventListener('click',e=>{
-      e.stopPropagation();
-      setFromHex(btn.getAttribute(dataAttr));
-      pickerEl.querySelectorAll(`[${dataAttr}]`).forEach(b=>b.classList.remove('qp-selected'));
-      btn.classList.add('qp-selected');
-    });
-  });
-
-  const pickerContainer=form.querySelector(`.ppt-picker[data-picker="${pickerType}"]`);
-  pickerContainer?.querySelectorAll('.acc-hdr').forEach(hdr=>{
-    hdr.addEventListener('click',()=>{
-      const bodyId=hdr.dataset.acc;
-      const body=document.getElementById(bodyId);if(!body)return;
-      const opening=body.classList.contains('hidden');
-      body.classList.toggle('hidden',!opening);
-      hdr.classList.toggle('acc-open',opening);
-      hdr.querySelector('.acc-chevron')?.classList.toggle('acc-chevron-open',opening);
-      if(opening&&bodyId===moreId)syncFromHsv();
-    });
-  });
-
-  hueSlider?.addEventListener('input',()=>{H=parseFloat(hueSlider.value);syncFromHsv();});
-
-  let dragging=false;
-  function handleDrag(e) {
-    if(!sq?.isConnected){dragging=false;return;}
-    const rect=sq.getBoundingClientRect();
-    const cx=e.touches?e.touches[0].clientX:e.clientX;
-    const cy=e.touches?e.touches[0].clientY:e.clientY;
-    S=Math.max(0,Math.min(1,(cx-rect.left)/rect.width));
-    V=Math.max(0,Math.min(1,1-(cy-rect.top)/rect.height));
-    syncFromHsv();
-  }
-  if(sq){
-    sq.addEventListener('mousedown',e=>{e.preventDefault();dragging=true;handleDrag(e);});
-    sq.addEventListener('touchstart',e=>{e.preventDefault();handleDrag(e);},{passive:false});
-    sq.addEventListener('touchmove',e=>{e.preventDefault();handleDrag(e);},{passive:false});
-  }
-  const onMove=e=>{if(dragging)handleDrag(e);};
-  const onUp=()=>{dragging=false;};
-  document.addEventListener('mousemove',onMove);
-  document.addEventListener('mouseup',onUp);
-  hexInp?.addEventListener('input',()=>{if(hexInp.value.length===6)setFromHex(hexInp.value);});
-  if(sq)syncFromHsv();
-  return ()=>{document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onUp);};
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Wire the whole color form
-// ─────────────────────────────────────────────────────────────────
-function wireColorForm(form,key) {
-  const type=form.dataset.type;
-  const idx=form.dataset.idx!==''?parseInt(form.dataset.idx,10):null;
-  const sufx=type==='edit'?`edit-${idx}`:'add';
-  const isFill=key==='fill';
-  let currentFill=normalizeHex('#'+(document.getElementById(`hex-fill-${sufx}`)?.value||''))||'#2A3E6D';
-  let currentText=normalizeHex('#'+(document.getElementById(`hex-textcolor-${sufx}`)?.value||''))||autoTextHex(currentFill);
-
-  function onFillChange(hex) {
-    currentFill=hex;
-    const sw=document.getElementById(`fill-swatch-${sufx}`);
-    if(sw){sw.style.background=hex;sw.classList.toggle('light',isLight(hex));}
-    const sv=document.getElementById(`fill-svg-${sufx}`);
-    if(sv){const p=sv.querySelector('path');if(p){p.setAttribute('fill',hex);p.setAttribute('stroke',isLight(hex)?'#aaa':hex);}}
-  }
-  function onFontChange(hex) {
-    currentText=hex;
-    const sw=document.getElementById(`font-swatch-${sufx}`);
-    if(sw){sw.style.background=hex;sw.classList.toggle('light',isLight(hex));}
-    const txt=document.getElementById(`font-svg-${sufx}`);if(txt)txt.setAttribute('fill',hex);
-    const bar=document.getElementById(`font-bar-${sufx}`);if(bar)bar.setAttribute('fill',hex);
-  }
-
-  const cleanFill=wirePicker(form,'fill',sufx,onFillChange);
-  const cleanFont=isFill?wirePicker(form,'textcolor',sufx,onFontChange):null;
-  const nameInp=document.getElementById(`cfn-${sufx}`);
-
-  form.querySelectorAll('.ppt-sect-toggle').forEach(hdr=>{
-    hdr.addEventListener('click',()=>{
-      const targetId=hdr.dataset.target;
-      const body=document.getElementById(targetId);if(!body)return;
-      const opening=body.classList.contains('hidden');
-      body.classList.toggle('hidden',!opening);
-      hdr.classList.toggle('acc-open',opening);
-      hdr.querySelector('.acc-chevron')?.classList.toggle('acc-chevron-open',opening);
-    });
-  });
-
-  form.querySelector('.cform-save')?.addEventListener('click',()=>{
-    const norm=normalizeHex(currentFill);if(!norm)return;
-    const name=nameInp?.value.trim()||'';
-    const txtNorm=isFill?(normalizeHex(currentText)||autoTextHex(norm)):null;
-    if(type==='edit'&&idx!==null)updateColor(key,idx,norm,name||norm,txtNorm);
-    else addColor(key,norm,name,txtNorm);
-    _openForm=null;cleanFill?.();cleanFont?.();renderEditPanel();
-  });
-  form.querySelector('.cform-cancel')?.addEventListener('click',()=>{
-    _openForm=null;cleanFill?.();cleanFont?.();renderEditPanel();
-  });
-  nameInp?.addEventListener('keydown',e=>{if(e.key==='Enter')form.querySelector('.cform-save')?.click();});
-  setTimeout(()=>{if(nameInp?.isConnected)nameInp.select();},50);
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Main panel — labeled tiles
+// MAIN SWATCH RENDER — Style mode
 // ─────────────────────────────────────────────────────────────────
 function renderMainSwatches(key) {
-  const row=document.getElementById(`swatches-${key}`);if(!row)return;
-  const colors=getPalette(key);
-  row.innerHTML=colors.map(c=>{
-    if(key==='border'){
-      return `<button class="main-swatch border-legend-tile"
-                       data-color="${c.hex}" title="${esc(c.name)}" aria-label="${esc(c.name)}">
-                <span class="legend-line-sample" style="background:${c.hex}"></span>
-                <span class="legend-line-name">${esc(c.name)}</span>
-              </button>`;
-    }
-    if(key==='fill'){
-      const txHex=c.textHex||autoTextHex(c.hex);
-      return `<button class="main-swatch doi-tile"
-                       style="background:${c.hex};"
-                       data-color="${c.hex}" data-textcolor="${txHex}"
-                       title="${esc(c.name)}" aria-label="${esc(c.name)}">
-                <span class="swatch-label" style="color:${txHex};">${esc(c.name)}</span>
-              </button>`;
-    }
-    const txtColor=isLight(c.hex)?'#000000':'#FFFFFF';
-    return `<button class="main-swatch${isLight(c.hex)?' light':''}"
-                     style="background:${c.hex}"
-                     data-color="${c.hex}" title="${esc(c.name)}" aria-label="${esc(c.name)}">
-              <span class="swatch-label" style="color:${txtColor};">${esc(c.name)}</span>
-            </button>`;
-  }).join('')+
-  `<button class="edit-palette-btn" data-key="${key}" title="Edit ${key} palette">
-     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-       <path d="M8.5 1.5a1.414 1.414 0 012 2L4 10H2V8L8.5 1.5z"
-             stroke="currentColor" stroke-width="1.3"
-             stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-     </svg>
-   </button>`;
+  const row = document.getElementById(`swatches-${key}`);
+  if(!row) return;
+  const palette = getPalette(key);
 
-  row.querySelectorAll('.main-swatch').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      const color=btn.dataset.color;
-      const txtColor=btn.dataset.textcolor;
-      if(key==='fill'&&txtColor)applyDOITile(color,txtColor);
-      else({border:applyBorderColor,text:applyTextColor})[key]?.(color);
-      pushRecent(key,color);
+  if(key === 'border') {
+    row.innerHTML = palette.map((c,i) => `
+      <button class="legend-tile" data-color="${c.hex}" data-key="border"
+              title="${esc(c.name)}" aria-label="${esc(c.name)}">
+        <span class="legend-line" style="background:${c.hex};"></span>
+        <span class="legend-name">${esc(c.name)}</span>
+      </button>`).join('') +
+      `<button class="edit-palette-btn" data-key="border" title="Edit border palette">
+         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+           <path d="M8.5 1.5a1.414 1.414 0 012 2L4 10H2V8L8.5 1.5z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+         </svg>
+       </button>`;
+  } else {
+    row.innerHTML = palette.map((c,i) => {
+      const txtColor = c.textHex || autoTextHex(c.hex);
+      return `<button class="main-swatch${isLight(c.hex)?' light':''}"
+                      style="background:${c.hex}"
+                      data-color="${c.hex}"
+                      data-textcolor="${txtColor}"
+                      title="${esc(c.name)}" aria-label="${esc(c.name)}">
+                <span class="swatch-label" style="color:${txtColor};">${esc(c.name)}</span>
+              </button>`;
+    }).join('') +
+    `<button class="edit-palette-btn" data-key="${key}" title="Edit ${key} palette">
+       <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+         <path d="M8.5 1.5a1.414 1.414 0 012 2L4 10H2V8L8.5 1.5z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+       </svg>
+     </button>`;
+  }
+
+  // Wire clicks
+  row.querySelectorAll('.main-swatch').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const color    = btn.dataset.color;
+      const txtColor = btn.dataset.textcolor;
+      applyDOITile(color, txtColor);
+      pushRecent(key, color);
     });
   });
-  row.querySelector('.edit-palette-btn').addEventListener('click',()=>{
-    const fnMap={fill:applyDOITile,border:applyBorderColor,text:applyTextColor};
-    openEditPanel(key,fnMap[key]);
+  row.querySelectorAll('.legend-tile').forEach(btn => {
+    btn.addEventListener('click', () => {
+      applyBorderColor(btn.dataset.color);
+      pushRecent('border', btn.dataset.color);
+    });
+  });
+  row.querySelectorAll('.edit-palette-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const k = btn.dataset.key;
+      const fnMap = {fill:applyDOITile, border:applyBorderColor, text:applyTextColor};
+      openEditPanel(k, fnMap[k]);
+    });
   });
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Trash icon
+// PAINT SWATCH RENDER — stages on click instead of applying
+// ─────────────────────────────────────────────────────────────────
+function renderPaintSwatches() {
+  renderPaintFillSwatches();
+  renderPaintBorderSwatches();
+}
+
+function renderPaintFillSwatches() {
+  const row = document.getElementById('paint-swatches-fill');
+  if(!row) return;
+  const palette = getPalette('fill');
+  const stagedHex = (STAGED.fill.dirty && STAGED.fill.hex) ? STAGED.fill.hex.toUpperCase() : null;
+
+  row.innerHTML = palette.map(c => {
+    const txtColor = c.textHex || autoTextHex(c.hex);
+    const isActive = stagedHex && c.hex.toUpperCase() === stagedHex;
+    return `<button class="main-swatch${isLight(c.hex)?' light':''}${isActive?' paint-staged':''}"
+                    style="background:${c.hex};"
+                    data-color="${c.hex}"
+                    data-textcolor="${txtColor}"
+                    data-name="${esc(c.name)}"
+                    title="${esc(c.name)}" aria-label="${esc(c.name)}">
+              <span class="swatch-label" style="color:${txtColor};">${esc(c.name)}</span>
+              ${isActive?'<span class="staged-check">✓</span>':''}
+            </button>`;
+  }).join('');
+
+  row.querySelectorAll('.main-swatch').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const hex      = btn.dataset.color;
+      const textHex  = btn.dataset.textcolor;
+      const name     = btn.dataset.name;
+      const already  = STAGED.fill.dirty && STAGED.fill.hex && STAGED.fill.hex.toUpperCase() === hex.toUpperCase();
+      if(already) {
+        // deselect
+        STAGED.fill.dirty   = false;
+        STAGED.fill.hex     = null;
+        STAGED.fill.textHex = null;
+        STAGED.fill.name    = null;
+      } else {
+        STAGED.fill.dirty   = true;
+        STAGED.fill.hex     = hex;
+        STAGED.fill.textHex = textHex;
+        STAGED.fill.name    = name;
+      }
+      saveStagedState();
+      renderPaintFillSwatches();
+      updatePaintBadge('fill');
+      updateApplyBtn();
+    });
+  });
+  updatePaintBadge('fill');
+}
+
+function renderPaintBorderSwatches() {
+  const row = document.getElementById('paint-swatches-border');
+  if(!row) return;
+  const palette   = getPalette('border');
+  const stagedHex = (STAGED.border.dirty && STAGED.border.hex) ? STAGED.border.hex.toUpperCase() : null;
+
+  row.innerHTML = palette.map(c => {
+    const isActive = stagedHex && c.hex.toUpperCase() === stagedHex;
+    return `<button class="legend-tile${isActive?' paint-staged':''}"
+                    data-color="${c.hex}"
+                    data-name="${esc(c.name)}"
+                    title="${esc(c.name)}" aria-label="${esc(c.name)}">
+              <span class="legend-line" style="background:${c.hex};"></span>
+              <span class="legend-name">${esc(c.name)}</span>
+              ${isActive?'<span class="staged-check-line">✓</span>':''}
+            </button>`;
+  }).join('');
+
+  row.querySelectorAll('.legend-tile').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const hex  = btn.dataset.color;
+      const name = btn.dataset.name;
+      const already = STAGED.border.dirty && STAGED.border.hex && STAGED.border.hex.toUpperCase() === hex.toUpperCase();
+      if(already) {
+        STAGED.border.dirty = false;
+        STAGED.border.hex   = null;
+        STAGED.border.name  = null;
+      } else {
+        STAGED.border.dirty = true;
+        STAGED.border.hex   = hex;
+        STAGED.border.name  = name;
+      }
+      saveStagedState();
+      renderPaintBorderSwatches();
+      updatePaintBadge('border');
+      updateApplyBtn();
+    });
+  });
+  updatePaintBadge('border');
+}
+
+function updatePaintBadge(attr) {
+  const badge = document.getElementById(`paint-${attr}-badge`);
+  if(!badge) return;
+  if(attr === 'fill' && STAGED.fill.dirty && STAGED.fill.hex) {
+    const txHex = STAGED.fill.textHex || autoTextHex(STAGED.fill.hex);
+    badge.style.cssText = `display:inline-flex;background:${STAGED.fill.hex};color:${txHex};`;
+    badge.textContent   = STAGED.fill.name || STAGED.fill.hex;
+    badge.classList.add('has-value');
+  } else if(attr === 'border' && STAGED.border.dirty && STAGED.border.hex) {
+    badge.innerHTML = `<span style="display:inline-block;width:28px;height:5px;background:${STAGED.border.hex};border-radius:2px;vertical-align:middle;margin-right:5px;"></span>${esc(STAGED.border.name||STAGED.border.hex)}`;
+    badge.style.cssText = '';
+    badge.classList.add('has-value');
+  } else {
+    badge.textContent = '';
+    badge.style.cssText = '';
+    badge.classList.remove('has-value');
+  }
+}
+
+function updateApplyBtn() {
+  const btn = document.getElementById('btn-apply-staged');
+  if(!btn) return;
+  const anyStaged = STAGED.fill.dirty || STAGED.border.dirty;
+  btn.disabled = !anyStaged;
+  btn.classList.toggle('apply-ready', anyStaged);
+}
+
+function updateLockToggle() {
+  const btn = document.getElementById('btn-lock');
+  const lbl = document.getElementById('lock-state-lbl');
+  if(!btn) return;
+  btn.setAttribute('aria-checked', STAGED.locked ? 'true' : 'false');
+  btn.classList.toggle('lock-on', STAGED.locked);
+  if(lbl) lbl.textContent = STAGED.locked ? 'On' : 'Off';
+}
+
+function updatePaintInstruction() {
+  const txt = document.getElementById('paint-instruction-text');
+  if(!txt) return;
+  const anyStaged = STAGED.fill.dirty || STAGED.border.dirty;
+  if(STAGED.locked) {
+    txt.textContent = anyStaged
+      ? 'Auto-paint ON — click any shape to apply staged format.'
+      : 'Auto-paint ON — select attributes above first.';
+  } else {
+    txt.textContent = anyStaged
+      ? 'Attributes staged — select shapes then click "Apply".'
+      : 'Select attributes above, then click shapes to apply.';
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TRASH ICON
 // ─────────────────────────────────────────────────────────────────
 function trashIcon() {
   return `<svg width="11" height="12" viewBox="0 0 11 12" fill="none">
@@ -637,10 +392,10 @@ function trashIcon() {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Edit panel
+// EDIT PANEL
 // ─────────────────────────────────────────────────────────────────
-function openEditPanel(key,fn) {
-  _editKey=key;_applyFn=fn;_openForm=null;
+function openEditPanel(key, fn) {
+  _editKey=key; _applyFn=fn; _openForm=null;
   renderEditPanel();
   document.getElementById('main-content').classList.add('hidden');
   document.getElementById('paint-panel').classList.add('hidden');
@@ -648,24 +403,25 @@ function openEditPanel(key,fn) {
 }
 function closeEditPanel() {
   document.getElementById('edit-panel').classList.add('hidden');
-  if(_currentMode==='paint'){
+  if(_currentMode==='paint') {
     document.getElementById('paint-panel').classList.remove('hidden');
+    renderPaintSwatches();
   } else {
     document.getElementById('main-content').classList.remove('hidden');
   }
   renderMainSwatches(_editKey);
-  _editKey=null;_applyFn=null;_openForm=null;
+  _editKey=null; _applyFn=null; _openForm=null;
 }
 
 function renderEditPanel() {
-  const key=_editKey;
-  const titleMap={fill:'Degree of Integration',border:'Post Int Process Owner',text:'Text Color'};
-  document.getElementById('edit-panel-title').textContent=titleMap[key]||'Edit Colors';
-  const palette=getPalette(key);
+  const key = _editKey;
+  const titleMap = {fill:'Degree of Integration',border:'Post Int Process Owner',text:'Text Color'};
+  document.getElementById('edit-panel-title').textContent = titleMap[key]||'Edit Colors';
+  const palette = getPalette(key);
 
-  const myColorsHtml=palette.map((c,i)=>{
-    const isEditing=_openForm&&_openForm.type==='edit'&&_openForm.idx===i;
-    const txHex=c.textHex||autoTextHex(c.hex);
+  const myColorsHtml = palette.map((c,i) => {
+    const isEditing = _openForm && _openForm.type==='edit' && _openForm.idx===i;
+    const txHex = c.textHex || autoTextHex(c.hex);
     return `
       <div class="my-color-item" draggable="true" data-idx="${i}">
         <div class="my-color-top">
@@ -697,17 +453,15 @@ function renderEditPanel() {
                       stroke-linecap="round" stroke-linejoin="round" fill="none"/>
               </svg>
             </button>
-            <button class="my-del-btn" data-idx="${i}" title="Delete">
-              ${trashIcon()}
-            </button>
+            <button class="my-del-btn" data-idx="${i}" title="Delete">${trashIcon()}</button>
           </div>
         </div>
-        ${isEditing?buildColorForm('edit',i,c.hex,c.name,txHex):''}
+        ${isEditing ? buildColorForm('edit',i,c.hex,c.name,txHex) : ''}
       </div>`;
   }).join('');
 
-  const isAdding=_openForm&&_openForm.type==='add';
-  document.getElementById('edit-panel-body').innerHTML=`
+  const isAdding = _openForm && _openForm.type==='add';
+  document.getElementById('edit-panel-body').innerHTML = `
     <div class="ep-label">My Colors <span class="ep-hint">drag to reorder · click swatch to apply</span></div>
     <div id="my-colors-list">${myColorsHtml}</div>
     <button class="add-new-btn${isAdding?' active':''}" id="ep-add-toggle">
@@ -717,7 +471,7 @@ function renderEditPanel() {
       </svg>
       Add New Color
     </button>
-    ${isAdding?buildColorForm('add',null,'#2A3E6D','','#FFFFFF'):''}
+    ${isAdding ? buildColorForm('add',null,'#2A3E6D','','#FFFFFF') : ''}
     <button class="no-color-btn" id="ep-no-color">
       <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
         <rect x="1" y="1" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.2"/>
@@ -731,498 +485,647 @@ function renderEditPanel() {
 }
 
 function bindEditEvents(key) {
-  const body=document.getElementById('edit-panel-body');
+  const body = document.getElementById('edit-panel-body');
 
-  body.querySelectorAll('.my-swatch').forEach(s=>{
-    const go=()=>{
-      const color=s.dataset.color,tc=s.dataset.textcolor;
-      if(key==='fill'&&tc)applyDOITile(color,tc);else _applyFn?.(color);
-      if(color!=='none')pushRecent(key,color);
+  body.querySelectorAll('.my-swatch').forEach(s => {
+    const go = () => {
+      const color=s.dataset.color, tc=s.dataset.textcolor;
+      if(key==='fill' && tc) applyDOITile(color,tc);
+      else _applyFn?.(color);
+      if(color!=='none') pushRecent(key,color);
       closeEditPanel();
     };
-    s.addEventListener('click',go);
-    s.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}});
+    s.addEventListener('click', go);
+    s.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' '){e.preventDefault();go();} });
   });
 
-  body.querySelectorAll('.my-edit-btn').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      const idx=parseInt(btn.dataset.idx,10);
-      _openForm=(_openForm&&_openForm.type==='edit'&&_openForm.idx===idx)?null:{type:'edit',idx};
+  body.querySelectorAll('.my-edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.idx,10);
+      _openForm = (_openForm && _openForm.type==='edit' && _openForm.idx===idx) ? null : {type:'edit',idx};
       renderEditPanel();
     });
   });
 
-  body.querySelectorAll('.my-del-btn').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      deleteColor(key,parseInt(btn.dataset.idx,10));
-      _openForm=null;renderEditPanel();
+  body.querySelectorAll('.my-del-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      deleteColor(key, parseInt(btn.dataset.idx,10));
+      _openForm=null; renderEditPanel();
     });
   });
 
-  document.getElementById('ep-add-toggle').addEventListener('click',()=>{
-    _openForm=(_openForm&&_openForm.type==='add')?null:{type:'add',idx:null};
+  document.getElementById('ep-add-toggle').addEventListener('click', () => {
+    _openForm = (_openForm && _openForm.type==='add') ? null : {type:'add',idx:null};
     renderEditPanel();
   });
 
-  document.getElementById('ep-no-color').addEventListener('click',()=>{
-    if(key==='fill')applyDOITile('none',null);else _applyFn?.('none');
+  document.getElementById('ep-no-color').addEventListener('click', () => {
+    if(key==='fill') applyDOITile('none',null);
+    else _applyFn?.('none');
     closeEditPanel();
   });
 
-  document.getElementById('ep-reset').addEventListener('click',()=>{
-    if(!confirm(`Reset ${key} palette to defaults? Your custom colors will be lost.`))return;
+  document.getElementById('ep-reset').addEventListener('click', () => {
+    if(!confirm(`Reset ${key} palette to defaults? Your custom colors will be lost.`)) return;
     localStorage.removeItem(`sct_${key}`);
-    _openForm=null;renderEditPanel();renderMainSwatches(key);
+    _openForm=null; renderEditPanel(); renderMainSwatches(key);
   });
 
-  body.querySelectorAll('.color-form').forEach(form=>wireColorForm(form,key));
+  body.querySelectorAll('.color-form').forEach(form => wireColorForm(form, key));
 
   // Drag-and-drop
-  const list=document.getElementById('my-colors-list');
-  let dragSrcIdx=null;
-  list.querySelectorAll('.my-color-item[draggable]').forEach(item=>{
-    item.addEventListener('dragstart',e=>{
-      dragSrcIdx=parseInt(item.dataset.idx,10);
+  const list = document.getElementById('my-colors-list');
+  let dragSrcIdx = null;
+  list.querySelectorAll('.my-color-item[draggable]').forEach(item => {
+    item.addEventListener('dragstart', e => {
+      dragSrcIdx = parseInt(item.dataset.idx,10);
       item.classList.add('dragging');
       e.dataTransfer.effectAllowed='move';
-      e.dataTransfer.setData('text/plain',dragSrcIdx);
     });
-    item.addEventListener('dragend',()=>{
+    item.addEventListener('dragend', () => {
       item.classList.remove('dragging');
       list.querySelectorAll('.my-color-item').forEach(i=>i.classList.remove('drag-over'));
     });
-    item.addEventListener('dragover',e=>{
-      e.preventDefault();e.dataTransfer.dropEffect='move';
+    item.addEventListener('dragover', e => {
+      e.preventDefault(); e.dataTransfer.dropEffect='move';
       list.querySelectorAll('.my-color-item').forEach(i=>i.classList.remove('drag-over'));
       item.classList.add('drag-over');
     });
-    item.addEventListener('drop',e=>{
+    item.addEventListener('drop', e => {
       e.preventDefault();
-      const destIdx=parseInt(item.dataset.idx,10);
-      if(dragSrcIdx===null||dragSrcIdx===destIdx)return;
-      const arr=getPalette(key);
-      const [moved]=arr.splice(dragSrcIdx,1);
+      const destIdx = parseInt(item.dataset.idx,10);
+      if(dragSrcIdx===null || dragSrcIdx===destIdx) return;
+      const arr = getPalette(key);
+      const [moved] = arr.splice(dragSrcIdx,1);
       arr.splice(destIdx,0,moved);
       savePalette(key,arr);
-      _openForm=null;renderEditPanel();
+      _openForm=null; renderEditPanel();
     });
   });
 }
 
 // ─────────────────────────────────────────────────────────────────
-// ══ MODE SWITCHING ══
+// COLOR FORM (inside edit panel)
+// ─────────────────────────────────────────────────────────────────
+function buildColorForm(mode, idx, initFillHex, initName, initTextHex) {
+  const fid = `cf-${mode}-${idx??'new'}`;
+  const isDOI = _editKey === 'fill';
+  const themeCols = getThemeCols();
+
+  function themeGrid(prefix) {
+    return themeCols.map((base,ci) => {
+      const variants = [base, tint(base,.8), tint(base,.6), tint(base,.4), shade(base,.25), shade(base,.5)];
+      return variants.map((v,ri) =>
+        `<button class="ppt-swatch ppt-theme-swatch" data-hex="${v}" data-form="${fid}"
+                 data-picker="${prefix}" title="${v}"
+                 style="background:${v};width:18px;height:${ri===0?20:14}px;"></button>`
+      ).join('');
+    }).join('');
+  }
+
+  function stdRow(prefix) {
+    return STANDARD_COLORS.map(c =>
+      `<button class="ppt-swatch ppt-std-swatch" data-hex="${c}" data-form="${fid}"
+               data-picker="${prefix}" title="${c}"
+               style="background:${c};width:18px;height:18px;"></button>`
+    ).join('');
+  }
+
+  function recentRow(prefix) {
+    const recs = getRecents(_editKey);
+    if(!recs.length) return '';
+    return `
+      <div class="acc-hdr" data-acc="acc-recent-${prefix}-${fid}">
+        <span>Recent Colors</span><svg class="acc-chev" width="10" height="10" viewBox="0 0 10 10"><polyline points="2,3 5,7 8,3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+      </div>
+      <div class="acc-body" id="acc-recent-${prefix}-${fid}">
+        <div class="ppt-row">${recs.map(c=>`<button class="ppt-swatch ppt-std-swatch" data-hex="${c}" data-form="${fid}" data-picker="${prefix}" title="${c}" style="background:${c};width:18px;height:18px;"></button>`).join('')}</div>
+      </div>`;
+  }
+
+  function picker(prefix, label, iconHtml, initHex) {
+    return `
+      <div class="ppt-picker-hdr ppt-sect-hdr" data-sect-key="${prefix}-${fid}">
+        <span class="ppt-picker-icon">${iconHtml}</span>
+        <span class="ppt-picker-label">${label}</span>
+        <span class="ppt-picker-preview" id="prev-${prefix}-${fid}" style="background:${initHex||'#FFFFFF'};${isLight(initHex||'#FFFFFF')?'border:1px solid #ddd;':''}"></span>
+        <svg class="ppt-sect-chev" width="10" height="10" viewBox="0 0 10 10"><polyline points="2,3 5,7 8,3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+      </div>
+      <div class="ppt-sect-body" id="sect-${prefix}-${fid}" style="${prefix==='fill'?'':'display:none;'}">
+        <div class="acc-hdr acc-open" data-acc="acc-theme-${prefix}-${fid}">
+          <span>Theme Colors</span><svg class="acc-chev" width="10" height="10" viewBox="0 0 10 10"><polyline points="2,3 5,7 8,3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+        </div>
+        <div class="acc-body acc-open" id="acc-theme-${prefix}-${fid}">
+          <div class="ppt-theme-grid">${themeGrid(prefix)}</div>
+        </div>
+
+        <div class="acc-hdr" data-acc="acc-std-${prefix}-${fid}">
+          <span>Standard Colors</span><svg class="acc-chev" width="10" height="10" viewBox="0 0 10 10"><polyline points="2,3 5,7 8,3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+        </div>
+        <div class="acc-body" id="acc-std-${prefix}-${fid}">
+          <div class="ppt-row">${stdRow(prefix)}</div>
+        </div>
+
+        ${recentRow(prefix)}
+
+        <div class="acc-hdr" data-acc="acc-more-${prefix}-${fid}">
+          <span>More Colors</span><svg class="acc-chev" width="10" height="10" viewBox="0 0 10 10"><polyline points="2,3 5,7 8,3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+        </div>
+        <div class="acc-body" id="acc-more-${prefix}-${fid}">
+          <canvas class="hsv-square" id="hsv-sq-${prefix}-${fid}" width="180" height="150"></canvas>
+          <div class="hue-slider-wrap"><input type="range" class="hue-slider" id="hue-sl-${prefix}-${fid}" min="0" max="360" value="${hexToHsv(initHex||'#2A3E6D').h}"/></div>
+          <div class="hex-input-row">
+            <span class="hex-hash">#</span>
+            <input type="text" class="hex-input" id="hex-in-${prefix}-${fid}" maxlength="6" value="${(initHex||'#2A3E6D').replace('#','')}"/>
+            <span class="hex-preview" id="hex-prev-${prefix}-${fid}" style="background:${initHex||'#2A3E6D'};"></span>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  const fillIcon   = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2"/><path d="M12 11V3m0 0L8 7m4-4l4 4"/></svg>`;
+  const textAIcon  = `<span style="font-weight:700;font-size:13px;border-bottom:3px solid currentColor;padding-bottom:1px;">A</span>`;
+
+  return `
+    <div class="color-form" data-form-id="${fid}" data-mode="${mode}" data-idx="${idx??''}" data-key="${_editKey}">
+      <div class="cf-name-row">
+        <label class="cf-name-lbl">Name</label>
+        <input type="text" class="cf-name-input" id="cfname-${fid}" value="${esc(initName||'')}"/>
+      </div>
+      ${picker('fill', isDOI?'Shape Fill':'Color', fillIcon, initFillHex)}
+      ${isDOI ? picker('text', 'Font Color', textAIcon, initTextHex) : ''}
+      <div class="cf-actions">
+        <button class="cf-save-btn" data-form="${fid}">${mode==='edit'?'Save Changes':'+ Add to My Colors'}</button>
+        <button class="cf-cancel-btn" data-form="${fid}">Cancel</button>
+      </div>
+    </div>`;
+}
+
+function wireColorForm(form, key) {
+  const fid     = form.dataset.formId;
+  const isDOI   = key === 'fill';
+  const prefixes = isDOI ? ['fill','text'] : ['fill'];
+
+  // Collapsible section headers (Shape Fill / Font Color)
+  form.querySelectorAll('.ppt-sect-hdr').forEach(hdr => {
+    hdr.addEventListener('click', () => {
+      const sectKey = hdr.dataset.sectKey;
+      const [prefix, ...rest] = sectKey.split('-');
+      const bodyId = `sect-${sectKey}`;
+      const body = document.getElementById(bodyId);
+      if(!body) return;
+      const open = body.style.display !== 'none';
+      body.style.display = open ? 'none' : '';
+      hdr.classList.toggle('ppt-sect-open', !open);
+    });
+  });
+
+  // Accordion toggles
+  form.querySelectorAll('.acc-hdr').forEach(hdr => {
+    hdr.addEventListener('click', () => {
+      const bodyId = hdr.dataset.acc;
+      const body   = document.getElementById(bodyId);
+      if(!body) return;
+      const open = body.classList.contains('acc-open');
+      body.classList.toggle('acc-open', !open);
+      hdr.classList.toggle('acc-open', !open);
+      if(!open) initHsvIfNeeded(hdr.dataset.acc, fid);
+    });
+  });
+
+  // Color swatch clicks
+  form.querySelectorAll('.ppt-swatch').forEach(sw => {
+    sw.addEventListener('click', () => {
+      const hex    = sw.dataset.hex;
+      const picker = sw.dataset.picker;
+      setPickerColor(fid, picker, hex);
+      markActive(form, picker, hex);
+    });
+  });
+
+  // Hue sliders + HSV
+  prefixes.forEach(prefix => {
+    const hueSl  = document.getElementById(`hue-sl-${prefix}-${fid}`);
+    const hexIn  = document.getElementById(`hex-in-${prefix}-${fid}`);
+    const hexPrv = document.getElementById(`hex-prev-${prefix}-${fid}`);
+    if(hueSl) {
+      hueSl.addEventListener('input', () => {
+        const sq  = document.getElementById(`hsv-sq-${prefix}-${fid}`);
+        if(sq && sq._sData) {
+          sq._sData.h = parseInt(hueSl.value,10);
+          drawHsvSquare(sq);
+          const hex = hsvToHex(sq._sData.h, sq._sData.s, sq._sData.v);
+          setPickerColor(fid, prefix, hex);
+        }
+      });
+    }
+    if(hexIn) {
+      hexIn.addEventListener('input', () => {
+        const raw = hexIn.value.replace('#','');
+        if(raw.length===6 && /^[0-9A-Fa-f]+$/.test(raw)) {
+          const hex = '#'+raw.toUpperCase();
+          if(hexPrv) hexPrv.style.background = hex;
+          syncPickerPreview(fid, prefix, hex);
+        }
+      });
+    }
+  });
+
+  // Save / Cancel
+  form.querySelector('.cf-save-btn')?.addEventListener('click', () => {
+    const nameVal = document.getElementById(`cfname-${fid}`)?.value.trim() || 'Custom';
+    const hexIn   = document.getElementById(`hex-in-fill-${fid}`);
+    const raw     = hexIn?.value.replace('#','').toUpperCase();
+    const hex     = raw && raw.length===6 ? '#'+raw : (STAGED.fill.hex||'#2A3E6D');
+    const norm    = normalizeHex(hex);
+    if(!norm) { setStatus('Invalid hex color'); return; }
+
+    let entry;
+    if(key==='fill') {
+      const txIn  = document.getElementById(`hex-in-text-${fid}`);
+      const txRaw = txIn?.value.replace('#','').toUpperCase();
+      const txHex = (txRaw&&txRaw.length===6) ? '#'+txRaw : autoTextHex(norm);
+      entry = {hex:norm, name:nameVal, textHex:txHex};
+    } else {
+      entry = {hex:norm, name:nameVal};
+    }
+
+    const arr = getPalette(key);
+    const mode = form.dataset.mode;
+    const idx  = form.dataset.idx;
+    if(mode==='edit' && idx!=='') arr[parseInt(idx,10)] = entry;
+    else arr.push(entry);
+    savePalette(key, arr);
+    pushRecent(key, norm);
+    _openForm=null; renderEditPanel(); renderMainSwatches(key);
+    setStatus(`${mode==='edit'?'Updated':'Added'}: ${nameVal}`);
+  });
+
+  form.querySelector('.cf-cancel-btn')?.addEventListener('click', () => {
+    _openForm=null; renderEditPanel();
+  });
+
+  // Init visible HSV squares
+  prefixes.forEach(prefix => {
+    const sq = document.getElementById(`hsv-sq-${prefix}-${fid}`);
+    if(sq) {
+      const hexIn = document.getElementById(`hex-in-${prefix}-${fid}`);
+      const initHex = hexIn ? '#'+(hexIn.value||'2A3E6D').replace('#','') : '#2A3E6D';
+      const {h,s,v} = hexToHsv(initHex);
+      sq._sData = {h, s, v};
+      drawHsvSquare(sq);
+      wireHsvSquare(sq, fid, prefix);
+    }
+  });
+}
+
+function initHsvIfNeeded(bodyId, fid) {
+  const body = document.getElementById(bodyId);
+  if(!body) return;
+  body.querySelectorAll('.hsv-square').forEach(sq => {
+    if(sq._sData) return;
+    const prefix = sq.id.replace(`hsv-sq-`,'').replace(`-${fid}`,'');
+    const hexIn = document.getElementById(`hex-in-${prefix}-${fid}`);
+    const initHex = hexIn ? '#'+(hexIn.value||'2A3E6D').replace('#','') : '#2A3E6D';
+    const {h,s,v} = hexToHsv(initHex);
+    sq._sData = {h, s, v};
+    drawHsvSquare(sq);
+    wireHsvSquare(sq, fid, prefix);
+  });
+}
+
+function drawHsvSquare(sq) {
+  const ctx = sq.getContext('2d');
+  const w=sq.width, h=sq.height;
+  const {h:hue} = sq._sData;
+  const baseHex = hsvToHex(hue,100,100);
+  const gradH = ctx.createLinearGradient(0,0,w,0);
+  gradH.addColorStop(0,'#FFFFFF'); gradH.addColorStop(1,baseHex);
+  ctx.fillStyle=gradH; ctx.fillRect(0,0,w,h);
+  const gradV = ctx.createLinearGradient(0,0,0,h);
+  gradV.addColorStop(0,'rgba(0,0,0,0)'); gradV.addColorStop(1,'rgba(0,0,0,1)');
+  ctx.fillStyle=gradV; ctx.fillRect(0,0,w,h);
+  const {s,v} = sq._sData;
+  const cx=Math.round(s/100*w), cy=Math.round((1-v/100)*h);
+  ctx.beginPath(); ctx.arc(cx,cy,6,0,2*Math.PI);
+  ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx,cy,5,0,2*Math.PI);
+  ctx.strokeStyle='rgba(0,0,0,.4)'; ctx.lineWidth=1; ctx.stroke();
+}
+
+function wireHsvSquare(sq, fid, prefix) {
+  let down=false;
+  const pick = e => {
+    const r=sq.getBoundingClientRect();
+    sq._sData.s = Math.round(Math.max(0,Math.min(1,(e.clientX-r.left)/r.width))*100);
+    sq._sData.v = Math.round(Math.max(0,Math.min(1,1-(e.clientY-r.top)/r.height))*100);
+    drawHsvSquare(sq);
+    const hex = hsvToHex(sq._sData.h, sq._sData.s, sq._sData.v);
+    setPickerColor(fid, prefix, hex);
+  };
+  sq.addEventListener('mousedown', e=>{ down=true; pick(e); });
+  window.addEventListener('mousemove', e=>{ if(down) pick(e); });
+  window.addEventListener('mouseup', ()=>{ down=false; });
+}
+
+function setPickerColor(fid, prefix, hex) {
+  const hexIn  = document.getElementById(`hex-in-${prefix}-${fid}`);
+  const hexPrv = document.getElementById(`hex-prev-${prefix}-${fid}`);
+  const topPrv = document.getElementById(`prev-${prefix}-${fid}`);
+  if(hexIn) hexIn.value = hex.replace('#','');
+  if(hexPrv) hexPrv.style.background = hex;
+  if(topPrv) { topPrv.style.background=hex; topPrv.style.border=isLight(hex)?'1px solid #ddd':''; }
+  const hueSl = document.getElementById(`hue-sl-${prefix}-${fid}`);
+  const sq    = document.getElementById(`hsv-sq-${prefix}-${fid}`);
+  if(sq && sq._sData) {
+    const {h,s,v} = hexToHsv(hex);
+    sq._sData = {h,s,v};
+    drawHsvSquare(sq);
+    if(hueSl) hueSl.value = h;
+  }
+}
+
+function syncPickerPreview(fid, prefix, hex) {
+  const topPrv = document.getElementById(`prev-${prefix}-${fid}`);
+  if(topPrv) { topPrv.style.background=hex; topPrv.style.border=isLight(hex)?'1px solid #ddd':''; }
+}
+
+function markActive(form, prefix, hex) {
+  form.querySelectorAll(`[data-picker="${prefix}"]`).forEach(s=>s.classList.remove('ppt-swatch-active'));
+  form.querySelectorAll(`[data-picker="${prefix}"][data-hex="${hex}"]`).forEach(s=>s.classList.add('ppt-swatch-active'));
+}
+
+// ─────────────────────────────────────────────────────────────────
+// MODE SWITCHING
 // ─────────────────────────────────────────────────────────────────
 function switchMode(mode) {
-  if(_currentMode === mode) return;
+  if(_currentMode===mode) return;
   _currentMode = mode;
+  const header    = document.getElementById('app-header');
+  const stylBtn   = document.getElementById('btn-mode-style');
+  const paintBtn  = document.getElementById('btn-mode-paint');
+  const mainCont  = document.getElementById('main-content');
+  const paintPnl  = document.getElementById('paint-panel');
+  const emptySt   = document.getElementById('empty-state');
+  const shapeBnr  = document.getElementById('shape-banner');
 
-  // Save/restore staged state on every switch
-  saveStagedState();
-
-  const header = document.getElementById('app-header');
-  const stylBtn = document.getElementById('btn-mode-style');
-  const paintBtn = document.getElementById('btn-mode-paint');
-  const mainContent = document.getElementById('main-content');
-  const paintPanel = document.getElementById('paint-panel');
-  const emptyState = document.getElementById('empty-state');
-  const shapeBanner = document.getElementById('shape-banner');
-
-  if(mode === 'paint') {
-    // Update toggle
+  if(mode==='paint') {
     stylBtn.classList.remove('mode-active');
     paintBtn.classList.add('mode-active');
-    // Header tint
     header.classList.add('paint-mode-header');
-    // Show/hide panels
-    mainContent.classList.add('hidden');
-    emptyState.classList.add('hidden');
-    shapeBanner.classList.add('hidden');
-    paintPanel.classList.remove('hidden');
-    // Render paint panel
-    renderPaintPanel();
-    setStatus('Paint mode — capture a shape or select attributes');
+    mainCont.classList.add('hidden');
+    emptySt.classList.add('hidden');
+    shapeBnr.classList.add('hidden');
+    paintPnl.classList.remove('hidden');
+    renderPaintSwatches();
+    updateApplyBtn();
+    updateLockToggle();
+    updatePaintInstruction();
+    setStatus('Paint mode — select attributes then click shapes');
   } else {
-    // Update toggle
     paintBtn.classList.remove('mode-active');
     stylBtn.classList.add('mode-active');
-    // Remove header tint
     header.classList.remove('paint-mode-header');
-    // Show/hide panels
-    paintPanel.classList.add('hidden');
-    mainContent.classList.remove('hidden');
-    // Re-inspect selection
+    paintPnl.classList.add('hidden');
+    mainCont.classList.remove('hidden');
     inspectSelection();
     setStatus('');
   }
 }
 
 // ─────────────────────────────────────────────────────────────────
-// ══ PAINT PANEL RENDER ══
-// ─────────────────────────────────────────────────────────────────
-function renderPaintPanel() {
-  // Fill / DOI preview
-  updateStagedPreview('fill');
-  updateStagedPreview('border');
-  updateStagedPreview('text');
-
-  // Checkboxes — only enabled when dirty
-  const fillChk  = document.getElementById('staged-fill-chk');
-  const borderChk = document.getElementById('staged-border-chk');
-  const textChk  = document.getElementById('staged-text-chk');
-
-  if(fillChk) {
-    fillChk.disabled = !STAGED.fill.dirty;
-    fillChk.checked  = STAGED.fill.dirty;
-  }
-  if(borderChk) {
-    borderChk.disabled = !STAGED.border.dirty;
-    borderChk.checked  = STAGED.border.dirty;
-  }
-  if(textChk) {
-    textChk.disabled = !STAGED.text.dirty;
-    textChk.checked  = STAGED.text.dirty;
-  }
-
-  // Lock toggle
-  updateLockToggle();
-
-  // Capture hint — update based on state
-  const anyDirty = STAGED.fill.dirty || STAGED.border.dirty || STAGED.text.dirty;
-  const hint = document.getElementById('capture-hint');
-  if(hint) {
-    hint.textContent = anyDirty
-      ? 'Format captured. Select shapes and click "Apply to Selection" or enable auto-paint.'
-      : 'Select a shape, then click Capture to read its formatting.';
-  }
-}
-
-function updateStagedPreview(attr) {
-  if(attr === 'fill') {
-    const prev = document.getElementById('staged-fill-preview');
-    if(!prev) return;
-    if(STAGED.fill.dirty && STAGED.fill.hex) {
-      const txHex = STAGED.fill.textHex || autoTextHex(STAGED.fill.hex);
-      prev.innerHTML = `<span class="staged-fill-tile"
-        style="background:${STAGED.fill.hex};color:${txHex};">
-        ${esc(STAGED.fill.name || STAGED.fill.hex)}
-      </span>`;
-    } else {
-      prev.innerHTML = '<span class="staged-not-set">Not captured</span>';
-    }
-  } else if(attr === 'border') {
-    const prev = document.getElementById('staged-border-preview');
-    if(!prev) return;
-    if(STAGED.border.dirty && STAGED.border.hex) {
-      prev.innerHTML = `<span class="staged-line-preview"
-        style="background:${STAGED.border.hex};"></span>
-        <span class="staged-border-name">${esc(STAGED.border.name || STAGED.border.hex)}</span>`;
-    } else {
-      prev.innerHTML = '<span class="staged-not-set">Not captured</span>';
-    }
-  } else if(attr === 'text') {
-    const prev = document.getElementById('staged-text-preview');
-    if(!prev) return;
-    if(STAGED.text.dirty && STAGED.text.hex) {
-      prev.innerHTML = `<span class="staged-color-dot${isLight(STAGED.text.hex)?' light':''}"
-        style="background:${STAGED.text.hex};"></span>
-        <span class="staged-hex-label">${STAGED.text.hex}</span>`;
-    } else {
-      prev.innerHTML = '<span class="staged-not-set">Not captured</span>';
-    }
-  }
-}
-
-function updateLockToggle() {
-  const btn = document.getElementById('btn-lock');
-  const lbl = document.getElementById('lock-state-label');
-  if(!btn) return;
-  btn.setAttribute('aria-checked', STAGED.locked ? 'true' : 'false');
-  btn.classList.toggle('lock-on', STAGED.locked);
-  if(lbl) lbl.textContent = STAGED.locked ? 'On' : 'Off';
-}
-
-// ─────────────────────────────────────────────────────────────────
-// ══ CAPTURE FROM SHAPE ══
+// CAPTURE FROM SHAPE
 // ─────────────────────────────────────────────────────────────────
 async function captureFromShape() {
   try {
     await PowerPoint.run(async ctx => {
       const sel = ctx.presentation.getSelectedShapes();
-      sel.load('items/type,items/name,items/fill,items/lineFormat,items/textFrame');
+      sel.load('items/type,items/name');
       await ctx.sync();
-
-      if(!sel.items.length) {
-        setStatus('No shape selected — select a shape first.');
-        return;
-      }
-
+      if(!sel.items.length) { setStatus('Select a shape first.'); return; }
       const s = sel.items[0];
-      // Load the properties we need
       s.fill.load('type,foreColor');
-      s.lineFormat.load('color,weight,visible');
+      s.lineFormat.load('color,visible');
       try { s.textFrame.textRange.font.load('color'); } catch(_) {}
       await ctx.sync();
 
-      // ── Capture fill ──
+      // Capture fill
       try {
-        const fillType = s.fill.type;
-        if(fillType === PowerPoint.ShapeFillType.solid || fillType === 'Solid') {
-          const rawFill = s.fill.foreColor;
-          const normFill = normalizeHex(rawFill.startsWith('#') ? rawFill : '#'+rawFill);
-          if(normFill) {
-            STAGED.fill.dirty   = true;
-            STAGED.fill.hex     = normFill;
-            STAGED.fill.textHex = autoTextHex(normFill);
-            // Try to match a palette name
-            const match = getPalette('fill').find(c=>c.hex.toUpperCase()===normFill.toUpperCase());
-            STAGED.fill.name = match ? match.name : normFill;
-            if(match && match.textHex) STAGED.fill.textHex = match.textHex;
+        if(s.fill.type==='Solid'||s.fill.type===PowerPoint.ShapeFillType.solid) {
+          const raw = s.fill.foreColor;
+          const norm = normalizeHex(raw.startsWith('#')?raw:'#'+raw);
+          if(norm) {
+            const match = getPalette('fill').find(c=>c.hex.toUpperCase()===norm.toUpperCase());
+            STAGED.fill = {
+              dirty:true, hex:norm,
+              textHex: match?.textHex || autoTextHex(norm),
+              name: match?.name || norm
+            };
           }
         }
       } catch(_) {}
 
-      // ── Capture border ──
+      // Capture border
       try {
-        if(s.lineFormat.visible !== false) {
-          const rawBorder = s.lineFormat.color;
-          const normBorder = normalizeHex(rawBorder.startsWith('#') ? rawBorder : '#'+rawBorder);
-          if(normBorder) {
-            STAGED.border.dirty = true;
-            STAGED.border.hex   = normBorder;
-            const match = getPalette('border').find(c=>c.hex.toUpperCase()===normBorder.toUpperCase());
-            STAGED.border.name = match ? match.name : normBorder;
+        if(s.lineFormat.visible!==false) {
+          const raw = s.lineFormat.color;
+          const norm = normalizeHex(raw.startsWith('#')?raw:'#'+raw);
+          if(norm) {
+            const match = getPalette('border').find(c=>c.hex.toUpperCase()===norm.toUpperCase());
+            STAGED.border = {dirty:true, hex:norm, name:match?.name||norm};
           }
-        }
-      } catch(_) {}
-
-      // ── Capture text color ──
-      try {
-        const rawText = s.textFrame.textRange.font.color;
-        const normText = normalizeHex(rawText.startsWith('#') ? rawText : '#'+rawText);
-        if(normText) {
-          STAGED.text.dirty = true;
-          STAGED.text.hex   = normText;
         }
       } catch(_) {}
 
       _cachedShapeCount = sel.items.length;
       saveStagedState();
-      renderPaintPanel();
-      setStatus(`Captured from "${s.name || 'shape'}"`);
+      renderPaintSwatches();
+      updateApplyBtn();
+      updatePaintInstruction();
+      setStatus(`Captured from "${sel.items[0].name||'shape'}"`);
     });
-  } catch(e) {
-    setStatus('Capture failed — make sure a shape is selected.');
-  }
+  } catch(e) { setStatus('Capture failed — select a shape first.'); }
 }
 
 // ─────────────────────────────────────────────────────────────────
-// ══ APPLY STAGED FORMAT ══
+// APPLY STAGED FORMAT
 // ─────────────────────────────────────────────────────────────────
 async function applyStagedFormat() {
-  const anyChecked =
-    (STAGED.fill.dirty   && document.getElementById('staged-fill-chk')?.checked)   ||
-    (STAGED.border.dirty && document.getElementById('staged-border-chk')?.checked) ||
-    (STAGED.text.dirty   && document.getElementById('staged-text-chk')?.checked);
-
-  if(!anyChecked) { setStatus('Nothing staged — capture a shape first.'); return; }
-  if(!_cachedShapeCount) { setStatus('No shape selected.'); return; }
+  const doFill   = STAGED.fill.dirty   && STAGED.fill.hex;
+  const doBorder = STAGED.border.dirty && STAGED.border.hex;
+  if(!doFill && !doBorder) { setStatus('Select at least one attribute above.'); return; }
+  if(!_cachedShapeCount)    { setStatus('No shape selected.'); return; }
 
   const ver = ++_applyVer;
   await PowerPoint.run(async ctx => {
-    if(ver !== _applyVer) return;
+    if(ver!==_applyVer) return;
     const shapes = getSelectedFast(ctx);
-    const applyFill   = STAGED.fill.dirty   && document.getElementById('staged-fill-chk')?.checked;
-    const applyBorder = STAGED.border.dirty && document.getElementById('staged-border-chk')?.checked;
-    const applyText   = STAGED.text.dirty   && document.getElementById('staged-text-chk')?.checked;
-
     shapes.forEach(s => {
-      if(applyFill) {
-        if(STAGED.fill.hex === 'none') s.fill.clear();
-        else s.fill.setSolidColor(STAGED.fill.hex);
-        if(STAGED.fill.textHex && !applyText) {
-          try { s.textFrame.textRange.font.color = STAGED.fill.textHex; } catch(_) {}
+      if(doFill) {
+        if(STAGED.fill.hex==='none') s.fill.clear();
+        else {
+          s.fill.setSolidColor(STAGED.fill.hex);
+          const tx = STAGED.fill.textHex || autoTextHex(STAGED.fill.hex);
+          try { s.textFrame.textRange.font.color=tx; } catch(_) {}
         }
       }
-      if(applyBorder) {
-        if(STAGED.border.hex === 'none') s.lineFormat.visible = false;
-        else { s.lineFormat.visible = true; s.lineFormat.color = STAGED.border.hex; }
-      }
-      if(applyText) {
-        try { s.textFrame.textRange.font.color = STAGED.text.hex; } catch(_) {}
+      if(doBorder) {
+        if(STAGED.border.hex==='none') s.lineFormat.visible=false;
+        else { s.lineFormat.visible=true; s.lineFormat.color=STAGED.border.hex; }
       }
     });
-
     await ctx.sync();
-    if(ver === _applyVer) {
-      const parts = [];
-      if(applyFill)   parts.push('fill');
-      if(applyBorder) parts.push('border');
-      if(applyText)   parts.push('text');
-      setStatus(`Painted: ${parts.join(' + ')}`);
+    if(ver===_applyVer) {
+      const parts=[];
+      if(doFill)   parts.push(`fill: ${STAGED.fill.name||STAGED.fill.hex}`);
+      if(doBorder) parts.push(`border: ${STAGED.border.name||STAGED.border.hex}`);
+      setStatus('Painted — ' + parts.join(' + '));
     }
   });
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Update shape count for paint mode (no UI update)
-// ─────────────────────────────────────────────────────────────────
 async function updateShapeCount() {
   try {
-    await PowerPoint.run(async ctx => {
-      const sel = ctx.presentation.getSelectedShapes();
+    await PowerPoint.run(async ctx=>{
+      const sel=ctx.presentation.getSelectedShapes();
       sel.load('items');
       await ctx.sync();
-      _cachedShapeCount = sel.items.length;
+      _cachedShapeCount=sel.items.length;
     });
-  } catch(_) { _cachedShapeCount = 0; }
+  } catch(_) { _cachedShapeCount=0; }
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Apply functions (Style mode)
+// APPLY FUNCTIONS — Style mode
 // ─────────────────────────────────────────────────────────────────
 function getSelectedFast(ctx) {
   const col=ctx.presentation.getSelectedShapes();
   const out=[];
-  for(let i=0;i<_cachedShapeCount;i++)out.push(col.getItemAt(i));
+  for(let i=0;i<_cachedShapeCount;i++) out.push(col.getItemAt(i));
   return out;
 }
 
-async function applyDOITile(fillColor,textColor) {
+async function applyDOITile(fillColor, textColor) {
   const ver=++_applyVer;
-  if(!_cachedShapeCount)return setStatus('No shape selected.');
+  if(!_cachedShapeCount) return setStatus('No shape selected.');
   await PowerPoint.run(async ctx=>{
-    if(ver!==_applyVer)return;
+    if(ver!==_applyVer) return;
     getSelectedFast(ctx).forEach(s=>{
-      if(fillColor==='none')s.fill.clear();else s.fill.setSolidColor(fillColor);
-      if(textColor&&textColor!=='none'){try{s.textFrame.textRange.font.color=textColor;}catch(_){}}
+      if(fillColor==='none') s.fill.clear();
+      else s.fill.setSolidColor(fillColor);
+      if(textColor&&textColor!=='none') try{s.textFrame.textRange.font.color=textColor;}catch(_){}
     });
     await ctx.sync();
-    if(ver===_applyVer)setStatus(`DOI → ${fillColor==='none'?'cleared':fillColor}`);
+    if(ver===_applyVer) setStatus(`DOI → ${fillColor==='none'?'cleared':fillColor}`);
   });
 }
 
 async function applyBorderColor(color) {
   const ver=++_applyVer;
-  if(!_cachedShapeCount)return setStatus('No shape selected.');
+  if(!_cachedShapeCount) return setStatus('No shape selected.');
   await PowerPoint.run(async ctx=>{
-    if(ver!==_applyVer)return;
+    if(ver!==_applyVer) return;
     getSelectedFast(ctx).forEach(s=>{
-      if(color==='none')s.lineFormat.visible=false;
-      else{s.lineFormat.visible=true;s.lineFormat.color=color;}
+      if(color==='none') s.lineFormat.visible=false;
+      else { s.lineFormat.visible=true; s.lineFormat.color=color; }
     });
     await ctx.sync();
-    if(ver===_applyVer)setStatus(`Border → ${color==='none'?'removed':color}`);
+    if(ver===_applyVer) setStatus(`Border → ${color==='none'?'removed':color}`);
   });
 }
 
 async function applyBorderWeight(pts) {
   const ver=++_applyVer;
-  if(!_cachedShapeCount)return setStatus('No shape selected.');
+  if(!_cachedShapeCount) return setStatus('No shape selected.');
   await PowerPoint.run(async ctx=>{
-    if(ver!==_applyVer)return;
-    getSelectedFast(ctx).forEach(s=>{s.lineFormat.weight=pts;s.lineFormat.visible=true;});
+    if(ver!==_applyVer) return;
+    getSelectedFast(ctx).forEach(s=>{ s.lineFormat.weight=pts; s.lineFormat.visible=true; });
     await ctx.sync();
-    if(ver===_applyVer)setStatus(`Weight → ${pts}pt`);
+    if(ver===_applyVer) setStatus(`Weight → ${pts}pt`);
   });
 }
 
 async function applyBorderDash(style) {
   const ver=++_applyVer;
-  if(!_cachedShapeCount)return setStatus('No shape selected.');
+  if(!_cachedShapeCount) return setStatus('No shape selected.');
   await PowerPoint.run(async ctx=>{
-    if(ver!==_applyVer)return;
+    if(ver!==_applyVer) return;
     let dashVal;
-    switch(style){
+    switch(style) {
       case 'dash':     dashVal=PowerPoint.LineDashStyle.dash;     break;
       case 'roundDot': dashVal=PowerPoint.LineDashStyle.roundDot; break;
       default:         dashVal=PowerPoint.LineDashStyle.solid;    break;
     }
-    getSelectedFast(ctx).forEach(s=>{s.lineFormat.dashStyle=dashVal;s.lineFormat.visible=true;});
+    getSelectedFast(ctx).forEach(s=>{ s.lineFormat.dashStyle=dashVal; s.lineFormat.visible=true; });
     await ctx.sync();
-    if(ver===_applyVer)setStatus(`Style → ${style}`);
+    if(ver===_applyVer) setStatus(`Style → ${style}`);
   });
 }
 
 async function applyTextColor(color) {
   const ver=++_applyVer;
-  if(!_cachedShapeCount)return setStatus('No shape selected.');
+  if(!_cachedShapeCount) return setStatus('No shape selected.');
   await PowerPoint.run(async ctx=>{
-    if(ver!==_applyVer)return;
-    getSelectedFast(ctx).forEach(s=>{try{s.textFrame.textRange.font.color=color;}catch(_){}});
+    if(ver!==_applyVer) return;
+    getSelectedFast(ctx).forEach(s=>{ try{s.textFrame.textRange.font.color=color;}catch(_){} });
     await ctx.sync();
-    if(ver===_applyVer)setStatus(`Text → ${color}`);
+    if(ver===_applyVer) setStatus(`Text → ${color}`);
   });
 }
 
 async function applyLineEnds() {
-  const sv=el('line-start').value,ev=el('line-end').value;
+  const sv=el('line-start').value, ev=el('line-end').value;
   const ver=++_applyVer;
-  if(!_cachedShapeCount)return setStatus('No shape selected.');
+  if(!_cachedShapeCount) return setStatus('No shape selected.');
   await PowerPoint.run(async ctx=>{
-    if(ver!==_applyVer)return;
+    if(ver!==_applyVer) return;
     getSelectedFast(ctx).forEach(s=>{
-      try{
+      try {
         s.lineFormat.beginArrowheadStyle=PowerPoint.ArrowheadStyle[sv]??PowerPoint.ArrowheadStyle.none;
-        s.lineFormat.endArrowheadStyle=PowerPoint.ArrowheadStyle[ev]??PowerPoint.ArrowheadStyle.none;
-      }catch(_){}
+        s.lineFormat.endArrowheadStyle  =PowerPoint.ArrowheadStyle[ev]??PowerPoint.ArrowheadStyle.none;
+      } catch(_) {}
     });
     await ctx.sync();
-    if(ver===_applyVer)setStatus(`Ends → ${sv} / ${ev}`);
+    if(ver===_applyVer) setStatus(`Ends → ${sv} / ${ev}`);
   });
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Insert New Capability
+// INSERT NEW CAPABILITY
 // ─────────────────────────────────────────────────────────────────
 async function insertCapabilityShape() {
-  await PowerPoint.run(async (context) => {
-    const CM_TO_PT = 28.3465;
-    const widthPt  = 5.6  * CM_TO_PT;
-    const heightPt = 1.46 * CM_TO_PT;
-    const leftPt   = (720 - widthPt)  / 2;
-    const topPt    = (540 - heightPt) / 2;
-
+  await PowerPoint.run(async ctx=>{
+    const CM=28.3465;
+    const w=5.6*CM, h=1.46*CM, left=(720-w)/2, top=(540-h)/2;
     let slide;
     try {
-      const sel = context.presentation.getSelectedSlides();
-      sel.load('items');
-      await context.sync();
-      slide = sel.items.length
-        ? context.presentation.getSelectedSlides().getItemAt(0)
-        : context.presentation.slides.getItemAt(0);
-    } catch (_) {
-      slide = context.presentation.slides.getItemAt(0);
-    }
+      const s=ctx.presentation.getSelectedSlides(); s.load('items'); await ctx.sync();
+      slide=s.items.length?ctx.presentation.getSelectedSlides().getItemAt(0):ctx.presentation.slides.getItemAt(0);
+    } catch(_) { slide=ctx.presentation.slides.getItemAt(0); }
 
-    const shape = slide.shapes.addGeometricShape(
+    const shape=slide.shapes.addGeometricShape(
       PowerPoint.GeometricShapeType.roundedRectangle,
-      { left: leftPt, top: topPt, width: widthPt, height: heightPt }
+      {left,top,width:w,height:h}
     );
-
-    shape.name = 'Capability';
-    const tf = shape.textFrame;
-    tf.textRange.text = 'New Capability\n(xx)';
-    tf.textRange.font.name = 'Aptos';
-    tf.textRange.font.size = 12;
+    shape.name='Capability';
+    const tf=shape.textFrame;
+    tf.textRange.text='New Capability\n(xx)';
+    tf.textRange.font.name='Aptos';
+    tf.textRange.font.size=12;
     try {
-      tf.verticalAlignment = PowerPoint.TextVerticalAlignment.middle;
-      tf.textRange.paragraphFormat.alignment =
-        PowerPoint.ParagraphHorizontalAlignment.center;
-    } catch (_) {}
-
-    await context.sync();
+      tf.verticalAlignment=PowerPoint.TextVerticalAlignment.middle;
+      tf.textRange.paragraphFormat.alignment=PowerPoint.ParagraphHorizontalAlignment.center;
+    } catch(_) {}
+    await ctx.sync();
     setStatus('Inserted New Capability shape');
-  }).catch(err => setStatus('Insert failed: ' + err.message));
+  }).catch(e=>setStatus('Insert failed: '+e.message));
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Office ready
+// OFFICE READY
 // ─────────────────────────────────────────────────────────────────
 Office.onReady(async () => {
-  // Load persisted staged state
   loadStagedState();
-
-  // Render main swatches
   renderMainSwatches('fill');
   renderMainSwatches('border');
 
@@ -1235,35 +1138,39 @@ Office.onReady(async () => {
   document.getElementById('btn-insert-capability')?.addEventListener('click',insertCapabilityShape);
   document.getElementById('edit-back-btn').addEventListener('click',closeEditPanel);
 
-  // ── Mode toggle ──
+  // Mode toggle
   document.getElementById('btn-mode-style').addEventListener('click',()=>switchMode('style'));
   document.getElementById('btn-mode-paint').addEventListener('click',()=>switchMode('paint'));
 
-  // ── Paint panel controls ──
+  // Paint panel
   document.getElementById('btn-capture').addEventListener('click',captureFromShape);
 
   document.getElementById('btn-apply-staged').addEventListener('click',applyStagedFormat);
 
   document.getElementById('btn-lock').addEventListener('click',()=>{
-    STAGED.locked = !STAGED.locked;
+    STAGED.locked=!STAGED.locked;
     saveStagedState();
     updateLockToggle();
-    setStatus(STAGED.locked
-      ? 'Lock ON — format will auto-apply on every shape click'
-      : 'Lock OFF — click "Apply to Selection" manually');
+    updatePaintInstruction();
+    setStatus(STAGED.locked?'Auto-paint ON — click shapes to apply':'Auto-paint OFF');
   });
 
-  // Staged checkboxes — re-save when toggled
-  ['fill','border','text'].forEach(attr=>{
-    document.getElementById(`staged-${attr}-chk`)?.addEventListener('change',()=>saveStagedState());
+  // Clear staged buttons
+  document.getElementById('paint-fill-clear')?.addEventListener('click',()=>{
+    STAGED.fill={dirty:false,hex:null,textHex:null,name:null};
+    saveStagedState(); renderPaintFillSwatches(); updateApplyBtn(); updatePaintInstruction();
+  });
+  document.getElementById('paint-border-clear')?.addEventListener('click',()=>{
+    STAGED.border={dirty:false,hex:null,name:null};
+    saveStagedState(); renderPaintBorderSwatches(); updateApplyBtn(); updatePaintInstruction();
   });
 
-  // ── Selection changed — bifurcated by mode ──
+  // Selection change — bifurcated by mode
   Office.context.document.addHandlerAsync(
     Office.EventType.DocumentSelectionChanged,
     async () => {
-      if(_editKey) return; // Edit panel is open — don't interrupt
-      if(_currentMode === 'paint') {
+      if(_editKey) return;
+      if(_currentMode==='paint') {
         await updateShapeCount();
         if(STAGED.locked) await applyStagedFormat();
       } else {
@@ -1277,7 +1184,7 @@ Office.onReady(async () => {
 });
 
 // ─────────────────────────────────────────────────────────────────
-// Shape inspection (Style mode)
+// SHAPE INSPECTION — Style mode
 // ─────────────────────────────────────────────────────────────────
 async function inspectSelection() {
   try {
@@ -1290,47 +1197,47 @@ async function inspectSelection() {
       _cachedShapeCount=items.length;
       const merged={fill:false,border:false,text:false,lineEnds:false};
       let allSame=true;
-      const firstKey=toKey(items[0].type),firstName=items[0].name||'';
+      const firstKey=toKey(items[0].type), firstName=items[0].name||'';
       items.forEach(s=>{
-        const k=toKey(s.type);if(k!==firstKey)allSame=false;
+        const k=toKey(s.type); if(k!==firstKey)allSame=false;
         const caps=CAPABILITIES[k]||{};
-        if(caps.fill)merged.fill=true;
-        if(caps.border)merged.border=true;
-        if(caps.text)merged.text=true;
+        if(caps.fill)    merged.fill=true;
+        if(caps.border)  merged.border=true;
+        if(caps.text)    merged.text=true;
         if(caps.lineEnds)merged.lineEnds=true;
       });
       const meta=allSame?(TYPE_META[firstKey]||{icon:'?',label:cap(firstKey||'Shape')}):{icon:'⊕',label:'Mixed Selection'};
       renderUI({merged,meta,firstName,count:items.length,anySupported:Object.values(merged).some(Boolean),isLine:allSame&&firstKey==='line'});
     });
-  }catch(_){renderEmpty();}
+  } catch(_){renderEmpty();}
 }
 
 function toKey(raw){if(!raw)return'unsupported';const s=String(raw);return s.charAt(0).toLowerCase()+s.slice(1);}
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
 
 function renderUI({merged,meta,firstName,count,anySupported,isLine}) {
-  hide('empty-state');hide('unsupported-state');show('shape-banner');
-  el('shape-icon').textContent=meta.icon;
-  el('shape-type-label').textContent=meta.label;
-  el('shape-name').textContent=firstName?`"${firstName}"` :'';
+  hide('empty-state'); hide('unsupported-state'); show('shape-banner');
+  el('shape-icon').textContent      = meta.icon;
+  el('shape-type-label').textContent= meta.label;
+  el('shape-name').textContent      = firstName?`"${firstName}"` :'';
   el('shape-count-badge').textContent=`×${count}`;
-  tog('shape-count-badge',count>1);
-  tog('section-fill',merged.fill);
-  tog('section-border',merged.border);
-  tog('section-line-ends',merged.lineEnds);
+  tog('shape-count-badge', count>1);
+  tog('section-fill',      merged.fill);
+  tog('section-border',    merged.border);
+  tog('section-line-ends', merged.lineEnds);
   el('border-heading').textContent=isLine?'Line Style':'Post Int Process Owner';
-  if(!anySupported)show('unsupported-state');
+  if(!anySupported) show('unsupported-state');
 }
 
 function renderEmpty() {
   _cachedShapeCount=0;
-  show('empty-state');hide('shape-banner');hide('unsupported-state');
+  show('empty-state'); hide('shape-banner'); hide('unsupported-state');
   ['section-fill','section-border','section-line-ends'].forEach(hide);
   setStatus('');
 }
 
-function el(id){return document.getElementById(id);}
-function show(id){el(id)?.classList.remove('hidden');}
-function hide(id){el(id)?.classList.add('hidden');}
-function tog(id,vis){el(id)?.classList.toggle('hidden',!vis);}
-function setStatus(m){if(el('status'))el('status').textContent=m;}
+function el(id)       { return document.getElementById(id); }
+function show(id)     { el(id)?.classList.remove('hidden'); }
+function hide(id)     { el(id)?.classList.add('hidden'); }
+function tog(id,vis)  { el(id)?.classList.toggle('hidden',!vis); }
+function setStatus(m) { if(el('status')) el('status').textContent=m; }
