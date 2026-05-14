@@ -889,6 +889,53 @@ async function applyLineEnds() {
 }
 
 // ─────────────────────────────────────────────────────────────────
+// Insert New Capability shape
+// ─────────────────────────────────────────────────────────────────
+async function insertCapabilityShape() {
+  await PowerPoint.run(async (context) => {
+    const CM_TO_PT = 28.3465;
+    const widthPt  = 5.6  * CM_TO_PT;   // 158.74 pt
+    const heightPt = 1.46 * CM_TO_PT;   //  41.39 pt
+    const leftPt   = (720 - widthPt)  / 2;
+    const topPt    = (540 - heightPt) / 2;
+
+    // Get the currently visible slide; fall back to first slide
+    let slide;
+    try {
+      const sel = context.presentation.getSelectedSlides();
+      sel.load("items");
+      await context.sync();
+      slide = sel.items.length
+        ? context.presentation.getSelectedSlides().getItemAt(0)
+        : context.presentation.slides.getItemAt(0);
+    } catch (_) {
+      slide = context.presentation.slides.getItemAt(0);
+    }
+
+    const shape = slide.shapes.addGeometricShape(
+      PowerPoint.GeometricShapeType.roundedRectangle,
+      { left: leftPt, top: topPt, width: widthPt, height: heightPt }
+    );
+
+    shape.name = "Capability";
+
+    const tf = shape.textFrame;
+    tf.textRange.text      = "New Capability\n(xx)";
+    tf.textRange.font.name = "Aptos";
+    tf.textRange.font.size = 12;
+    try {
+      tf.verticalAlignment = PowerPoint.TextVerticalAlignment.middle;
+      tf.textRange.paragraphFormat.alignment =
+        PowerPoint.ParagraphHorizontalAlignment.center;
+    } catch (_) {}
+
+    await context.sync();
+    setStatus("Inserted New Capability shape");
+  }).catch(err => setStatus("Insert failed: " + err.message));
+}
+
+
+// ─────────────────────────────────────────────────────────────────
 // Office ready
 // ─────────────────────────────────────────────────────────────────
 Office.onReady(async () => {
@@ -900,6 +947,7 @@ Office.onReady(async () => {
   document.querySelectorAll('[data-dash]').forEach(btn=>
     btn.addEventListener('click',()=>applyBorderDash(btn.dataset.dash)));
   document.getElementById('btn-apply-ends')?.addEventListener('click',applyLineEnds);
+  document.getElementById('btn-insert-capability')?.addEventListener('click',insertCapabilityShape);
   document.getElementById('edit-back-btn').addEventListener('click',closeEditPanel);
 
   Office.context.document.addHandlerAsync(

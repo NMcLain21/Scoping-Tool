@@ -570,3 +570,47 @@ h3 {
 .my-del-btn:hover {
   color: #D50032;
 }
+
+/* ── Two-column swatch grid (Post Int Process Owner) ──────────── */
+.swatch-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
+.swatch-two-col .edit-palette-btn {
+  grid-column: 1 / -1;
+}
+.swatch-two-col .border-legend-tile {
+  padding: 8px 8px;
+  gap: 8px;
+}
+.swatch-two-col .legend-line-sample {
+  width: 36px;
+  min-width: 36px;
+}
+.swatch-two-col .legend-line-name {
+  font-size: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Insert New Capability button ─────────────────────────────── */
+#section-insert { border-top: 1px solid var(--border); }
+.insert-cap-btn {
+  display: flex; align-items: center; justify-content: center;
+  gap: 7px; width: 100%;
+  padding: 10px 14px;
+  background: var(--api-navy); color: #fff;
+  border: none; border-radius: var(--radius-md);
+  font-size: 12px; font-weight: 600; font-family: var(--font);
+  cursor: pointer; letter-spacing: 0.2px;
+  transition: background .15s, box-shadow .15s;
+  box-shadow: var(--shadow-sm);
+}
+.insert-cap-btn:hover {
+  background: var(--api-blue);
+  box-shadow: var(--shadow-md);
+}
+.insert-cap-btn:active { transform: scale(.98); }
+.insert-cap-btn svg { flex-shrink: 0; opacity: .85; }
