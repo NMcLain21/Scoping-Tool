@@ -206,6 +206,7 @@ function renderMainSwatches(key) {
       return `<button class="main-swatch${isLight(c.hex)?' light':''}"
                       style="background:${c.hex}"
                       data-color="${c.hex}"
+                      data-name="${esc(c.name)}"
                       data-textcolor="${txtColor}"
                       title="${esc(c.name)}" aria-label="${esc(c.name)}">
                 <span class="swatch-label" style="color:${txtColor};">${esc(c.name)}</span>
@@ -224,14 +225,14 @@ function renderMainSwatches(key) {
     btn.addEventListener('click', () => {
       const color    = btn.dataset.color;
       const txtColor = btn.dataset.textcolor;
-      applyDOITile(color, txtColor);
+      applyDOITile(color, txtColor, btn.dataset.name);
       pushRecent(key, color);
     });
   });
   // Border legend tiles (style panel)
   row.querySelectorAll('.border-legend-tile').forEach(btn => {
     btn.addEventListener('click', () => {
-      applyBorderColor(btn.dataset.color);
+      applyBorderColor(btn.dataset.color, btn.dataset.name||btn.dataset.color);
       pushRecent('border', btn.dataset.color);
     });
   });
@@ -500,7 +501,7 @@ function bindEditEvents(key) {
   body.querySelectorAll('.my-swatch').forEach(s => {
     const go = () => {
       const color=s.dataset.color, tc=s.dataset.textcolor;
-      if(key==='fill' && tc) applyDOITile(color,tc);
+      if(key==='fill' && tc) applyDOITile(color, tc, s.dataset.name);
       else _applyFn?.(color);
       if(color!=='none') pushRecent(key,color);
       closeEditPanel();
@@ -951,18 +952,13 @@ async function captureFromShape() {
   try {
     await PowerPoint.run(async ctx => {
 
-      // ── Step 1: load shape list + all fill/line properties ───
+      // Load shape + tags + border properties in one sync
       const sel = ctx.presentation.getSelectedShapes();
       sel.load([
-        'items/type','items/name',
-        'items/fill/type',
-        'items/fill/foreColor',
-        'items/fill/backgroundColor',
-        'items/fill/themeColor',
-        'items/fill/tintAndShade',
+        'items/name',
+        'items/tags/items/key',
+        'items/tags/items/value',
         'items/lineFormat/color',
-        'items/lineFormat/themeColor',
-        'items/lineFormat/tintAndShade',
         'items/lineFormat/visible',
         'items/lineFormat/weight',
         'items/lineFormat/dashStyle',
@@ -972,88 +968,56 @@ async function captureFromShape() {
       if(!sel.items.length) { setStatus('Select a shape first.'); return; }
       const s = sel.items[0];
 
-      // ── Capture fill — diagnostic + strategies ───────────────
-      let fillHex = null;
+      // ── Strategy 0: read our own shape tags (written on every apply) ──
+      // This is 100% reliable for shapes styled by the Scoping Tool
+      let fillHex = null, fillTextHex = null, fillName = null;
+      let borderHex = null, borderName = null;
 
-      // --- DEBUG LOG ALL FILL PROPERTIES ---
-      console.log('=== CAPTURE DEBUG ===');
-      try { console.log('fill.type       :', s.fill.type); } catch(e) { console.log('fill.type ERR:', e.message); }
-      try { console.log('fill.foreColor  :', s.fill.foreColor, typeof s.fill.foreColor); } catch(e) { console.log('fill.foreColor ERR:', e.message); }
-      try { console.log('fill.bgColor    :', s.fill.backgroundColor, typeof s.fill.backgroundColor); } catch(e) { console.log('fill.bgColor ERR:', e.message); }
-      try { console.log('fill.themeColor :', s.fill.themeColor, typeof s.fill.themeColor); } catch(e) { console.log('fill.themeColor ERR:', e.message); }
-      try { console.log('fill.tintShade  :', s.fill.tintAndShade, typeof s.fill.tintAndShade); } catch(e) { console.log('fill.tintShade ERR:', e.message); }
-      try { console.log('_themeColors    :', JSON.stringify(_themeColors)); } catch(e) { console.log('_themeColors ERR:', e.message); }
-      console.log('=== END DEBUG ===');
-
-      // Strategy 1: direct foreColor
       try {
-        fillHex = resolveColor(s.fill.foreColor);
-        console.log('S1 foreColor result:', fillHex);
+        const tags = {};
+        (s.tags.items || []).forEach(t => { tags[t.key] = t.value; });
+
+        if(tags['doi_fill'])    fillHex     = tags['doi_fill'];
+        if(tags['doi_textHex']) fillTextHex = tags['doi_textHex'];
+        if(tags['doi_name'])    fillName    = tags['doi_name'];
+        if(tags['doi_border'])      borderHex  = tags['doi_border'];
+        if(tags['doi_border_name']) borderName = tags['doi_border_name'];
       } catch(_) {}
 
-      // Strategy 2: backgroundColor
-      if(!fillHex) {
+      // ── Strategy 1: lineFormat.color direct read for border ──
+      // lineFormat.color works reliably even when fill does not
+      if(!borderHex) {
         try {
-          fillHex = resolveColor(s.fill.backgroundColor);
-          console.log('S2 bgColor result:', fillHex);
-        } catch(_) {}
-      }
-
-      // Strategy 3: themeColor + tintAndShade resolved through master
-      if(!fillHex) {
-        try {
-          const tc   = s.fill.themeColor;
-          const tint = s.fill.tintAndShade || 0;
-          console.log('S3 themeColor:', tc, 'tint:', tint);
-          if(tc && tc !== 'none' && tc !== 'notDefined') {
-            fillHex = resolveThemeColor(tc, tint);
-            console.log('S3 resolved:', fillHex);
+          if(s.lineFormat.visible !== false) {
+            const raw = resolveColor(s.lineFormat.color);
+            if(raw) borderHex = raw;
           }
-        } catch(e) { console.log('S3 ERR:', e.message); }
-      }
-
-      // Strategy 4: read via getItemOrNullObject on tags / customXml
-      // (no side effects — pure read)
-      if(!fillHex) {
-        try {
-          // Try reading via the shape's body XML representation
-          // Some Office.js builds expose fill through tags
-          const tags = s.tags;
-          tags.load('items/key,items/value');
-          await ctx.sync();
-          const fillTag = tags.items.find(t => t.key.toLowerCase() === 'fillcolor');
-          if(fillTag) fillHex = resolveColor(fillTag.value);
         } catch(_) {}
       }
 
+      // ── Populate STAGED ───────────────────────────────────────
       if(fillHex) {
-        const match = getPalette('fill').find(c => c.hex.toUpperCase() === fillHex.toUpperCase());
+        // Try to match palette entry by hex for richer metadata
+        const match = getPalette('fill').find(c =>
+          c.hex.toUpperCase() === fillHex.toUpperCase()
+        );
         STAGED.fill = {
           dirty:   true,
           hex:     fillHex,
-          textHex: match?.textHex || autoTextHex(fillHex),
-          name:    match?.name    || fillHex,
+          textHex: fillTextHex || match?.textHex || autoTextHex(fillHex),
+          name:    fillName    || match?.name    || fillHex,
         };
       }
 
-      // ── Capture border — two strategies ──────────────────────
-      let borderHex = null;
-      try {
-        if(s.lineFormat.visible !== false) {
-          borderHex = resolveColor(s.lineFormat.color);
-          if(!borderHex) {
-            const tc   = s.lineFormat.themeColor;
-            const tint = s.lineFormat.tintAndShade || 0;
-            if(tc && tc !== 'none' && tc !== 'notDefined') {
-              borderHex = resolveThemeColor(tc, tint);
-            }
-          }
-        }
-      } catch(_) {}
-
       if(borderHex) {
-        const match = getPalette('border').find(c => c.hex.toUpperCase() === borderHex.toUpperCase());
-        STAGED.border = { dirty: true, hex: borderHex, name: match?.name || borderHex };
+        const match = getPalette('border').find(c =>
+          c.hex.toUpperCase() === borderHex.toUpperCase()
+        );
+        STAGED.border = {
+          dirty: true,
+          hex:   borderHex,
+          name:  borderName || match?.name || borderHex,
+        };
       }
 
       _cachedShapeCount = sel.items.length;
@@ -1062,9 +1026,11 @@ async function captureFromShape() {
       updateApplyBtn();
       updatePaintInstruction();
 
-      const fillMsg   = STAGED.fill.dirty   ? STAGED.fill.name   : '⚠ not detected — tap a tile to set';
+      const fillMsg   = STAGED.fill.dirty
+        ? STAGED.fill.name
+        : '⚠ not detected — tap a DOI tile to set manually';
       const borderMsg = STAGED.border.dirty ? STAGED.border.name : 'not captured';
-      setStatus(`Captured — Fill: ${fillMsg} | Border: ${borderMsg}`);
+      setStatus(`Captured from "${s.name}" — Fill: ${fillMsg} | Border: ${borderMsg}`);
     });
   } catch(e) {
     setStatus('Capture error: ' + (e.message || e));
@@ -1138,14 +1104,24 @@ function getSelectedFast(ctx) {
   return out;
 }
 
-async function applyDOITile(fillColor, textColor) {
+async function applyDOITile(fillColor, textColor, name) {
   const ver=++_applyVer;
   if(!_cachedShapeCount) return setStatus('No shape selected.');
   await PowerPoint.run(async ctx=>{
     if(ver!==_applyVer) return;
     getSelectedFast(ctx).forEach(s=>{
-      if(fillColor==='none') s.fill.clear();
-      else s.fill.setSolidColor(fillColor);
+      if(fillColor==='none') {
+        s.fill.clear();
+        try { s.tags.add('doi_fill','none'); s.tags.add('doi_name','No Fill'); } catch(_){}
+      } else {
+        s.fill.setSolidColor(fillColor);
+        // Write tags so Capture can reliably read them back later
+        try {
+          s.tags.add('doi_fill',    fillColor);
+          s.tags.add('doi_textHex', textColor || autoTextHex(fillColor));
+          s.tags.add('doi_name',    name      || fillColor);
+        } catch(_){}
+      }
       if(textColor&&textColor!=='none') try{s.textFrame.textRange.font.color=textColor;}catch(_){}
     });
     await ctx.sync();
@@ -1153,14 +1129,24 @@ async function applyDOITile(fillColor, textColor) {
   });
 }
 
-async function applyBorderColor(color) {
+async function applyBorderColor(color, name) {
   const ver=++_applyVer;
   if(!_cachedShapeCount) return setStatus('No shape selected.');
   await PowerPoint.run(async ctx=>{
     if(ver!==_applyVer) return;
     getSelectedFast(ctx).forEach(s=>{
-      if(color==='none') s.lineFormat.visible=false;
-      else { s.lineFormat.visible=true; s.lineFormat.color=color; }
+      if(color==='none') {
+        s.lineFormat.visible=false;
+        try { s.tags.add('doi_border','none'); s.tags.add('doi_border_name','No Border'); } catch(_){}
+      } else {
+        s.lineFormat.visible=true;
+        s.lineFormat.color=color;
+        // Write tags so Capture can reliably read them back
+        try {
+          s.tags.add('doi_border',      color);
+          s.tags.add('doi_border_name', name || color);
+        } catch(_){}
+      }
     });
     await ctx.sync();
     if(ver===_applyVer) setStatus(`Border → ${color==='none'?'removed':color}`);
