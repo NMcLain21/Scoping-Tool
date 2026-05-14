@@ -182,10 +182,10 @@ function renderMainSwatches(key) {
 
   if(key === 'border') {
     row.innerHTML = palette.map((c,i) => `
-      <button class="main-swatch border-legend-tile" data-color="${c.hex}" data-key="border"
+      <button class="main-swatch border-box-tile" data-color="${c.hex}" data-key="border"
+              style="border-color:${c.hex};"
               title="${esc(c.name)}" aria-label="${esc(c.name)}">
-        <span class="legend-line-sample" style="background:${c.hex};"></span>
-        <span class="legend-line-name">${esc(c.name)}</span>
+        <span class="border-box-name" style="color:${c.hex};">${esc(c.name)}</span>
       </button>`).join('') +
       `<button class="edit-palette-btn" data-key="border" title="Edit border palette">
          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -219,7 +219,7 @@ function renderMainSwatches(key) {
       pushRecent(key, color);
     });
   });
-  row.querySelectorAll('.legend-tile').forEach(btn => {
+  row.querySelectorAll('.main-swatch').forEach(btn => {
     btn.addEventListener('click', () => {
       applyBorderColor(btn.dataset.color);
       pushRecent('border', btn.dataset.color);
@@ -297,18 +297,17 @@ function renderPaintBorderSwatches() {
 
   row.innerHTML = palette.map(c => {
     const isActive = stagedHex && c.hex.toUpperCase() === stagedHex;
-    const txtCol   = autoTextHex(c.hex);
-    return `<button class="main-swatch${isLight(c.hex)?' light':''}${isActive?' paint-staged':''}"
-                    style="background:${c.hex};"
+    return `<button class="main-swatch border-box-tile${isActive?' paint-staged':''}"
+                    style="border-color:${c.hex};"
                     data-color="${c.hex}"
                     data-name="${esc(c.name)}"
                     title="${esc(c.name)}" aria-label="${esc(c.name)}">
-              <span class="swatch-label" style="color:${txtCol};">${esc(c.name)}</span>
-              ${isActive?'<span class="staged-check" style="color:'+txtCol+';">✓</span>':''}
+              <span class="border-box-name" style="color:${c.hex};">${esc(c.name)}</span>
+              ${isActive?'<span class="staged-check" style="color:'+c.hex+';">✓</span>':''}
             </button>`;
   }).join('');
 
-  row.querySelectorAll('.legend-tile').forEach(btn => {
+  row.querySelectorAll('.main-swatch').forEach(btn => {
     btn.addEventListener('click', () => {
       const hex  = btn.dataset.color;
       const name = btn.dataset.name;
