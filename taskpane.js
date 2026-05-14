@@ -1103,31 +1103,65 @@ async function applyLineEnds() {
 // INSERT NEW CAPABILITY
 // ─────────────────────────────────────────────────────────────────
 async function insertCapabilityShape() {
-  await PowerPoint.run(async ctx=>{
-    const CM=28.3465;
-    const w=5.6*CM, h=1.46*CM, left=(720-w)/2, top=(540-h)/2;
+  await PowerPoint.run(async ctx => {
+    // Convert cm to points (1 cm = 28.3465 pt)
+    const CM = 28.3465;
+    const w    = 5.6  * CM;   // 158.74 pt
+    const h    = 1.46 * CM;   // 41.39 pt
+
+    // Get the active slide
     let slide;
     try {
-      const s=ctx.presentation.getSelectedSlides(); s.load('items'); await ctx.sync();
-      slide=s.items.length?ctx.presentation.getSelectedSlides().getItemAt(0):ctx.presentation.slides.getItemAt(0);
-    } catch(_) { slide=ctx.presentation.slides.getItemAt(0); }
+      const sel = ctx.presentation.getSelectedSlides();
+      sel.load('items');
+      await ctx.sync();
+      slide = sel.items.length ? sel.items[0] : ctx.presentation.slides.getItemAt(0);
+    } catch (_) {
+      slide = ctx.presentation.slides.getItemAt(0);
+    }
 
-    const shape=slide.shapes.addGeometricShape(
-      PowerPoint.GeometricShapeType.roundedRectangle,
-      {left,top,width:w,height:h}
-    );
-    shape.name='Capability';
-    const tf=shape.textFrame;
-    tf.textRange.text='New Capability\n(xx)';
-    tf.textRange.font.name='Aptos';
-    tf.textRange.font.size=12;
+    // Add shape — set geometry AFTER creation to avoid Online options-ignore bug
+    const shape = slide.shapes.addGeometricShape(PowerPoint.GeometricShapeType.roundedRectangle);
+    shape.width  = w;
+    shape.height = h;
+    shape.left   = (720 - w) / 2;
+    shape.top    = (540 - h) / 2;
+    shape.name   = 'Capability';
+
+    // Default white fill, light border
+    shape.fill.setSolidColor('#FFFFFF');
+    shape.lineFormat.color   = '#2A3E6D';
+    shape.lineFormat.weight  = 1.5;
+    shape.lineFormat.visible = true;
+
+    // Text — two paragraphs so each line is independently aligned
+    const tf = shape.textFrame;
+    tf.autoSizeSetting = PowerPoint.ShapeAutoSize.autoSizeNone;
+
+    // Clear default and set line 1
+    const range = tf.textRange;
+    range.text = 'New Capability';
+    range.font.name = 'Aptos';
+    range.font.size = 12;
+    range.font.color = '#151F37';
+
+    // Add line 2 as a second paragraph
+    const para2 = tf.textRange.paragraphs.add();
+    para2.text = '(xx)';
+    para2.font.name = 'Aptos';
+    para2.font.size = 12;
+    para2.font.color = '#151F37';
+
+    // Vertical + horizontal alignment
     try {
-      tf.verticalAlignment=PowerPoint.TextVerticalAlignment.middle;
-      tf.textRange.paragraphFormat.alignment=PowerPoint.ParagraphHorizontalAlignment.center;
-    } catch(_) {}
+      tf.verticalAlignment = PowerPoint.TextVerticalAlignment.middle;
+      range.paragraphFormat.alignment          = PowerPoint.ParagraphHorizontalAlignment.center;
+      para2.paragraphFormat.alignment          = PowerPoint.ParagraphHorizontalAlignment.center;
+    } catch (_) {}
+
     await ctx.sync();
     setStatus('Inserted New Capability shape');
-  }).catch(e=>setStatus('Insert failed: '+e.message));
+  }).catch(e => setStatus('Insert failed: ' + e.message));
 }
 
 // ─────────────────────────────────────────────────────────────────
