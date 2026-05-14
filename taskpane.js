@@ -909,61 +909,84 @@ function switchMode(mode) {
 async function captureFromShape() {
   try {
     await PowerPoint.run(async ctx => {
-      // Load everything in ONE sync — most reliable approach in PowerPoint Online
+
+      // ── Step 1: load shape list ──────────────────────────────
       const sel = ctx.presentation.getSelectedShapes();
-      sel.load([
-        'items/type',
-        'items/name',
-        'items/fill/foreColor',
-        'items/lineFormat/color',
-        'items/lineFormat/visible',
-        'items/lineFormat/weight',
-        'items/lineFormat/dashStyle',
-      ].join(','));
+      sel.load('items/type,items/name');
       await ctx.sync();
 
       if(!sel.items.length) { setStatus('Select a shape first.'); return; }
       const s = sel.items[0];
 
-      // ── Capture fill ──────────────────────────────────────────
-      // foreColor may be: "#RRGGBB", "RRGGBB", "FFRRGGBB" (ARGB), or rgb(r,g,b)
-      try {
-        let raw = s.fill.foreColor;
-        // Some versions return an object with .value
-        if(raw && typeof raw === 'object') raw = raw.value || raw.toString();
-        const norm = normalizeHex(typeof raw === 'string' ? raw : String(raw||''));
-        if(norm) {
-          const match = getPalette('fill').find(c=>c.hex.toUpperCase()===norm.toUpperCase());
-          STAGED.fill = {
-            dirty:   true,
-            hex:     norm,
-            textHex: match?.textHex || autoTextHex(norm),
-            name:    match?.name    || norm,
-          };
+      // ── Step 2: load fill + line separately after shape resolved ─
+      s.fill.load('type,foreColor');
+      s.lineFormat.load('color,visible,weight,dashStyle');
+      await ctx.sync();
+
+      // ── Capture fill ─────────────────────────────────────────
+      // Log raw value to console AND status so we can diagnose
+      let fillRaw = null;
+      try { fillRaw = s.fill.foreColor; } catch(e) { console.warn('foreColor err:', e.message); }
+
+      console.log('RAW fill.type    :', s.fill.type);
+      console.log('RAW fill.foreColor:', fillRaw, typeof fillRaw);
+
+      // foreColor may arrive as: "#RRGGBB", "RRGGBB", "FFRRGGBB", rgb(...), or object
+      let fillHex = null;
+      if(fillRaw !== null && fillRaw !== undefined) {
+        let raw = (typeof fillRaw === 'object') ? (fillRaw.value || fillRaw.toString()) : String(fillRaw);
+        fillHex = normalizeHex(raw);
+        // If normalizeHex failed, try stripping any non-hex prefix ourselves
+        if(!fillHex) {
+          const m = raw.replace('#','').match(/([0-9A-Fa-f]{6})$/);
+          if(m) fillHex = '#' + m[1].toUpperCase();
         }
-      } catch(_) {}
+      }
+
+      console.log('NORMALIZED fillHex:', fillHex);
+
+      if(fillHex) {
+        const match = getPalette('fill').find(c => c.hex.toUpperCase() === fillHex.toUpperCase());
+        STAGED.fill = {
+          dirty:   true,
+          hex:     fillHex,
+          textHex: match?.textHex || autoTextHex(fillHex),
+          name:    match?.name    || fillHex,
+        };
+      }
 
       // ── Capture border ────────────────────────────────────────
-      try {
-        if(s.lineFormat.visible !== false) {
-          let raw = s.lineFormat.color;
-          if(raw && typeof raw === 'object') raw = raw.value || raw.toString();
-          const norm = normalizeHex(typeof raw === 'string' ? raw : String(raw||''));
-          if(norm) {
-            const match = getPalette('border').find(c=>c.hex.toUpperCase()===norm.toUpperCase());
-            STAGED.border = { dirty:true, hex:norm, name:match?.name||norm };
-          }
+      let borderRaw = null;
+      try { borderRaw = s.lineFormat.color; } catch(e) { console.warn('lineFormat.color err:', e.message); }
+      console.log('RAW lineFormat.color:', borderRaw, 'visible:', s.lineFormat.visible);
+
+      if(s.lineFormat.visible !== false && borderRaw) {
+        let raw = (typeof borderRaw === 'object') ? (borderRaw.value || borderRaw.toString()) : String(borderRaw);
+        let borderHex = normalizeHex(raw);
+        if(!borderHex) {
+          const m = raw.replace('#','').match(/([0-9A-Fa-f]{6})$/);
+          if(m) borderHex = '#' + m[1].toUpperCase();
         }
-      } catch(_) {}
+        if(borderHex) {
+          const match = getPalette('border').find(c => c.hex.toUpperCase() === borderHex.toUpperCase());
+          STAGED.border = { dirty: true, hex: borderHex, name: match?.name || borderHex };
+        }
+      }
 
       _cachedShapeCount = sel.items.length;
       saveStagedState();
       renderPaintSwatches();
       updateApplyBtn();
       updatePaintInstruction();
-      setStatus(`Captured from "${s.name||'shape'}"`);
+
+      const fillMsg   = STAGED.fill.dirty   ? STAGED.fill.name   : 'none';
+      const borderMsg = STAGED.border.dirty ? STAGED.border.name : 'none';
+      setStatus(`Captured — Fill: ${fillMsg} | Border: ${borderMsg}`);
     });
-  } catch(e) { setStatus('Capture failed — select a shape first.'); }
+  } catch(e) {
+    console.error('captureFromShape error:', e);
+    setStatus('Capture error: ' + e.message);
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────
