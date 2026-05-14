@@ -121,10 +121,18 @@ function isLight(hex) {
 }
 function autoTextHex(hex){ return isLight(hex)?'#000000':'#FFFFFF'; }
 function normalizeHex(h) {
-  if(!h)return null;
-  const c=h.replace('#','').toUpperCase();
-  if(c.length===6&&/^[0-9A-F]+$/.test(c))return '#'+c;
-  if(c.length===3&&/^[0-9A-F]+$/.test(c))return '#'+c[0]+c[0]+c[1]+c[1]+c[2]+c[2];
+  if(!h) return null;
+  // Strip leading # and uppercase
+  const c = h.replace(/^#/,'').toUpperCase();
+  // 8-char ARGB (e.g. FF0000FF or FFD50032) — PowerPoint Online returns this format
+  if(c.length===8 && /^[0-9A-F]+$/.test(c)) return '#'+c.slice(2);
+  // Standard 6-char RGB
+  if(c.length===6 && /^[0-9A-F]+$/.test(c)) return '#'+c;
+  // 3-char shorthand
+  if(c.length===3 && /^[0-9A-F]+$/.test(c)) return '#'+c[0]+c[0]+c[1]+c[1]+c[2]+c[2];
+  // rgb(r,g,b) format
+  const rgb = h.match(/rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/i);
+  if(rgb) return '#'+[rgb[1],rgb[2],rgb[3]].map(n=>parseInt(n).toString(16).padStart(2,'0')).join('').toUpperCase();
   return null;
 }
 function hexToHsv(hex) {
@@ -901,20 +909,29 @@ function switchMode(mode) {
 async function captureFromShape() {
   try {
     await PowerPoint.run(async ctx => {
+      // Load everything in ONE sync — most reliable approach in PowerPoint Online
       const sel = ctx.presentation.getSelectedShapes();
-      sel.load('items/type,items/name');
-      await ctx.sync();
-      if(!sel.items.length) { setStatus('Select a shape first.'); return; }
-      const s = sel.items[0];
-      s.fill.load('foreColor');
-      s.lineFormat.load('color,visible');
-      try { s.textFrame.textRange.font.load('color'); } catch(_) {}
+      sel.load([
+        'items/type',
+        'items/name',
+        'items/fill/foreColor',
+        'items/lineFormat/color',
+        'items/lineFormat/visible',
+        'items/lineFormat/weight',
+        'items/lineFormat/dashStyle',
+      ].join(','));
       await ctx.sync();
 
-      // Capture fill — no type guard, just attempt foreColor directly
+      if(!sel.items.length) { setStatus('Select a shape first.'); return; }
+      const s = sel.items[0];
+
+      // ── Capture fill ──────────────────────────────────────────
+      // foreColor may be: "#RRGGBB", "RRGGBB", "FFRRGGBB" (ARGB), or rgb(r,g,b)
       try {
-        const raw  = s.fill.foreColor;
-        const norm = raw ? normalizeHex(raw.startsWith('#') ? raw : '#'+raw) : null;
+        let raw = s.fill.foreColor;
+        // Some versions return an object with .value
+        if(raw && typeof raw === 'object') raw = raw.value || raw.toString();
+        const norm = normalizeHex(typeof raw === 'string' ? raw : String(raw||''));
         if(norm) {
           const match = getPalette('fill').find(c=>c.hex.toUpperCase()===norm.toUpperCase());
           STAGED.fill = {
@@ -926,14 +943,15 @@ async function captureFromShape() {
         }
       } catch(_) {}
 
-      // Capture border
+      // ── Capture border ────────────────────────────────────────
       try {
-        if(s.lineFormat.visible!==false) {
-          const raw = s.lineFormat.color;
-          const norm = normalizeHex(raw.startsWith('#')?raw:'#'+raw);
+        if(s.lineFormat.visible !== false) {
+          let raw = s.lineFormat.color;
+          if(raw && typeof raw === 'object') raw = raw.value || raw.toString();
+          const norm = normalizeHex(typeof raw === 'string' ? raw : String(raw||''));
           if(norm) {
             const match = getPalette('border').find(c=>c.hex.toUpperCase()===norm.toUpperCase());
-            STAGED.border = {dirty:true, hex:norm, name:match?.name||norm};
+            STAGED.border = { dirty:true, hex:norm, name:match?.name||norm };
           }
         }
       } catch(_) {}
@@ -943,7 +961,7 @@ async function captureFromShape() {
       renderPaintSwatches();
       updateApplyBtn();
       updatePaintInstruction();
-      setStatus(`Captured from "${sel.items[0].name||'shape'}"`);
+      setStatus(`Captured from "${s.name||'shape'}"`);
     });
   } catch(e) { setStatus('Capture failed — select a shape first.'); }
 }
