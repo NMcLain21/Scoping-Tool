@@ -119,23 +119,49 @@ h3 {
 }
 
 /* ── Border box tiles (Post Int Process Owner) ───────────────── */
-.border-box-tile {
+.border-legend-tile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   background: #F7F8FA;
-  border-width: 3px !important;
-  border-style: solid !important;
-  justify-content: center;
-  padding: 8px 10px;
-  min-height: 44px;
+  border: 1px solid #e0e5ee;
+  border-radius: 6px;
+  padding: 7px 10px;
+  width: 100%;
+  min-height: 38px;
+  cursor: pointer;
+  transition: background 0.12s, box-shadow 0.12s;
+  text-align: left;
 }
-.border-box-tile:hover {
-  background: #ffffff !important;
-  filter: none;
+.border-legend-tile:hover {
+  background: #ffffff;
   box-shadow: var(--shadow-md);
-  border-width: 4px !important;
+  border-color: #c0c8d8;
 }
-.border-box-name {
-  font-size: 11px; font-weight: 700;
-  text-align: center; line-height: 1.3; pointer-events: none;
+.border-legend-tile.paint-staged {
+  border-color: var(--api-teal) !important;
+  box-shadow: 0 0 0 2px rgba(0,133,121,0.25);
+  background: #f0faf9;
+}
+.legend-line-marker {
+  flex-shrink: 0;
+  width: 32px;
+  height: 6px;
+  border-radius: 3px;
+}
+.legend-tile-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.3;
+  pointer-events: none;
+  flex: 1;
+}
+.staged-check-line {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--api-teal);
+  flex-shrink: 0;
 }
 
 /* ── Edit palette button ──────────────────────────────────────── */
@@ -586,14 +612,19 @@ h3 {
 .swatch-two-col .edit-palette-btn {
   grid-column: 1 / -1;
 }
-.swatch-two-col .border-box-tile {
-  padding: 8px 6px;
+.swatch-two-col .border-legend-tile {
+  padding: 6px 8px;
+  gap: 6px;
 }
-.swatch-two-col .border-box-name {
+.swatch-two-col .legend-tile-name {
   font-size: 10px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.swatch-two-col .legend-line-marker {
+  width: 24px;
+  height: 5px;
 }
 
 /* ── Insert New Capability button ─────────────────────────────── */

@@ -182,10 +182,10 @@ function renderMainSwatches(key) {
 
   if(key === 'border') {
     row.innerHTML = palette.map((c,i) => `
-      <button class="main-swatch border-box-tile" data-color="${c.hex}" data-key="border"
-              style="border-color:${c.hex};"
+      <button class="border-legend-tile" data-color="${c.hex}" data-key="border"
               title="${esc(c.name)}" aria-label="${esc(c.name)}">
-        <span class="border-box-name" style="color:${c.hex};">${esc(c.name)}</span>
+        <span class="legend-line-marker" style="background:${c.hex};"></span>
+        <span class="legend-tile-name">${esc(c.name)}</span>
       </button>`).join('') +
       `<button class="edit-palette-btn" data-key="border" title="Edit border palette">
          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -211,6 +211,7 @@ function renderMainSwatches(key) {
   }
 
   // Wire clicks
+  // DOI fill tiles
   row.querySelectorAll('.main-swatch').forEach(btn => {
     btn.addEventListener('click', () => {
       const color    = btn.dataset.color;
@@ -219,7 +220,8 @@ function renderMainSwatches(key) {
       pushRecent(key, color);
     });
   });
-  row.querySelectorAll('.main-swatch').forEach(btn => {
+  // Border legend tiles (style panel)
+  row.querySelectorAll('.border-legend-tile').forEach(btn => {
     btn.addEventListener('click', () => {
       applyBorderColor(btn.dataset.color);
       pushRecent('border', btn.dataset.color);
@@ -297,17 +299,17 @@ function renderPaintBorderSwatches() {
 
   row.innerHTML = palette.map(c => {
     const isActive = stagedHex && c.hex.toUpperCase() === stagedHex;
-    return `<button class="main-swatch border-box-tile${isActive?' paint-staged':''}"
-                    style="border-color:${c.hex};"
+    return `<button class="border-legend-tile${isActive?' paint-staged':''}"
                     data-color="${c.hex}"
                     data-name="${esc(c.name)}"
                     title="${esc(c.name)}" aria-label="${esc(c.name)}">
-              <span class="border-box-name" style="color:${c.hex};">${esc(c.name)}</span>
-              ${isActive?'<span class="staged-check" style="color:'+c.hex+';">✓</span>':''}
+              <span class="legend-line-marker" style="background:${c.hex};"></span>
+              <span class="legend-tile-name">${esc(c.name)}</span>
+              ${isActive?'<span class="staged-check-line">✓</span>':''}
             </button>`;
   }).join('');
 
-  row.querySelectorAll('.main-swatch').forEach(btn => {
+  row.querySelectorAll('.border-legend-tile').forEach(btn => {
     btn.addEventListener('click', () => {
       const hex  = btn.dataset.color;
       const name = btn.dataset.name;
