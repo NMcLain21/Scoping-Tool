@@ -906,24 +906,23 @@ async function captureFromShape() {
       await ctx.sync();
       if(!sel.items.length) { setStatus('Select a shape first.'); return; }
       const s = sel.items[0];
-      s.fill.load('type,foreColor');
+      s.fill.load('foreColor');
       s.lineFormat.load('color,visible');
       try { s.textFrame.textRange.font.load('color'); } catch(_) {}
       await ctx.sync();
 
-      // Capture fill
+      // Capture fill — no type guard, just attempt foreColor directly
       try {
-        if(s.fill.type==='Solid'||s.fill.type===PowerPoint.ShapeFillType.solid) {
-          const raw = s.fill.foreColor;
-          const norm = normalizeHex(raw.startsWith('#')?raw:'#'+raw);
-          if(norm) {
-            const match = getPalette('fill').find(c=>c.hex.toUpperCase()===norm.toUpperCase());
-            STAGED.fill = {
-              dirty:true, hex:norm,
-              textHex: match?.textHex || autoTextHex(norm),
-              name: match?.name || norm
-            };
-          }
+        const raw  = s.fill.foreColor;
+        const norm = raw ? normalizeHex(raw.startsWith('#') ? raw : '#'+raw) : null;
+        if(norm) {
+          const match = getPalette('fill').find(c=>c.hex.toUpperCase()===norm.toUpperCase());
+          STAGED.fill = {
+            dirty:   true,
+            hex:     norm,
+            textHex: match?.textHex || autoTextHex(norm),
+            name:    match?.name    || norm,
+          };
         }
       } catch(_) {}
 
