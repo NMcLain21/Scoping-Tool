@@ -1277,6 +1277,263 @@ async function insertCapabilityShape() {
 // ─────────────────────────────────────────────────────────────────
 // OFFICE READY
 // ─────────────────────────────────────────────────────────────────
+
+// =================================================================
+// GENERATE INTEGRATION PLAN
+// =================================================================
+
+function normalizeCategoryText(text) {
+  var upper = (text || '').toUpperCase().replace(/\s+/g, ' ').trim();
+  if (upper.indexOf('SYSTEM') >= 0 || upper.indexOf('TOOL') >= 0) return 'Systems & Tools';
+  if (upper.indexOf('GUIDELINE') >= 0 || upper.indexOf('POLIC') >= 0) return 'Guidelines & Policies';
+  if (upper.indexOf('PROCESS') >= 0) return 'Process';
+  return text.replace(/\n/g, ' ').trim().slice(0, 60) || 'General';
+}
+
+function normalizeTimeline(raw) {
+  if (!raw) return 'TBD';
+  var r = raw.trim().toUpperCase().replace(/[\s\-_]/g, '');
+  if (!r || r==='XX' || r==='X' || r==='TBD' || r==='N/A' || r==='NA') return 'TBD';
+  if (r==='1'   || r==='D1'   || r==='DAY1')              return 'Day 1';
+  if (r==='30'  || r==='D30'  || r==='DAY30'  || r==='M1') return 'Day 30';
+  if (r==='60'  || r==='D60'  || r==='DAY60'  || r==='M2') return 'Day 60';
+  if (r==='90'  || r==='D90'  || r==='DAY90'  || r==='M3') return 'Day 90';
+  if (r==='120' || r==='D120' || r==='DAY120' || r==='M4') return 'Day 120';
+  if (r==='150' || r==='D150' || r==='DAY150' || r==='M5') return 'Day 150';
+  if (r==='180' || r==='D180' || r==='DAY180' || r==='M6') return 'Day 180';
+  if (r.indexOf('YE') === 0 || r==='YEAREND' || r==='EOY') return 'Year End';
+  if (/^20[2-9][5-9]/.test(r) || r.indexOf('2027')>=0 || r.indexOf('2028')>=0) return 'Next Year+';
+  if (/^Q[1-4]/.test(r)) return raw.trim();
+  return raw.trim();
+}
+
+function analyzeSlide(shapes, slideNum) {
+  var CAP_W_MIN = 100, CAP_W_MAX = 230;
+  var CAP_H_MIN = 25,  CAP_H_MAX = 70;
+  var capabilities = [], categoryBanners = [], textItems = [];
+
+  for (var si = 0; si < shapes.length; si++) {
+    var shape = shapes[si];
+    var w = shape.width  || 0;
+    var h = shape.height || 0;
+    var t = shape.top    || 0;
+    var text = '';
+    try {
+      if (shape.textFrame && shape.textFrame.textRange) {
+        text = (shape.textFrame.textRange.text || '').trim();
+      }
+    } catch(_) {}
+
+    var tags = {};
+    try {
+      var tagItems = (shape.tags && shape.tags.items) ? shape.tags.items : [];
+      for (var ti = 0; ti < tagItems.length; ti++) {
+        tags[tagItems[ti].key] = tagItems[ti].value;
+      }
+    } catch(_) {}
+
+    var hasTag    = !!(tags['doi_fill'] || tags['doi_name']);
+    var isCapSize = w >= CAP_W_MIN && w <= CAP_W_MAX && h >= CAP_H_MIN && h <= CAP_H_MAX;
+
+    if (hasTag || (isCapSize && text)) {
+      var lines = text.split('\n').map(function(s){ return s.trim(); }).filter(Boolean);
+      capabilities.push({
+        name:            lines[0] || '(unnamed)',
+        timeline:        lines.slice(1).join(' ') || '',
+        doi:             tags['doi_name']        || 'Not Reviewed',
+        owner:           tags['doi_border_name'] || 'TBD',
+        top:             t,
+        processCategory: ''
+      });
+    } else if (text && w > 180 && h < 70) {
+      var upper = text.toUpperCase().replace(/\s+/g, ' ');
+      if (/PROCESS|SYSTEM|TOOL|GUIDELINE|POLIC/.test(upper)) {
+        categoryBanners.push({ text: text, top: t });
+      }
+    }
+    if (text && text.length >= 2) {
+      textItems.push({ text: text, top: t, width: w, height: h });
+    }
+  }
+
+  categoryBanners.sort(function(a,b){ return a.top - b.top; });
+  for (var ci = 0; ci < capabilities.length; ci++) {
+    var cap = capabilities[ci];
+    var category = 'Process';
+    for (var bi = 0; bi < categoryBanners.length; bi++) {
+      if (categoryBanners[bi].top <= cap.top + 15) {
+        category = normalizeCategoryText(categoryBanners[bi].text);
+      }
+    }
+    cap.processCategory = category;
+  }
+
+  textItems.sort(function(a,b){ return a.top - b.top; });
+  var title = '';
+  for (var xi = 0; xi < textItems.length; xi++) {
+    var ti2 = textItems[xi];
+    var firstLine = ti2.text.split('\n')[0].trim();
+    var isCapText    = capabilities.some(function(c){ return c.name === firstLine; });
+    var isBannerText = categoryBanners.some(function(b){ return b.text === ti2.text; });
+    if (!isCapText && !isBannerText && ti2.text.length >= 3 && ti2.text.length <= 120) {
+      title = firstLine;
+      break;
+    }
+  }
+
+  var isWorkstreamDivider = capabilities.length === 0 && shapes.length <= 12 && title.length >= 3;
+  return { isWorkstreamDivider: isWorkstreamDivider, title: title, capabilities: capabilities };
+}
+
+async function generateIntegrationPlan() {
+  var btn = document.getElementById('btn-generate-plan');
+  if (btn) { btn.disabled = true; btn.classList.add('btn-loading'); }
+  setStatus('Scanning presentation...');
+  var rows = [];
+  try {
+    await PowerPoint.run(async function(ctx) {
+      var slides = ctx.presentation.slides;
+      slides.load('items/id');
+      await ctx.sync();
+      var total = slides.items.length;
+      setStatus('Loading ' + total + ' slides...');
+      for (var i = 0; i < slides.items.length; i++) {
+        slides.items[i].shapes.load('items/name,items/type,items/width,items/height,items/top,items/left');
+      }
+      await ctx.sync();
+      for (var i = 0; i < slides.items.length; i++) {
+        for (var j = 0; j < slides.items[i].shapes.items.length; j++) {
+          var shape = slides.items[i].shapes.items[j];
+          try { shape.textFrame.textRange.load('text'); } catch(_) {}
+          try { shape.tags.load('items/key,items/value'); } catch(_) {}
+        }
+      }
+      await ctx.sync();
+      setStatus('Analyzing capabilities...');
+      var workstream = '';
+      for (var si = 0; si < slides.items.length; si++) {
+        var result = analyzeSlide(slides.items[si].shapes.items, si + 1);
+        if (result.isWorkstreamDivider) {
+          if (result.title) workstream = result.title;
+        } else {
+          var fa = result.title || ('Slide ' + (si + 1));
+          for (var ci = 0; ci < result.capabilities.length; ci++) {
+            var cap = result.capabilities[ci];
+            rows.push({
+              workstream:      workstream || 'General',
+              functionalArea:  fa,
+              processCategory: cap.processCategory,
+              capability:      cap.name,
+              doi:             cap.doi,
+              owner:           cap.owner,
+              timeline:        normalizeTimeline(cap.timeline),
+              status:          'Not Started',
+              assignedTo:      '',
+              dueDate:         '',
+              notes:           ''
+            });
+          }
+        }
+      }
+    });
+    if (!rows.length) {
+      setStatus('No capabilities found. Style shapes with the Scoping Tool first.');
+      return;
+    }
+    buildAndDownloadPlan(rows);
+  } catch(e) {
+    setStatus('Generation failed: ' + (e.message || String(e)));
+    console.error('generateIntegrationPlan:', e);
+  } finally {
+    if (btn) { btn.disabled = false; btn.classList.remove('btn-loading'); }
+  }
+}
+
+function buildAndDownloadPlan(rows) {
+  var today = new Date().toISOString().slice(0, 10);
+  var fname = 'Integration_Plan_' + today;
+  var headers = [
+    'Workstream','Functional Area','Process Category','Capability',
+    'Degree of Integration','Post Int Process Owner','Integration Timeline',
+    'Status','Assigned To','Due Date','Notes'
+  ];
+
+  if (typeof XLSX !== 'undefined') {
+    var wsData = [headers].concat(rows.map(function(r) {
+      return [r.workstream, r.functionalArea, r.processCategory, r.capability,
+              r.doi, r.owner, r.timeline, r.status,
+              r.assignedTo, r.dueDate, r.notes];
+    }));
+    var ws = XLSX.utils.aoa_to_sheet(wsData);
+    ws['!cols'] = [
+      {wch:22},{wch:24},{wch:24},{wch:38},
+      {wch:32},{wch:26},{wch:20},{wch:15},{wch:22},{wch:13},{wch:32}
+    ];
+    ws['!autofilter'] = { ref: 'A1:K' + (rows.length + 1) };
+
+    // Summary sheet
+    var byFA = {};
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      var key = r.workstream + '|||' + r.functionalArea;
+      if (!byFA[key]) byFA[key] = { ws: r.workstream, fa: r.functionalArea, total: 0, reviewed: 0 };
+      byFA[key].total++;
+      if (r.doi !== 'Not Reviewed') byFA[key].reviewed++;
+    }
+    var sumHeaders = ['Workstream','Functional Area','Total Capabilities','Reviewed','% Reviewed'];
+    var sumRows = Object.values(byFA).map(function(d) {
+      return [d.ws, d.fa, d.total, d.reviewed,
+              d.total ? Math.round(d.reviewed/d.total*100)+'%' : '0%'];
+    });
+    var totalCaps     = rows.length;
+    var totalReviewed = rows.filter(function(r){ return r.doi !== 'Not Reviewed'; }).length;
+    sumRows.push(['','TOTAL', totalCaps, totalReviewed,
+      totalCaps ? Math.round(totalReviewed/totalCaps*100)+'%' : '0%']);
+    var wsSummary = XLSX.utils.aoa_to_sheet([sumHeaders].concat(sumRows));
+    wsSummary['!cols'] = [{wch:22},{wch:24},{wch:20},{wch:12},{wch:14}];
+
+    // Legend sheet
+    var fillPal   = JSON.parse(localStorage.getItem('scoping_palette_fill')   || 'null') || DEFAULTS.fill;
+    var borderPal = JSON.parse(localStorage.getItem('scoping_palette_border') || 'null') || DEFAULTS.border;
+    var legendData = [
+      ['DEGREE OF INTEGRATION','',''],
+      ['Name','Fill Color',''],
+    ].concat(fillPal.map(function(c){ return [c.name, c.hex, '']; }))
+    .concat([[''],['']])
+    .concat([['POST INT PROCESS OWNER','','']])
+    .concat([['Name','Border Color','']])
+    .concat(borderPal.map(function(c){ return [c.name, c.hex, '']; }));
+    var wsLegend = XLSX.utils.aoa_to_sheet(legendData);
+    wsLegend['!cols'] = [{wch:32},{wch:16},{wch:40}];
+
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws,        'Integration Plan');
+    XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
+    XLSX.utils.book_append_sheet(wb, wsLegend,  'Legend');
+    XLSX.writeFile(wb, fname + '.xlsx');
+    setStatus('checkmark ' + rows.length + ' capabilities exported to ' + fname + '.xlsx');
+  } else {
+    // CSV fallback
+    function csvQ(v) {
+      var s = String(v || '');
+      return (s.indexOf(',')>=0 || s.indexOf('"')>=0 || s.indexOf('\n')>=0)
+        ? '"' + s.replace(/"/g,'""') + '"' : s;
+    }
+    var lines = [headers.join(',')].concat(rows.map(function(r) {
+      return [r.workstream,r.functionalArea,r.processCategory,r.capability,
+              r.doi,r.owner,r.timeline,r.status,r.assignedTo,r.dueDate,r.notes]
+             .map(csvQ).join(',');
+    })).join('\n');
+    var blob = new Blob([lines], {type:'text/csv;charset=utf-8;'});
+    var url  = URL.createObjectURL(blob);
+    var a    = document.createElement('a');
+    a.href = url; a.download = fname + '.csv';
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+    setStatus('checkmark ' + rows.length + ' capabilities exported to ' + fname + '.csv');
+  }
+}
+
 Office.onReady(async () => {
   loadStagedState();
   renderMainSwatches('fill');
@@ -1289,6 +1546,7 @@ Office.onReady(async () => {
     btn.addEventListener('click',()=>applyBorderDash(btn.dataset.dash)));
   document.getElementById('btn-apply-ends')?.addEventListener('click',applyLineEnds);
   document.getElementById('btn-insert-capability')?.addEventListener('click',insertCapabilityShape);
+  document.getElementById('btn-generate-plan')?.addEventListener('click',generateIntegrationPlan);
   document.getElementById('edit-back-btn').addEventListener('click',closeEditPanel);
 
   // Mode toggle

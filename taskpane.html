@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Scoping Tool</title>
   <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <link rel="stylesheet" href="taskpane.css" />
 </head>
 <body>
@@ -127,6 +128,21 @@
           </svg>
           Insert New Capability
         </button>
+      </section>
+
+      <!-- Generate Integration Plan -->
+      <section id="section-generate">
+        <h3>Integration Plan</h3>
+        <button class="generate-plan-btn" id="btn-generate-plan">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <rect x="1" y="1" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.5" fill="none"/>
+            <line x1="3.5" y1="4.5" x2="10.5" y2="4.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+            <line x1="3.5" y1="7" x2="10.5" y2="7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+            <line x1="3.5" y1="9.5" x2="7.5" y2="9.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+          Generate Integration Plan
+        </button>
+        <p class="generate-hint">Scans all slides and exports a structured integration plan as an Excel file ready for Smartsheet import.</p>
       </section>
 
       <div id="unsupported-state" class="hidden">
