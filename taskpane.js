@@ -182,10 +182,10 @@ function renderMainSwatches(key) {
 
   if(key === 'border') {
     row.innerHTML = palette.map((c,i) => `
-      <button class="legend-tile" data-color="${c.hex}" data-key="border"
+      <button class="main-swatch border-legend-tile" data-color="${c.hex}" data-key="border"
               title="${esc(c.name)}" aria-label="${esc(c.name)}">
-        <span class="legend-line" style="background:${c.hex};"></span>
-        <span class="legend-name">${esc(c.name)}</span>
+        <span class="legend-line-sample" style="background:${c.hex};"></span>
+        <span class="legend-line-name">${esc(c.name)}</span>
       </button>`).join('') +
       `<button class="edit-palette-btn" data-key="border" title="Edit border palette">
          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -297,13 +297,14 @@ function renderPaintBorderSwatches() {
 
   row.innerHTML = palette.map(c => {
     const isActive = stagedHex && c.hex.toUpperCase() === stagedHex;
-    return `<button class="legend-tile${isActive?' paint-staged':''}"
+    const txtCol   = autoTextHex(c.hex);
+    return `<button class="main-swatch${isLight(c.hex)?' light':''}${isActive?' paint-staged':''}"
+                    style="background:${c.hex};"
                     data-color="${c.hex}"
                     data-name="${esc(c.name)}"
                     title="${esc(c.name)}" aria-label="${esc(c.name)}">
-              <span class="legend-line" style="background:${c.hex};"></span>
-              <span class="legend-name">${esc(c.name)}</span>
-              ${isActive?'<span class="staged-check-line">✓</span>':''}
+              <span class="swatch-label" style="color:${txtCol};">${esc(c.name)}</span>
+              ${isActive?'<span class="staged-check" style="color:'+txtCol+';">✓</span>':''}
             </button>`;
   }).join('');
 
@@ -954,43 +955,52 @@ async function applyStagedFormat() {
   const doFill   = STAGED.fill.dirty   && STAGED.fill.hex;
   const doBorder = STAGED.border.dirty && STAGED.border.hex;
   if(!doFill && !doBorder) { setStatus('Select at least one attribute above.'); return; }
-  if(!_cachedShapeCount)    { setStatus('No shape selected.'); return; }
 
   const ver = ++_applyVer;
-  await PowerPoint.run(async ctx => {
-    if(ver!==_applyVer) return;
-    const shapes = getSelectedFast(ctx);
-    shapes.forEach(s => {
-      if(doFill) {
-        if(STAGED.fill.hex==='none') s.fill.clear();
-        else {
-          s.fill.setSolidColor(STAGED.fill.hex);
-          const tx = STAGED.fill.textHex || autoTextHex(STAGED.fill.hex);
-          try { s.textFrame.textRange.font.color=tx; } catch(_) {}
+  try {
+    await PowerPoint.run(async ctx => {
+      if(ver!==_applyVer) return;
+      // ── One run: load count + write properties in two syncs ──────────────
+      const col = ctx.presentation.getSelectedShapes();
+      const cnt = col.getCount();
+      await ctx.sync();                              // sync 1 — get count
+      if(ver!==_applyVer) return;
+      _cachedShapeCount = cnt.value;
+      if(!_cachedShapeCount) { setStatus('No shape selected.'); return; }
+
+      for(let i=0; i<_cachedShapeCount; i++) {
+        const s = col.getItemAt(i);
+        if(doFill) {
+          if(STAGED.fill.hex==='none') s.fill.clear();
+          else {
+            s.fill.setSolidColor(STAGED.fill.hex);
+            const tx = STAGED.fill.textHex || autoTextHex(STAGED.fill.hex);
+            try { s.textFrame.textRange.font.color=tx; } catch(_) {}
+          }
+        }
+        if(doBorder) {
+          if(STAGED.border.hex==='none') s.lineFormat.visible=false;
+          else { s.lineFormat.visible=true; s.lineFormat.color=STAGED.border.hex; }
         }
       }
-      if(doBorder) {
-        if(STAGED.border.hex==='none') s.lineFormat.visible=false;
-        else { s.lineFormat.visible=true; s.lineFormat.color=STAGED.border.hex; }
+      await ctx.sync();                              // sync 2 — commit writes
+      if(ver===_applyVer) {
+        const parts=[];
+        if(doFill)   parts.push(STAGED.fill.name   || STAGED.fill.hex);
+        if(doBorder) parts.push(STAGED.border.name || STAGED.border.hex);
+        setStatus('Painted — ' + parts.join(' + '));
       }
     });
-    await ctx.sync();
-    if(ver===_applyVer) {
-      const parts=[];
-      if(doFill)   parts.push(`fill: ${STAGED.fill.name||STAGED.fill.hex}`);
-      if(doBorder) parts.push(`border: ${STAGED.border.name||STAGED.border.hex}`);
-      setStatus('Painted — ' + parts.join(' + '));
-    }
-  });
+  } catch(e) { setStatus('Apply failed — select a shape first.'); }
 }
 
 async function updateShapeCount() {
   try {
     await PowerPoint.run(async ctx=>{
-      const sel=ctx.presentation.getSelectedShapes();
-      sel.load('items');
+      const col = ctx.presentation.getSelectedShapes();
+      const cnt = col.getCount();
       await ctx.sync();
-      _cachedShapeCount=sel.items.length;
+      _cachedShapeCount = cnt.value;
     });
   } catch(_) { _cachedShapeCount=0; }
 }
@@ -1171,8 +1181,15 @@ Office.onReady(async () => {
     async () => {
       if(_editKey) return;
       if(_currentMode==='paint') {
-        await updateShapeCount();
-        if(STAGED.locked) await applyStagedFormat();
+        const anyStaged = STAGED.fill.dirty || STAGED.border.dirty;
+        if(STAGED.locked && anyStaged) {
+          // Combined: count + apply in one PowerPoint.run — fastest path
+          await applyStagedFormat();
+        } else {
+          // Lightweight count-only update (no apply)
+          await updateShapeCount();
+        }
+        updateApplyBtn();
       } else {
         inspectSelection();
       }
