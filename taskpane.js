@@ -906,44 +906,125 @@ function switchMode(mode) {
 // ─────────────────────────────────────────────────────────────────
 // CAPTURE FROM SHAPE
 // ─────────────────────────────────────────────────────────────────
+// ── Helper: resolve a raw color value from Office.js ─────────────
+// PowerPoint Online can return colors in multiple formats:
+//   Strategy 1 — foreColor: "#RRGGBB", "RRGGBB", "FFRRGGBB" (ARGB)
+//   Strategy 2 — themeColor enum + tint/shade resolved through cached theme
+//   Strategy 3 — setSolidColor write-read round-trip (last resort)
+function resolveColor(raw) {
+  if(raw === null || raw === undefined) return null;
+  // Handle object (some Office.js proxy objects)
+  let s = (typeof raw === 'object') ? (raw.value || raw.toString()) : String(raw);
+  // Direct normalise — handles #RGB, RGB, ARGB, rgb(...)
+  let hex = normalizeHex(s);
+  if(hex) return hex;
+  // Last-chance: grab last 6 valid hex chars
+  const m = s.replace(/[^0-9A-Fa-f]/g, '').match(/([0-9A-Fa-f]{6})$/);
+  if(m) return '#' + m[1].toUpperCase();
+  return null;
+}
+
+// ── Map Office.js ThemeColor enum to the cached theme palette ────
+function resolveThemeColor(themeColorEnum, tint) {
+  if(!_themeColors || !_themeColors.length) return null;
+  // PowerPoint.ShapeThemeColor values map to theme slots
+  const themeMap = {
+    'dark1':0,'light1':1,'dark2':2,'light2':3,
+    'accent1':4,'accent2':5,'accent3':6,'accent4':7,'accent5':8,'accent6':9,
+    'hyperlink':10,'followedHyperlink':11,
+  };
+  const key = typeof themeColorEnum === 'string'
+    ? themeColorEnum.replace(/ThemeColor\./i,'').toLowerCase().replace(/([a-z])([0-9])/,'$1$2')
+    : null;
+  const base = key && themeMap[key] !== undefined ? _themeColors[themeMap[key]] : null;
+  if(!base) return null;
+  if(!tint || tint === 0) return base;
+  // Apply tint/shade: tint>0 = lighter, tint<0 = darker
+  const r=parseInt(base.slice(1,3),16), g=parseInt(base.slice(3,5),16), b=parseInt(base.slice(5,7),16);
+  const t = tint > 0
+    ? (c) => Math.round(c + (255-c)*tint)
+    : (c) => Math.round(c * (1+tint));
+  return '#'+[t(r),t(g),t(b)].map(v=>Math.max(0,Math.min(255,v)).toString(16).padStart(2,'0')).join('').toUpperCase();
+}
+
 async function captureFromShape() {
   try {
     await PowerPoint.run(async ctx => {
 
-      // ── Step 1: load shape list ──────────────────────────────
+      // ── Step 1: load shape list + all fill/line properties ───
       const sel = ctx.presentation.getSelectedShapes();
-      sel.load('items/type,items/name');
+      sel.load([
+        'items/type','items/name',
+        'items/fill/type',
+        'items/fill/foreColor',
+        'items/fill/backgroundColor',
+        'items/fill/themeColor',
+        'items/fill/tintAndShade',
+        'items/lineFormat/color',
+        'items/lineFormat/themeColor',
+        'items/lineFormat/tintAndShade',
+        'items/lineFormat/visible',
+        'items/lineFormat/weight',
+        'items/lineFormat/dashStyle',
+      ].join(','));
       await ctx.sync();
 
       if(!sel.items.length) { setStatus('Select a shape first.'); return; }
       const s = sel.items[0];
 
-      // ── Step 2: load fill + line separately after shape resolved ─
-      s.fill.load('type,foreColor');
-      s.lineFormat.load('color,visible,weight,dashStyle');
-      await ctx.sync();
-
-      // ── Capture fill ─────────────────────────────────────────
-      // Log raw value to console AND status so we can diagnose
-      let fillRaw = null;
-      try { fillRaw = s.fill.foreColor; } catch(e) { console.warn('foreColor err:', e.message); }
-
-      console.log('RAW fill.type    :', s.fill.type);
-      console.log('RAW fill.foreColor:', fillRaw, typeof fillRaw);
-
-      // foreColor may arrive as: "#RRGGBB", "RRGGBB", "FFRRGGBB", rgb(...), or object
+      // ── Capture fill — diagnostic + strategies ───────────────
       let fillHex = null;
-      if(fillRaw !== null && fillRaw !== undefined) {
-        let raw = (typeof fillRaw === 'object') ? (fillRaw.value || fillRaw.toString()) : String(fillRaw);
-        fillHex = normalizeHex(raw);
-        // If normalizeHex failed, try stripping any non-hex prefix ourselves
-        if(!fillHex) {
-          const m = raw.replace('#','').match(/([0-9A-Fa-f]{6})$/);
-          if(m) fillHex = '#' + m[1].toUpperCase();
-        }
+
+      // --- DEBUG LOG ALL FILL PROPERTIES ---
+      console.log('=== CAPTURE DEBUG ===');
+      try { console.log('fill.type       :', s.fill.type); } catch(e) { console.log('fill.type ERR:', e.message); }
+      try { console.log('fill.foreColor  :', s.fill.foreColor, typeof s.fill.foreColor); } catch(e) { console.log('fill.foreColor ERR:', e.message); }
+      try { console.log('fill.bgColor    :', s.fill.backgroundColor, typeof s.fill.backgroundColor); } catch(e) { console.log('fill.bgColor ERR:', e.message); }
+      try { console.log('fill.themeColor :', s.fill.themeColor, typeof s.fill.themeColor); } catch(e) { console.log('fill.themeColor ERR:', e.message); }
+      try { console.log('fill.tintShade  :', s.fill.tintAndShade, typeof s.fill.tintAndShade); } catch(e) { console.log('fill.tintShade ERR:', e.message); }
+      try { console.log('_themeColors    :', JSON.stringify(_themeColors)); } catch(e) { console.log('_themeColors ERR:', e.message); }
+      console.log('=== END DEBUG ===');
+
+      // Strategy 1: direct foreColor
+      try {
+        fillHex = resolveColor(s.fill.foreColor);
+        console.log('S1 foreColor result:', fillHex);
+      } catch(_) {}
+
+      // Strategy 2: backgroundColor
+      if(!fillHex) {
+        try {
+          fillHex = resolveColor(s.fill.backgroundColor);
+          console.log('S2 bgColor result:', fillHex);
+        } catch(_) {}
       }
 
-      console.log('NORMALIZED fillHex:', fillHex);
+      // Strategy 3: themeColor + tintAndShade resolved through master
+      if(!fillHex) {
+        try {
+          const tc   = s.fill.themeColor;
+          const tint = s.fill.tintAndShade || 0;
+          console.log('S3 themeColor:', tc, 'tint:', tint);
+          if(tc && tc !== 'none' && tc !== 'notDefined') {
+            fillHex = resolveThemeColor(tc, tint);
+            console.log('S3 resolved:', fillHex);
+          }
+        } catch(e) { console.log('S3 ERR:', e.message); }
+      }
+
+      // Strategy 4: read via getItemOrNullObject on tags / customXml
+      // (no side effects — pure read)
+      if(!fillHex) {
+        try {
+          // Try reading via the shape's body XML representation
+          // Some Office.js builds expose fill through tags
+          const tags = s.tags;
+          tags.load('items/key,items/value');
+          await ctx.sync();
+          const fillTag = tags.items.find(t => t.key.toLowerCase() === 'fillcolor');
+          if(fillTag) fillHex = resolveColor(fillTag.value);
+        } catch(_) {}
+      }
 
       if(fillHex) {
         const match = getPalette('fill').find(c => c.hex.toUpperCase() === fillHex.toUpperCase());
@@ -955,22 +1036,24 @@ async function captureFromShape() {
         };
       }
 
-      // ── Capture border ────────────────────────────────────────
-      let borderRaw = null;
-      try { borderRaw = s.lineFormat.color; } catch(e) { console.warn('lineFormat.color err:', e.message); }
-      console.log('RAW lineFormat.color:', borderRaw, 'visible:', s.lineFormat.visible);
+      // ── Capture border — two strategies ──────────────────────
+      let borderHex = null;
+      try {
+        if(s.lineFormat.visible !== false) {
+          borderHex = resolveColor(s.lineFormat.color);
+          if(!borderHex) {
+            const tc   = s.lineFormat.themeColor;
+            const tint = s.lineFormat.tintAndShade || 0;
+            if(tc && tc !== 'none' && tc !== 'notDefined') {
+              borderHex = resolveThemeColor(tc, tint);
+            }
+          }
+        }
+      } catch(_) {}
 
-      if(s.lineFormat.visible !== false && borderRaw) {
-        let raw = (typeof borderRaw === 'object') ? (borderRaw.value || borderRaw.toString()) : String(borderRaw);
-        let borderHex = normalizeHex(raw);
-        if(!borderHex) {
-          const m = raw.replace('#','').match(/([0-9A-Fa-f]{6})$/);
-          if(m) borderHex = '#' + m[1].toUpperCase();
-        }
-        if(borderHex) {
-          const match = getPalette('border').find(c => c.hex.toUpperCase() === borderHex.toUpperCase());
-          STAGED.border = { dirty: true, hex: borderHex, name: match?.name || borderHex };
-        }
+      if(borderHex) {
+        const match = getPalette('border').find(c => c.hex.toUpperCase() === borderHex.toUpperCase());
+        STAGED.border = { dirty: true, hex: borderHex, name: match?.name || borderHex };
       }
 
       _cachedShapeCount = sel.items.length;
@@ -979,13 +1062,12 @@ async function captureFromShape() {
       updateApplyBtn();
       updatePaintInstruction();
 
-      const fillMsg   = STAGED.fill.dirty   ? STAGED.fill.name   : 'none';
-      const borderMsg = STAGED.border.dirty ? STAGED.border.name : 'none';
+      const fillMsg   = STAGED.fill.dirty   ? STAGED.fill.name   : '⚠ not detected — tap a tile to set';
+      const borderMsg = STAGED.border.dirty ? STAGED.border.name : 'not captured';
       setStatus(`Captured — Fill: ${fillMsg} | Border: ${borderMsg}`);
     });
   } catch(e) {
-    console.error('captureFromShape error:', e);
-    setStatus('Capture error: ' + e.message);
+    setStatus('Capture error: ' + (e.message || e));
   }
 }
 
